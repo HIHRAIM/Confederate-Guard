@@ -48,7 +48,7 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
     network="Network ID (number) to group servers together"
 )
 async def setup_cmd(interaction: discord.Interaction, lang: str, channel_id: str, network: int = None):
-    if not is_admin(interaction.user.id):
+    if not is_admin(interaction.user.id, interaction.guild_id):
         await interaction.response.send_message(
             localized("setup_no_perm", "en"), ephemeral=True
         )
@@ -89,7 +89,7 @@ async def guard_cmd(interaction: discord.Interaction, duration: str, reason: str
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
     lang = guild_row["lang"] if guild_row else DEFAULT_LANG
 
-    if not is_admin(interaction.user.id):
+    if not is_admin(interaction.user.id, interaction.guild_id):
         await interaction.response.send_message(
             localized("setup_no_perm", lang), ephemeral=True
         )
@@ -128,7 +128,7 @@ async def dm_cmd(interaction: discord.Interaction, text: str):
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
     lang = guild_row["lang"] if guild_row else DEFAULT_LANG
 
-    if not is_admin(interaction.user.id):
+    if not is_admin(interaction.user.id, interaction.guild_id):
         await interaction.response.send_message(
             localized("setup_no_perm", lang), ephemeral=True
         )
@@ -149,7 +149,7 @@ async def autorole_cmd(interaction: discord.Interaction, role_id: str):
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
     lang = guild_row["lang"] if guild_row else DEFAULT_LANG
 
-    if not is_admin(interaction.user.id):
+    if not is_admin(interaction.user.id, interaction.guild_id):
         await interaction.response.send_message(
             localized("setup_no_perm", lang), ephemeral=True
         )
@@ -193,7 +193,6 @@ async def autorole_cmd(interaction: discord.Interaction, role_id: str):
                 pass
 
     await interaction.followup.send(localized("autorole_done", lang, count=count))
-
 
 @bot.tree.command(name="report", description="Report a user: reply to their message, then run this command")
 @app_commands.describe(
@@ -262,7 +261,6 @@ async def report_cmd(interaction: discord.Interaction, user_id: str, message_id:
         except Exception:
             pass
 
-
 @bot.tree.command(name="ban", description="Ban a user by ID (works even if not on the server)")
 @app_commands.describe(
     user_id="ID of the user to ban",
@@ -273,7 +271,7 @@ async def ban_cmd(interaction: discord.Interaction, user_id: str, duration: str,
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
     lang = guild_row["lang"] if guild_row else DEFAULT_LANG
 
-    if not is_admin(interaction.user.id):
+    if not is_admin(interaction.user.id, interaction.guild_id):
         await interaction.response.send_message(
             localized("setup_no_perm", lang), ephemeral=True
         )
@@ -331,7 +329,6 @@ async def ban_cmd(interaction: discord.Interaction, user_id: str, duration: str,
             except Exception:
                 pass
 
-
 @bot.event
 async def on_member_join(member: discord.Member):
     if member.bot:
@@ -345,7 +342,6 @@ async def on_member_join(member: discord.Member):
             await member.add_roles(role, reason="autorole")
         except Exception:
             pass
-
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -423,6 +419,36 @@ async def on_message(message: discord.Message):
             except Exception:
                 pass
 
+@bot.tree.command(name="add_admin", description="Add a user as a server admin (can use /setup, /guard, /ban, /report, /dm, /autorole)")
+@app_commands.describe(user_id="ID of the user to grant admin rights on this server")
+async def add_admin_cmd(interaction: discord.Interaction, user_id: str):
+    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    try:
+        uid = int(user_id.strip())
+    except ValueError:
+        await interaction.response.send_message(
+            localized("add_admin_invalid_id", lang), ephemeral=True
+        )
+        return
+
+    if db.is_guild_admin(interaction.guild.id, uid):
+        await interaction.response.send_message(
+            localized("add_admin_already", lang, user_id=uid), ephemeral=True
+        )
+        return
+
+    db.add_guild_admin(interaction.guild.id, uid)
+    await interaction.response.send_message(
+        localized("add_admin_success", lang, user_id=uid)
+    )
 
 @bot.tree.command(name="backup", description="Send current database backup")
 async def backup_cmd(interaction: discord.Interaction):
@@ -439,7 +465,6 @@ async def backup_cmd(interaction: discord.Interaction):
     await interaction.response.send_message(
         file=discord.File(io.BytesIO(data), filename="guard.db")
     )
-
 
 async def unban_loop(client: discord.Client):
     await client.wait_until_ready()
