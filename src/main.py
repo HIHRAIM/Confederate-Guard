@@ -1,0 +1,69 @@
+import asyncio
+import discord
+import db
+from config import BOT_TOKEN, SERVICE_CHATS, BACKUP_CHATS
+from discord_bot import bot
+from utils import get_guild_lang, localized
+
+async def send_service_event(event_key):
+    for channel_id in SERVICE_CHATS.get("discord", set()):
+        try:
+            ch = bot.get_channel(channel_id)
+            if not ch:
+                try:
+                    ch = await bot.fetch_channel(channel_id)
+                except Exception:
+                    ch = None
+            if ch:
+                guild_id = ch.guild.id if getattr(ch, "guild", None) else None
+                lang = get_guild_lang(guild_id) if guild_id else "en"
+                text = localized(event_key, lang)
+                await ch.send(text)
+        except Exception:
+            pass
+
+async def send_db_backup():
+    import io
+    try:
+        with open("guard.db", "rb") as f:
+            data = f.read()
+    except Exception:
+        return
+
+    for channel_id in BACKUP_CHATS.get("discord", set()):
+        try:
+            ch = bot.get_channel(channel_id)
+            if not ch:
+                try:
+                    ch = await bot.fetch_channel(channel_id)
+                except Exception:
+                    continue
+            if ch:
+                await ch.send(file=discord.File(io.BytesIO(data), filename="guard.db"))
+        except Exception:
+            pass
+
+async def backup_loop():
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        await asyncio.sleep(12 * 3600)
+        await send_db_backup()
+
+async def main():
+    db.init()
+
+    await asyncio.sleep(0)
+    task = asyncio.create_task(bot.start(BOT_TOKEN))
+    asyncio.get_event_loop().create_task(backup_loop())
+
+    await asyncio.sleep(5)
+    await send_service_event("bot_started")
+
+    try:
+        await task
+    finally:
+        await send_service_event("bot_stopped")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
