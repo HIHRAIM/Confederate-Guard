@@ -238,6 +238,30 @@ _LOCALE = {
         "es": "ID de usuario inválido.",
         "pt": "ID de usuário inválido.",
     },
+    "add_admin_success": {
+        "ru": "Пользователь {user_id} добавлен в администраторы этого сервера.",
+        "uk": "Користувача {user_id} додано до адміністраторів цього сервера.",
+        "pl": "Użytkownik {user_id} został dodany jako administrator tego serwera.",
+        "en": "User {user_id} has been added as an admin of this server.",
+        "es": "El usuario {user_id} ha sido añadido como administrador de este servidor.",
+        "pt": "O usuário {user_id} foi adicionado como administrador deste servidor.",
+    },
+    "add_admin_already": {
+        "ru": "Пользователь {user_id} уже является администратором этого сервера.",
+        "uk": "Користувач {user_id} вже є адміністратором цього сервера.",
+        "pl": "Użytkownik {user_id} jest już administratorem tego serwera.",
+        "en": "User {user_id} is already an admin of this server.",
+        "es": "El usuario {user_id} ya es administrador de este servidor.",
+        "pt": "O usuário {user_id} já é administrador deste servidor.",
+    },
+    "add_admin_invalid_id": {
+        "ru": "Неверный ID пользователя.",
+        "uk": "Невірний ID користувача.",
+        "pl": "Nieprawidłowe ID użytkownika.",
+        "en": "Invalid user ID.",
+        "es": "ID de usuario inválido.",
+        "pt": "ID de usuário inválido.",
+    },
 }
 
 URL_RE = re.compile(
@@ -245,8 +269,12 @@ URL_RE = re.compile(
     re.IGNORECASE
 )
 
-def is_admin(user_id):
-    return user_id in ADMINS
+def is_admin(user_id, guild_id=None):
+    if user_id in ADMINS:
+        return True
+    if guild_id is not None:
+        return db.is_guild_admin(guild_id, user_id)
+    return False
 
 def get_guild_lang(guild_id):
     row = db.get_guild(guild_id)
