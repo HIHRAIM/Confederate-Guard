@@ -40,6 +40,12 @@ def init():
         guild_id TEXT PRIMARY KEY,
         role_id TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS guild_admins (
+        guild_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        PRIMARY KEY (guild_id, user_id)
+    );
     """)
     conn.commit()
     cols = [r[1] for r in cur.execute("PRAGMA table_info(guilds)").fetchall()]
@@ -128,6 +134,27 @@ def get_autorole(guild_id):
 def remove_autorole(guild_id):
     cur.execute("DELETE FROM autoroles WHERE guild_id=?", (str(guild_id),))
     conn.commit()
+
+def add_guild_admin(guild_id, user_id):
+    cur.execute(
+        "INSERT OR IGNORE INTO guild_admins (guild_id, user_id) VALUES (?,?)",
+        (str(guild_id), str(user_id))
+    )
+    conn.commit()
+
+def remove_guild_admin(guild_id, user_id):
+    cur.execute(
+        "DELETE FROM guild_admins WHERE guild_id=? AND user_id=?",
+        (str(guild_id), str(user_id))
+    )
+    conn.commit()
+
+def is_guild_admin(guild_id, user_id):
+    row = cur.execute(
+        "SELECT 1 FROM guild_admins WHERE guild_id=? AND user_id=?",
+        (str(guild_id), str(user_id))
+    ).fetchone()
+    return row is not None
 
 def get_expired_bans():
     now = int(time.time())
