@@ -8,6 +8,7 @@ import db
 from utils import (
     is_admin, get_guild_lang, localized,
     parse_duration, format_duration, message_has_spam,
+    classify_banned_link, message_has_banned_link,
     SUPPORTED_LANGS, DEFAULT_LANG
 )
 
@@ -194,54 +195,34 @@ async def autorole_cmd(interaction: discord.Interaction, role_id: str):
 
     await interaction.followup.send(localized("autorole_done", lang, count=count))
 
-@bot.tree.command(name="report", description="Report a user: reply to their message, then run this command")
-@app_commands.describe(
-    user_id="ID of the reported user",
-    message_id="ID of the message to report (reply to it or paste ID here)"
-)
-async def report_cmd(interaction: discord.Interaction, user_id: str, message_id: str):
+async def _check_report_access(interaction: discord.Interaction):
+    """Returns (guild_row, lang, network) or (None, lang, None) after responding with an error."""
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
     lang = guild_row["lang"] if guild_row else DEFAULT_LANG
 
-    if not guild_row or str(interaction.channel.id) != str(guild_row["log_channel_id"]):
+    if not is_admin(interaction.user.id, interaction.guild_id):
         await interaction.response.send_message(
-            localized("report_not_log_channel", lang), ephemeral=True
+            localized("setup_no_perm", lang), ephemeral=True
         )
-        return
+        return None, lang, None
+
+    if not guild_row:
+        await interaction.response.send_message(
+            localized("report_no_setup", lang), ephemeral=True
+        )
+        return None, lang, None
 
     network = guild_row["network"]
     if network is None:
         await interaction.response.send_message(
             localized("report_no_network", lang), ephemeral=True
         )
-        return
+        return None, lang, None
 
-    try:
-        mid = int(message_id.strip())
-    except ValueError:
-        await interaction.response.send_message(
-            localized("report_not_reply", lang), ephemeral=True
-        )
-        return
+    return guild_row, lang, network
 
-    replied_msg = None
-    for channel in interaction.guild.text_channels:
-        try:
-            replied_msg = await channel.fetch_message(mid)
-            break
-        except Exception:
-            continue
-
-    if replied_msg is None:
-        await interaction.response.send_message(
-            localized("report_message_not_found", lang), ephemeral=True
-        )
-        return
-
+async def _send_report(interaction: discord.Interaction, reported_msg: discord.Message, lang, network):
     server_name = interaction.guild.name
-    author_nick = replied_msg.author.display_name
-    content = replied_msg.content or ""
-    report_text = f"[Discord | {server_name}] {author_nick}:\n{content}\n ID пользователя: {user_id}"
 
     network_guilds = db.get_network_guilds(network)
     await interaction.response.send_message(localized("report_sent", lang), ephemeral=True)
@@ -256,10 +237,65 @@ async def report_cmd(interaction: discord.Interaction, user_id: str, message_id:
                 log_ch = await bot.fetch_channel(log_cid)
             except Exception:
                 continue
+        report_text = localized(
+            "report_text", row["lang"],
+            server=server_name,
+            nick=reported_msg.author.display_name,
+            content=reported_msg.content or "",
+            user_id=reported_msg.author.id
+        )
         try:
             await log_ch.send(report_text)
         except Exception:
             pass
+
+@bot.tree.command(name="report", description="Report a message to the network log channels")
+@app_commands.describe(
+    message_id="ID of the message to report (optional, defaults to the latest message in this channel)"
+)
+async def report_cmd(interaction: discord.Interaction, message_id: str = None):
+    guild_row, lang, network = await _check_report_access(interaction)
+    if not guild_row:
+        return
+
+    reported_msg = None
+    if message_id is not None:
+        try:
+            mid = int(message_id.strip())
+        except ValueError:
+            await interaction.response.send_message(
+                localized("report_invalid_message_id", lang), ephemeral=True
+            )
+            return
+        for channel in interaction.guild.text_channels:
+            try:
+                reported_msg = await channel.fetch_message(mid)
+                break
+            except Exception:
+                continue
+    else:
+        try:
+            async for msg in interaction.channel.history(limit=50):
+                if msg.author.id != interaction.user.id and msg.author.id != bot.user.id:
+                    reported_msg = msg
+                    break
+        except Exception:
+            pass
+
+    if reported_msg is None:
+        await interaction.response.send_message(
+            localized("report_message_not_found", lang), ephemeral=True
+        )
+        return
+
+    await _send_report(interaction, reported_msg, lang, network)
+
+@bot.tree.context_menu(name="report")
+async def report_context_menu(interaction: discord.Interaction, message: discord.Message):
+    guild_row, lang, network = await _check_report_access(interaction)
+    if not guild_row:
+        return
+    await _send_report(interaction, message, lang, network)
 
 @bot.tree.command(name="ban", description="Ban a user by ID (works even if not on the server)")
 @app_commands.describe(
@@ -352,6 +388,14 @@ async def on_message(message: discord.Message):
 
     guard = db.get_guard(message.channel.id)
     if not guard:
+        if (
+            message_has_banned_link(message.content or "")
+            and not is_admin(message.author.id, message.guild.id)
+        ):
+            try:
+                await message.delete()
+            except Exception:
+                pass
         return
 
     try:
@@ -419,9 +463,9 @@ async def on_message(message: discord.Message):
             except Exception:
                 pass
 
-@bot.tree.command(name="add_admin", description="Add a user as a server admin (can use /setup, /guard, /ban, /report, /dm, /autorole)")
+@bot.tree.command(name="setadmin", description="Add a user as a server admin")
 @app_commands.describe(user_id="ID of the user to grant admin rights on this server")
-async def add_admin_cmd(interaction: discord.Interaction, user_id: str):
+async def setadmin_cmd(interaction: discord.Interaction, user_id: str):
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
     lang = guild_row["lang"] if guild_row else DEFAULT_LANG
 
@@ -435,19 +479,268 @@ async def add_admin_cmd(interaction: discord.Interaction, user_id: str):
         uid = int(user_id.strip())
     except ValueError:
         await interaction.response.send_message(
-            localized("add_admin_invalid_id", lang), ephemeral=True
+            localized("setadmin_invalid_id", lang), ephemeral=True
         )
         return
 
     if db.is_guild_admin(interaction.guild.id, uid):
         await interaction.response.send_message(
-            localized("add_admin_already", lang, user_id=uid), ephemeral=True
+            localized("setadmin_already", lang, user_id=uid), ephemeral=True
         )
         return
 
     db.add_guild_admin(interaction.guild.id, uid)
     await interaction.response.send_message(
-        localized("add_admin_success", lang, user_id=uid)
+        localized("setadmin_success", lang, user_id=uid)
+    )
+
+@bot.tree.command(name="remadmin", description="Remove a user's server admin status (bot admins)")
+@app_commands.describe(user_id="ID of the user to revoke admin rights on this server")
+async def remadmin_cmd(interaction: discord.Interaction, user_id: str):
+    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    try:
+        uid = int(user_id.strip())
+    except ValueError:
+        await interaction.response.send_message(
+            localized("setadmin_invalid_id", lang), ephemeral=True
+        )
+        return
+
+    if not db.is_guild_admin(interaction.guild.id, uid):
+        await interaction.response.send_message(
+            localized("remadmin_not_admin", lang, user_id=uid), ephemeral=True
+        )
+        return
+
+    db.remove_guild_admin(interaction.guild.id, uid)
+    await interaction.response.send_message(
+        localized("remadmin_success", lang, user_id=uid)
+    )
+
+@bot.tree.command(name="banlink", description="Add a link or Discord invite to the banned list (bot admins)")
+@app_commands.describe(link="A URL (evil.com) or a Discord invite code/link (fXaxuYdN or discord.gg/fXaxuYdN)")
+async def banlink_cmd(interaction: discord.Interaction, link: str):
+    lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    kind, value = classify_banned_link(link)
+    if not db.add_banned_link(kind, value):
+        await interaction.response.send_message(
+            localized("banlink_exists", lang), ephemeral=True
+        )
+        return
+
+    if kind == "invite":
+        await interaction.response.send_message(
+            localized("banlink_added_invite", lang, code=value), ephemeral=True
+        )
+    else:
+        await interaction.response.send_message(
+            localized("banlink_added_url", lang, url=value), ephemeral=True
+        )
+
+@bot.tree.command(name="unbanlink", description="Remove a link from the banned list by its number (bot admins)")
+@app_commands.describe(link_id="Number of the link as shown in /links")
+async def unbanlink_cmd(interaction: discord.Interaction, link_id: int):
+    lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    if db.remove_banned_link(link_id):
+        await interaction.response.send_message(
+            localized("unbanlink_success", lang, link_id=link_id), ephemeral=True
+        )
+    else:
+        await interaction.response.send_message(
+            localized("unbanlink_not_found", lang, link_id=link_id), ephemeral=True
+        )
+
+LINKS_PAGE_SIZE = 10
+
+def _links_embed(lang, rows, page, pages):
+    lines = []
+    for r in rows[page * LINKS_PAGE_SIZE:(page + 1) * LINKS_PAGE_SIZE]:
+        kind_key = "links_kind_invite" if r["kind"] == "invite" else "links_kind_url"
+        lines.append(f"{r['id']}. {localized(kind_key, lang)}: `{r['value']}`")
+    embed = discord.Embed(
+        title=localized("links_title", lang),
+        description="\n".join(lines),
+        color=discord.Color.blurple()
+    )
+    if pages > 1:
+        embed.set_footer(text=localized("links_page", lang, page=page + 1, pages=pages))
+    return embed
+
+class LinksView(discord.ui.View):
+    def __init__(self, lang, rows):
+        super().__init__(timeout=600)
+        self.lang = lang
+        self.rows = rows
+        self.page = 0
+        self.pages = (len(rows) + LINKS_PAGE_SIZE - 1) // LINKS_PAGE_SIZE
+        self._update_buttons()
+
+    def _update_buttons(self):
+        self.prev_page.disabled = self.page <= 0
+        self.next_page.disabled = self.page >= self.pages - 1
+
+    @discord.ui.button(emoji="◀", style=discord.ButtonStyle.secondary)
+    async def prev_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.page = max(0, self.page - 1)
+        self._update_buttons()
+        await interaction.response.edit_message(
+            embed=_links_embed(self.lang, self.rows, self.page, self.pages), view=self
+        )
+
+    @discord.ui.button(emoji="▶", style=discord.ButtonStyle.secondary)
+    async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.page = min(self.pages - 1, self.page + 1)
+        self._update_buttons()
+        await interaction.response.edit_message(
+            embed=_links_embed(self.lang, self.rows, self.page, self.pages), view=self
+        )
+
+@bot.tree.command(name="links", description="Show the list of banned links")
+async def links_cmd(interaction: discord.Interaction):
+    lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id, interaction.guild_id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    rows = db.get_banned_links()
+    if not rows:
+        await interaction.response.send_message(
+            localized("links_empty", lang), ephemeral=True
+        )
+        return
+
+    pages = (len(rows) + LINKS_PAGE_SIZE - 1) // LINKS_PAGE_SIZE
+    embed = _links_embed(lang, rows, 0, pages)
+    if pages > 1:
+        await interaction.response.send_message(embed=embed, view=LinksView(lang, rows), ephemeral=True)
+    else:
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@bot.tree.command(name="help", description="Show the list of commands")
+async def help_cmd(interaction: discord.Interaction):
+    lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+
+    server_admin_lines = "\n".join([
+        localized("help_cmd_setup", lang),
+        localized("help_cmd_guard", lang),
+        localized("help_cmd_dm", lang),
+        localized("help_cmd_autorole", lang),
+        localized("help_cmd_ban", lang),
+        localized("help_cmd_report", lang),
+        localized("help_cmd_links", lang),
+    ])
+
+    bot_admin_lines = "\n".join([
+        localized("help_cmd_banlink", lang),
+        localized("help_cmd_unbanlink", lang),
+        localized("help_cmd_setadmin", lang),
+        localized("help_cmd_remadmin", lang),
+        localized("help_cmd_backup", lang),
+        localized("help_cmd_list_chats", lang),
+        localized("help_cmd_force_leave", lang),
+    ])
+
+    embed = discord.Embed(
+        title=localized("help_title", lang),
+        color=discord.Color.blurple()
+    )
+    embed.add_field(name=localized("help_section_server_admins", lang), value=server_admin_lines, inline=False)
+    embed.add_field(name=localized("help_section_bot_admins", lang), value=bot_admin_lines, inline=False)
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@bot.tree.command(name="list_chats", description="List all servers the bot is in (bot admins)")
+async def list_chats_cmd(interaction: discord.Interaction):
+    lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    lines = [localized("list_chats_header", lang)]
+    for g in bot.guilds:
+        lines.append(f"- {g.name} — id: {g.id}")
+
+    msg = "\n".join(lines)
+
+    if len(msg) > 1900:
+        import io
+        bio = io.BytesIO(msg.encode("utf-8"))
+        bio.seek(0)
+        await interaction.response.send_message(
+            localized("list_chats_too_long", lang), ephemeral=True
+        )
+        await interaction.followup.send(
+            file=discord.File(bio, filename="chat_list.txt"), ephemeral=True
+        )
+    else:
+        await interaction.response.send_message(msg, ephemeral=True)
+
+@bot.tree.command(name="force_leave", description="Force the bot to leave a server by ID (bot admins)")
+@app_commands.describe(server_id="ID of the server the bot should leave")
+async def force_leave_cmd(interaction: discord.Interaction, server_id: str):
+    lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    try:
+        gid = int(server_id.strip())
+    except ValueError:
+        await interaction.response.send_message(
+            localized("force_leave_invalid_id", lang), ephemeral=True
+        )
+        return
+
+    guild = bot.get_guild(gid)
+    if not guild:
+        await interaction.response.send_message(
+            localized("force_leave_not_member", lang), ephemeral=True
+        )
+        return
+
+    try:
+        await guild.leave()
+    except Exception as e:
+        await interaction.response.send_message(
+            localized("force_leave_failed", lang, error=e), ephemeral=True
+        )
+        return
+
+    db.remove_guild_data(gid)
+
+    await interaction.response.send_message(
+        localized("force_leave_success", lang, guild_id=gid), ephemeral=True
     )
 
 @bot.tree.command(name="backup", description="Send current database backup")

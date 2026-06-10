@@ -46,6 +46,12 @@ def init():
         user_id TEXT NOT NULL,
         PRIMARY KEY (guild_id, user_id)
     );
+
+    CREATE TABLE IF NOT EXISTS banned_links (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        kind TEXT NOT NULL,
+        value TEXT NOT NULL UNIQUE
+    );
     """)
     conn.commit()
     cols = [r[1] for r in cur.execute("PRAGMA table_info(guilds)").fetchall()]
@@ -155,6 +161,34 @@ def is_guild_admin(guild_id, user_id):
         (str(guild_id), str(user_id))
     ).fetchone()
     return row is not None
+
+def add_banned_link(kind, value):
+    cur.execute(
+        "INSERT OR IGNORE INTO banned_links (kind, value) VALUES (?,?)",
+        (kind, value)
+    )
+    conn.commit()
+    return cur.rowcount > 0
+
+def get_banned_links():
+    return cur.execute(
+        "SELECT * FROM banned_links ORDER BY id"
+    ).fetchall()
+
+def remove_banned_link(link_id):
+    cur.execute("DELETE FROM banned_links WHERE id=?", (link_id,))
+    conn.commit()
+    return cur.rowcount > 0
+
+def remove_guild_data(guild_id):
+    gid = str(guild_id)
+    cur.execute("DELETE FROM guilds WHERE guild_id=?", (gid,))
+    cur.execute("DELETE FROM guarded_channels WHERE guild_id=?", (gid,))
+    cur.execute("DELETE FROM custom_dm WHERE guild_id=?", (gid,))
+    cur.execute("DELETE FROM active_bans WHERE guild_id=?", (gid,))
+    cur.execute("DELETE FROM autoroles WHERE guild_id=?", (gid,))
+    cur.execute("DELETE FROM guild_admins WHERE guild_id=?", (gid,))
+    conn.commit()
 
 def get_expired_bans():
     now = int(time.time())

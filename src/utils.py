@@ -166,21 +166,29 @@ _LOCALE = {
         "es": "Servidor registrado. Idioma: {lang}, canal de registro: <#{channel_id}>, red: {network}.",
         "pt": "Servidor registrado. Idioma: {lang}, canal de log: <#{channel_id}>, rede: {network}.",
     },
-    "report_not_log_channel": {
-        "ru": "Эту команду можно использовать только в лог-каналах.",
-        "uk": "Цю команду можна використовувати лише в лог-каналах.",
-        "pl": "Tej komendy można używać tylko na kanałach logów.",
-        "en": "This command can only be used in log channels.",
-        "es": "Este comando solo se puede usar en canales de registro.",
-        "pt": "Este comando só pode ser usado em canais de log.",
+    "report_no_setup": {
+        "ru": "Сначала выполните /setup для регистрации сервера.",
+        "uk": "Спочатку виконайте /setup для реєстрації сервера.",
+        "pl": "Najpierw uruchom /setup, aby zarejestrować serwer.",
+        "en": "Run /setup first to register this server.",
+        "es": "Primero ejecuta /setup para registrar este servidor.",
+        "pt": "Execute /setup primeiro para registrar este servidor.",
     },
-    "report_not_reply": {
-        "ru": "Используйте эту команду в ответ на сообщение.",
-        "uk": "Використовуйте цю команду у відповідь на повідомлення.",
-        "pl": "Użyj tej komendy jako odpowiedź na wiadomość.",
-        "en": "Use this command as a reply to a message.",
-        "es": "Usa este comando como respuesta a un mensaje.",
-        "pt": "Use este comando como resposta a uma mensagem.",
+    "report_invalid_message_id": {
+        "ru": "Неверный ID сообщения.",
+        "uk": "Невірний ID повідомлення.",
+        "pl": "Nieprawidłowe ID wiadomości.",
+        "en": "Invalid message ID.",
+        "es": "ID de mensaje inválido.",
+        "pt": "ID de mensagem inválido.",
+    },
+    "report_text": {
+        "ru": "[Discord | {server}] {nick}:\n{content}\nID пользователя: {user_id}",
+        "uk": "[Discord | {server}] {nick}:\n{content}\nID користувача: {user_id}",
+        "pl": "[Discord | {server}] {nick}:\n{content}\nID użytkownika: {user_id}",
+        "en": "[Discord | {server}] {nick}:\n{content}\nUser ID: {user_id}",
+        "es": "[Discord | {server}] {nick}:\n{content}\nID del usuario: {user_id}",
+        "pt": "[Discord | {server}] {nick}:\n{content}\nID do usuário: {user_id}",
     },
     "report_message_not_found": {
         "ru": "Сообщение с таким ID не найдено на этом сервере.",
@@ -238,7 +246,7 @@ _LOCALE = {
         "es": "ID de usuario inválido.",
         "pt": "ID de usuário inválido.",
     },
-    "add_admin_success": {
+    "setadmin_success": {
         "ru": "Пользователь {user_id} добавлен в администраторы этого сервера.",
         "uk": "Користувача {user_id} додано до адміністраторів цього сервера.",
         "pl": "Użytkownik {user_id} został dodany jako administrator tego serwera.",
@@ -246,7 +254,7 @@ _LOCALE = {
         "es": "El usuario {user_id} ha sido añadido como administrador de este servidor.",
         "pt": "O usuário {user_id} foi adicionado como administrador deste servidor.",
     },
-    "add_admin_already": {
+    "setadmin_already": {
         "ru": "Пользователь {user_id} уже является администратором этого сервера.",
         "uk": "Користувач {user_id} вже є адміністратором цього сервера.",
         "pl": "Użytkownik {user_id} jest już administratorem tego serwera.",
@@ -254,7 +262,7 @@ _LOCALE = {
         "es": "El usuario {user_id} ya es administrador de este servidor.",
         "pt": "O usuário {user_id} já é administrador deste servidor.",
     },
-    "add_admin_invalid_id": {
+    "setadmin_invalid_id": {
         "ru": "Неверный ID пользователя.",
         "uk": "Невірний ID користувача.",
         "pl": "Nieprawidłowe ID użytkownika.",
@@ -262,12 +270,333 @@ _LOCALE = {
         "es": "ID de usuario inválido.",
         "pt": "ID de usuário inválido.",
     },
+    "remadmin_success": {
+        "ru": "Пользователь {user_id} лишён статуса администратора этого сервера.",
+        "uk": "Користувача {user_id} позбавлено статусу адміністратора цього сервера.",
+        "pl": "Użytkownik {user_id} został pozbawiony statusu administratora tego serwera.",
+        "en": "User {user_id} is no longer an admin of this server.",
+        "es": "El usuario {user_id} ya no es administrador de este servidor.",
+        "pt": "O usuário {user_id} não é mais administrador deste servidor.",
+    },
+    "remadmin_not_admin": {
+        "ru": "Пользователь {user_id} не является администратором этого сервера.",
+        "uk": "Користувач {user_id} не є адміністратором цього сервера.",
+        "pl": "Użytkownik {user_id} nie jest administratorem tego serwera.",
+        "en": "User {user_id} is not an admin of this server.",
+        "es": "El usuario {user_id} no es administrador de este servidor.",
+        "pt": "O usuário {user_id} não é administrador deste servidor.",
+    },
+    "banlink_added_invite": {
+        "ru": "Код приглашения `{code}` добавлен в запрещённые.",
+        "uk": "Код запрошення `{code}` додано до заборонених.",
+        "pl": "Kod zaproszenia `{code}` został dodany do zabronionych.",
+        "en": "Invite code `{code}` added to the banned list.",
+        "es": "El código de invitación `{code}` fue añadido a la lista de prohibidos.",
+        "pt": "O código de convite `{code}` foi adicionado à lista de proibidos.",
+    },
+    "banlink_added_url": {
+        "ru": "Ссылка `{url}` добавлена в запрещённые.",
+        "uk": "Посилання `{url}` додано до заборонених.",
+        "pl": "Link `{url}` został dodany do zabronionych.",
+        "en": "Link `{url}` added to the banned list.",
+        "es": "El enlace `{url}` fue añadido a la lista de prohibidos.",
+        "pt": "O link `{url}` foi adicionado à lista de proibidos.",
+    },
+    "unbanlink_success": {
+        "ru": "Ссылка с номером {link_id} удалена из запрещённых.",
+        "uk": "Посилання з номером {link_id} видалено із заборонених.",
+        "pl": "Link o numerze {link_id} został usunięty z zabronionych.",
+        "en": "Link number {link_id} removed from the banned list.",
+        "es": "El enlace número {link_id} fue eliminado de la lista de prohibidos.",
+        "pt": "O link número {link_id} foi removido da lista de proibidos.",
+    },
+    "unbanlink_not_found": {
+        "ru": "Ссылка с номером {link_id} не найдена.",
+        "uk": "Посилання з номером {link_id} не знайдено.",
+        "pl": "Link o numerze {link_id} nie został znaleziony.",
+        "en": "Link number {link_id} was not found.",
+        "es": "No se encontró el enlace número {link_id}.",
+        "pt": "O link número {link_id} não foi encontrado.",
+    },
+    "banlink_exists": {
+        "ru": "Эта ссылка уже есть в списке запрещённых.",
+        "uk": "Це посилання вже є у списку заборонених.",
+        "pl": "Ten link już znajduje się na liście zabronionych.",
+        "en": "This link is already in the banned list.",
+        "es": "Este enlace ya está en la lista de prohibidos.",
+        "pt": "Este link já está na lista de proibidos.",
+    },
+    "links_title": {
+        "ru": "Запрещённые ссылки",
+        "uk": "Заборонені посилання",
+        "pl": "Zabronione linki",
+        "en": "Banned links",
+        "es": "Enlaces prohibidos",
+        "pt": "Links proibidos",
+    },
+    "links_empty": {
+        "ru": "Список запрещённых ссылок пуст.",
+        "uk": "Список заборонених посилань порожній.",
+        "pl": "Lista zabronionych linków jest pusta.",
+        "en": "The banned links list is empty.",
+        "es": "La lista de enlaces prohibidos está vacía.",
+        "pt": "A lista de links proibidos está vazia.",
+    },
+    "links_kind_invite": {
+        "ru": "Приглашение",
+        "uk": "Запрошення",
+        "pl": "Zaproszenie",
+        "en": "Invite",
+        "es": "Invitación",
+        "pt": "Convite",
+    },
+    "links_kind_url": {
+        "ru": "Ссылка",
+        "uk": "Посилання",
+        "pl": "Link",
+        "en": "Link",
+        "es": "Enlace",
+        "pt": "Link",
+    },
+    "links_page": {
+        "ru": "Страница {page}/{pages}",
+        "uk": "Сторінка {page}/{pages}",
+        "pl": "Strona {page}/{pages}",
+        "en": "Page {page}/{pages}",
+        "es": "Página {page}/{pages}",
+        "pt": "Página {page}/{pages}",
+    },
+    "help_title": {
+        "ru": "Команды бота",
+        "uk": "Команди бота",
+        "pl": "Komendy bota",
+        "en": "Bot commands",
+        "es": "Comandos del bot",
+        "pt": "Comandos do bot",
+    },
+    "help_section_server_admins": {
+        "ru": "Для админов серверов",
+        "uk": "Для адмінів серверів",
+        "pl": "Dla adminów serwerów",
+        "en": "For server admins",
+        "es": "Para admins de servidores",
+        "pt": "Para admins de servidores",
+    },
+    "help_section_bot_admins": {
+        "ru": "Для админов бота",
+        "uk": "Для адмінів бота",
+        "pl": "Dla adminów bota",
+        "en": "For bot admins",
+        "es": "Para admins del bot",
+        "pt": "Para admins do bot",
+    },
+    "help_cmd_setup": {
+        "ru": "/setup <язык> <channel_id> [сеть] — зарегистрировать сервер: язык, лог-канал, сеть",
+        "uk": "/setup <мова> <channel_id> [мережа] — зареєструвати сервер: мова, лог-канал, мережа",
+        "pl": "/setup <język> <channel_id> [sieć] — zarejestrować serwer: język, kanał logów, sieć",
+        "en": "/setup <lang> <channel_id> [network] — register the server: language, log channel, network",
+        "es": "/setup <idioma> <channel_id> [red] — registrar el servidor: idioma, canal de registro, red",
+        "pt": "/setup <idioma> <channel_id> [rede] — registrar o servidor: idioma, canal de log, rede",
+    },
+    "help_cmd_guard": {
+        "ru": "/guard <длительность> <причина> — включить охрану от спама в этом канале",
+        "uk": "/guard <тривалість> <причина> — увімкнути охорону від спаму в цьому каналі",
+        "pl": "/guard <czas> <powód> — włączyć ochronę przed spamem na tym kanale",
+        "en": "/guard <duration> <reason> — enable spam guard on this channel",
+        "es": "/guard <duración> <motivo> — activar la guardia antispam en este canal",
+        "pt": "/guard <duração> <motivo> — ativar a guarda antispam neste canal",
+    },
+    "help_cmd_dm": {
+        "ru": "/dm <текст> — задать текст ЛС перед баном ({{server}} — название сервера)",
+        "uk": "/dm <текст> — задати текст ПП перед баном ({{server}} — назва сервера)",
+        "pl": "/dm <tekst> — ustawić treść wiadomości prywatnej przed banem ({{server}} — nazwa serwera)",
+        "en": "/dm <text> — set the DM text sent before a ban ({{server}} — server name)",
+        "es": "/dm <texto> — establecer el texto del MD antes del baneo ({{server}} — nombre del servidor)",
+        "pt": "/dm <texto> — definir o texto da MD antes do banimento ({{server}} — nome do servidor)",
+    },
+    "help_cmd_autorole": {
+        "ru": "/autorole <role_id> — автоматически выдавать роль всем участникам",
+        "uk": "/autorole <role_id> — автоматично видавати роль усім учасникам",
+        "pl": "/autorole <role_id> — automatycznie nadawać rolę wszystkim członkom",
+        "en": "/autorole <role_id> — automatically assign a role to all members",
+        "es": "/autorole <role_id> — asignar automáticamente un rol a todos los miembros",
+        "pt": "/autorole <role_id> — atribuir automaticamente um cargo a todos os membros",
+    },
+    "help_cmd_ban": {
+        "ru": "/ban <user_id> <длительность> <причина> — забанить пользователя по ID",
+        "uk": "/ban <user_id> <тривалість> <причина> — забанити користувача за ID",
+        "pl": "/ban <user_id> <czas> <powód> — zbanować użytkownika po ID",
+        "en": "/ban <user_id> <duration> <reason> — ban a user by ID",
+        "es": "/ban <user_id> <duración> <motivo> — banear a un usuario por ID",
+        "pt": "/ban <user_id> <duração> <motivo> — banir um usuário por ID",
+    },
+    "help_cmd_report": {
+        "ru": "/report [message_id] — отправить жалобу в лог-каналы сети (или ПКМ по сообщению → Apps → report)",
+        "uk": "/report [message_id] — надіслати скаргу в лог-канали мережі (або ПКМ на повідомленні → Apps → report)",
+        "pl": "/report [message_id] — wysłać zgłoszenie do kanałów logów sieci (lub PPM na wiadomości → Apps → report)",
+        "en": "/report [message_id] — send a report to the network log channels (or right-click a message → Apps → report)",
+        "es": "/report [message_id] — enviar una denuncia a los canales de registro de la red (o clic derecho en un mensaje → Apps → report)",
+        "pt": "/report [message_id] — enviar uma denúncia aos canais de log da rede (ou clique direito em uma mensagem → Apps → report)",
+    },
+    "help_cmd_links": {
+        "ru": "/links — список запрещённых ссылок",
+        "uk": "/links — список заборонених посилань",
+        "pl": "/links — lista zabronionych linków",
+        "en": "/links — list of banned links",
+        "es": "/links — lista de enlaces prohibidos",
+        "pt": "/links — lista de links proibidos",
+    },
+    "help_cmd_banlink": {
+        "ru": "/banlink <ссылка или код> — добавить ссылку или код приглашения в запрещённые",
+        "uk": "/banlink <посилання або код> — додати посилання або код запрошення до заборонених",
+        "pl": "/banlink <link lub kod> — dodać link lub kod zaproszenia do zabronionych",
+        "en": "/banlink <link or code> — add a link or invite code to the banned list",
+        "es": "/banlink <enlace o código> — añadir un enlace o código de invitación a los prohibidos",
+        "pt": "/banlink <link ou código> — adicionar um link ou código de convite aos proibidos",
+    },
+    "help_cmd_unbanlink": {
+        "ru": "/unbanlink <номер> — удалить ссылку из запрещённых (номер — в /links)",
+        "uk": "/unbanlink <номер> — видалити посилання із заборонених (номер — у /links)",
+        "pl": "/unbanlink <numer> — usunąć link z zabronionych (numer — w /links)",
+        "en": "/unbanlink <number> — remove a link from the banned list (number shown in /links)",
+        "es": "/unbanlink <número> — eliminar un enlace de los prohibidos (el número aparece en /links)",
+        "pt": "/unbanlink <número> — remover um link dos proibidos (o número aparece em /links)",
+    },
+    "help_cmd_setadmin": {
+        "ru": "/setadmin <user_id> — назначить администратора сервера",
+        "uk": "/setadmin <user_id> — призначити адміністратора сервера",
+        "pl": "/setadmin <user_id> — mianować administratora serwera",
+        "en": "/setadmin <user_id> — add a server admin",
+        "es": "/setadmin <user_id> — nombrar un administrador del servidor",
+        "pt": "/setadmin <user_id> — adicionar um administrador do servidor",
+    },
+    "help_cmd_remadmin": {
+        "ru": "/remadmin <user_id> — лишить пользователя статуса админа сервера",
+        "uk": "/remadmin <user_id> — позбавити користувача статусу адміна сервера",
+        "pl": "/remadmin <user_id> — odebrać użytkownikowi status admina serwera",
+        "en": "/remadmin <user_id> — remove a user's server admin status",
+        "es": "/remadmin <user_id> — quitar el estado de admin del servidor a un usuario",
+        "pt": "/remadmin <user_id> — remover o status de admin do servidor de um usuário",
+    },
+    "help_cmd_backup": {
+        "ru": "/backup — получить резервную копию базы данных",
+        "uk": "/backup — отримати резервну копію бази даних",
+        "pl": "/backup — pobrać kopię zapasową bazy danych",
+        "en": "/backup — get a database backup",
+        "es": "/backup — obtener una copia de seguridad de la base de datos",
+        "pt": "/backup — obter um backup do banco de dados",
+    },
+    "help_cmd_list_chats": {
+        "ru": "/list_chats — список серверов, на которых есть бот",
+        "uk": "/list_chats — список серверів, на яких є бот",
+        "pl": "/list_chats — lista serwerów, na których jest bot",
+        "en": "/list_chats — list of servers the bot is in",
+        "es": "/list_chats — lista de servidores donde está el bot",
+        "pt": "/list_chats — lista de servidores onde o bot está",
+    },
+    "help_cmd_force_leave": {
+        "ru": "/force_leave <server_id> — вывести бота с сервера",
+        "uk": "/force_leave <server_id> — вивести бота з сервера",
+        "pl": "/force_leave <server_id> — usunąć bota z serwera",
+        "en": "/force_leave <server_id> — make the bot leave a server",
+        "es": "/force_leave <server_id> — hacer que el bot abandone un servidor",
+        "pt": "/force_leave <server_id> — fazer o bot sair de um servidor",
+    },
+    "list_chats_header": {
+        "ru": "**Discord-серверы:**",
+        "uk": "**Discord-сервери:**",
+        "pl": "**Serwery Discord:**",
+        "en": "**Discord servers:**",
+        "es": "**Servidores de Discord:**",
+        "pt": "**Servidores do Discord:**",
+    },
+    "list_chats_too_long": {
+        "ru": "Список большой — загружаю файл.",
+        "uk": "Список великий — завантажую файл.",
+        "pl": "Lista jest duża — wysyłam plik.",
+        "en": "The list is long — uploading a file.",
+        "es": "La lista es larga — subiendo un archivo.",
+        "pt": "A lista é longa — enviando um arquivo.",
+    },
+    "force_leave_invalid_id": {
+        "ru": "Неверный ID сервера.",
+        "uk": "Невірний ID сервера.",
+        "pl": "Nieprawidłowe ID serwera.",
+        "en": "Invalid server ID.",
+        "es": "ID de servidor inválido.",
+        "pt": "ID de servidor inválido.",
+    },
+    "force_leave_not_member": {
+        "ru": "Бот не находится на этом сервере.",
+        "uk": "Бот не знаходиться на цьому сервері.",
+        "pl": "Bot nie znajduje się na tym serwerze.",
+        "en": "The bot is not a member of that server.",
+        "es": "El bot no está en ese servidor.",
+        "pt": "O bot não está nesse servidor.",
+    },
+    "force_leave_failed": {
+        "ru": "Не удалось покинуть сервер: {error}",
+        "uk": "Не вдалося покинути сервер: {error}",
+        "pl": "Nie udało się opuścić serwera: {error}",
+        "en": "Failed to leave the server: {error}",
+        "es": "No se pudo abandonar el servidor: {error}",
+        "pt": "Falha ao sair do servidor: {error}",
+    },
+    "force_leave_success": {
+        "ru": "Бот покинул сервер {guild_id}, данные сервера удалены из базы.",
+        "uk": "Бот покинув сервер {guild_id}, дані сервера видалено з бази.",
+        "pl": "Bot opuścił serwer {guild_id}, dane serwera usunięto z bazy.",
+        "en": "The bot left server {guild_id} and its data was removed from the database.",
+        "es": "El bot abandonó el servidor {guild_id} y sus datos fueron eliminados de la base de datos.",
+        "pt": "O bot saiu do servidor {guild_id} e seus dados foram removidos do banco de dados.",
+    },
 }
 
 URL_RE = re.compile(
     r"(https?://|discord\.gg/|discord\.com/invite/)\S+",
     re.IGNORECASE
 )
+
+INVITE_LINK_RE = re.compile(
+    r"(?:https?://)?(?:www\.)?(?:discord\.gg|discord(?:app)?\.com/invite)/([A-Za-z0-9-]+)",
+    re.IGNORECASE
+)
+
+def normalize_banned_url(raw):
+    value = raw.strip().lower()
+    value = re.sub(r"^https?://", "", value)
+    if value.startswith("www."):
+        value = value[4:]
+    return value.rstrip("/")
+
+def classify_banned_link(raw):
+    """Returns ('invite', code) or ('url', normalized_url) for a user-supplied link."""
+    raw = raw.strip().rstrip("/")
+    m = INVITE_LINK_RE.fullmatch(raw)
+    if m:
+        return "invite", m.group(1)
+    if re.fullmatch(r"[A-Za-z0-9-]+", raw):
+        return "invite", raw
+    return "url", normalize_banned_url(raw)
+
+def message_has_banned_link(content):
+    """Returns True if the text contains a banned invite code or a banned URL."""
+    if not content:
+        return False
+    rows = db.get_banned_links()
+    if not rows:
+        return False
+    invites = {r["value"] for r in rows if r["kind"] == "invite"}
+    urls = [r["value"] for r in rows if r["kind"] == "url"]
+    for m in INVITE_LINK_RE.finditer(content):
+        if m.group(1) in invites:
+            return True
+    if urls:
+        low = content.lower()
+        for u in urls:
+            if u in low:
+                return True
+    return False
 
 def is_admin(user_id, guild_id=None):
     if user_id in ADMINS:

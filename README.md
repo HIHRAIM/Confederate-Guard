@@ -34,7 +34,7 @@ Confederate Guard is a Discord moderation bot that protects channels from spam b
      - Set `DISCORD_BOT_TOKEN` environment variable, or paste the token directly.
      - `ADMINS` — set of numeric Discord user IDs with global bot-admin rights.
      - `SERVICE_CHATS["discord"]` — channel IDs where the bot sends startup/shutdown events.
-     - `BACKUP_CHATS["discord"]` — channel IDs where the bot sends automatic database backups every 12 hours. Telegram format: `"-1000000000000:topic_id"`; Discord format: numeric channel ID.
+     - `BACKUP_CHATS["discord"]` — channel IDs (numeric) where the bot sends automatic database backups every 12 hours.
 
 5. **Run the bot**
    ```bash
@@ -48,24 +48,32 @@ Confederate Guard is a Discord moderation bot that protects channels from spam b
 Permission roles used below:
 
 - **Everyone** — any user in the server.
-- **Bot Admins** — global admins defined in `config.py` (`ADMINS`).
+- **Server Admins** — per-server admins, granted by Bot Admins via `/setadmin` (stored in the database, scoped to one server).
+- **Bot Admins** — global admins defined in `config.py` (`ADMINS`); have Server Admin rights everywhere plus bot-wide commands.
 
 > Notes:
-> - `/report` must be run from inside the server's designated log channel.
 > - `/report` requires the server to be assigned to a network via `/setup`.
 > - Guard only bans on spam detection (URLs, invite links, attachments); plain text messages in guarded channels are deleted silently without a ban.
 
 ### Discord commands
 
-| Command | Purpose | Everyone | Bot Admins |
-|---|---|:---:|:---:|
-| `/setup <lang> <channel_id> [network]` | Register server: set language, log channel, and optional network ID | ❌ | ✅ |
-| `/guard <duration> <reason>` | Enable spam guard on the current channel; detected spam triggers a ban with given duration and reason | ❌ | ✅ |
-| `/ban <user_id> <duration> <reason>` | Ban a user by ID (works even if the user is not on the server) | ❌ | ✅ |
-| `/report <user_id> <message_id>` | Forward a report about a user to all log channels in the same network | ❌ | ✅ |
-| `/dm <text>` | Set a custom DM message sent to users before banning (use `{server}` for the server name) | ❌ | ✅ |
-| `/autorole <role_id>` | Set a role to be automatically assigned to all members on join; immediately assigns it to existing members | ❌ | ✅ |
-| `/backup` | Send current database backup file | ❌ | ✅ |
+| Command | Purpose | Everyone | Server Admins | Bot Admins |
+|---|---|:---:|:---:|:---:|
+| `/setup <lang> <channel_id> [network]` | Register server: set language, log channel, and optional network ID | ❌ | ✅ | ✅ |
+| `/guard <duration> <reason>` | Enable spam guard on the current channel; detected spam triggers a ban with given duration and reason | ❌ | ✅ | ✅ |
+| `/ban <user_id> <duration> <reason>` | Ban a user by ID (works even if the user is not on the server) | ❌ | ✅ | ✅ |
+| `/report [message_id]` (also as a message context menu action) | Forward a report about a user to all log channels in the same network | ❌ | ✅ | ✅ |
+| `/dm <text>` | Set a custom DM message sent to users before banning (use `{server}` for the server name) | ❌ | ✅ | ✅ |
+| `/autorole <role_id>` | Set a role to be automatically assigned to all members on join; immediately assigns it to existing members | ❌ | ✅ | ✅ |
+| `/links` | Show the list of globally banned links/invites | ❌ | ✅ | ✅ |
+| `/help` | Show the list of available commands | ✅ | ✅ | ✅ |
+| `/setadmin <user_id>` | Grant a user Server Admin rights on this server | ❌ | ❌ | ✅ |
+| `/remadmin <user_id>` | Revoke a user's Server Admin rights on this server | ❌ | ❌ | ✅ |
+| `/banlink <link>` | Add a URL or Discord invite to the global banned-link list | ❌ | ❌ | ✅ |
+| `/unbanlink <link_id>` | Remove a link from the global banned-link list by its number | ❌ | ❌ | ✅ |
+| `/list_chats` | List all servers the bot is currently in | ❌ | ❌ | ✅ |
+| `/force_leave <server_id>` | Force the bot to leave a server and remove its data | ❌ | ❌ | ✅ |
+| `/backup` | Send current database backup file | ❌ | ❌ | ✅ |
 
 ---
 
@@ -85,11 +93,15 @@ The bot stores operational data in local SQLite (`guard.db`) to provide spam pro
   - Guild ID, banned user ID, scheduled unban timestamp.
 - **Auto-role**
   - Per-guild role ID assigned to new members.
+- **Server admins**
+  - Guild ID, user ID of users granted Server Admin rights via `/setadmin`.
+- **Banned links**
+  - Globally banned URLs and Discord invite codes/links.
 
 ### Retention periods
 
 - **Active bans**: removed automatically after the ban expires and the unban is processed (checked every 60 seconds).
-- **Guild settings, guarded channels, custom DM, auto-role**: kept until manually changed or removed.
+- **Guild settings, guarded channels, custom DM, auto-role, server admins, banned links**: kept until manually changed or removed.
 
 ### Data usage boundaries
 
