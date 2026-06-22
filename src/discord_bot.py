@@ -195,6 +195,130 @@ async def autorole_cmd(interaction: discord.Interaction, role_id: str):
 
     await interaction.followup.send(localized("autorole_done", lang, count=count))
 
+async def _get_channel(channel_id):
+    if channel_id is None:
+        return None
+    try:
+        cid = int(channel_id)
+    except (TypeError, ValueError):
+        return None
+    ch = bot.get_channel(cid)
+    if ch is None:
+        try:
+            ch = await bot.fetch_channel(cid)
+        except Exception:
+            ch = None
+    return ch
+
+async def _grant_verify(member: discord.Member, verify_row, guild_row, lang, cross_server: bool):
+    """Give the verify role on this server, mark the grant, and announce it."""
+    guild = member.guild
+    role = guild.get_role(int(verify_row["role_id"]))
+    if role is not None and role not in member.roles:
+        try:
+            await member.add_roles(role, reason="verified")
+        except Exception:
+            pass
+
+    db.add_verify_grant(guild.id, member.id)
+
+    channel_id = verify_row["channel_id"]
+    if not channel_id and guild_row:
+        channel_id = guild_row["log_channel_id"]
+    channel = await _get_channel(channel_id)
+    if channel:
+        key = "verify_announce_cross" if cross_server else "verify_announce"
+        try:
+            await channel.send(
+                localized(key, lang, mention=member.mention, username=str(member), id=member.id)
+            )
+        except Exception:
+            pass
+
+async def handle_verification(message: discord.Message):
+    """Track activity dates and verify users who have chatted on more than one date."""
+    guild = message.guild
+    verify_row = db.get_verify(guild.id)
+    if not verify_row:
+        return
+
+    member = message.author
+    if db.has_verify_grant(guild.id, member.id):
+        return
+
+    guild_row = db.get_guild(guild.id)
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if db.is_verified(member.id):
+        await _grant_verify(member, verify_row, guild_row, lang, cross_server=True)
+        return
+
+    today = message.created_at.date().isoformat()
+    first = db.get_first_seen(guild.id, member.id)
+    if first is None:
+        db.set_first_seen(guild.id, member.id, today)
+        return
+
+    if first != today:
+        db.add_verified(member.id, guild.id)
+        await _grant_verify(member, verify_row, guild_row, lang, cross_server=False)
+
+@bot.tree.command(name="setverify", description="Verify users who chatted on more than one day and give them a role")
+@app_commands.describe(
+    role_id="ID of the role to give verified users",
+    channel_id="ID of the announcement channel (optional, defaults to the /setup log channel)"
+)
+async def setverify_cmd(interaction: discord.Interaction, role_id: str, channel_id: str = None):
+    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id, interaction.guild_id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    if not guild_row:
+        await interaction.response.send_message(
+            localized("verify_no_setup", DEFAULT_LANG), ephemeral=True
+        )
+        return
+
+    try:
+        rid = int(role_id.strip())
+    except ValueError:
+        await interaction.response.send_message(
+            localized("verify_invalid_role", lang, role_id=role_id), ephemeral=True
+        )
+        return
+
+    role = interaction.guild.get_role(rid)
+    if role is None:
+        await interaction.response.send_message(
+            localized("verify_invalid_role", lang, role_id=rid), ephemeral=True
+        )
+        return
+
+    cid = None
+    if channel_id is not None and channel_id.strip():
+        try:
+            cid = int(channel_id.strip())
+        except ValueError:
+            await interaction.response.send_message(
+                localized("verify_invalid_channel", lang), ephemeral=True
+            )
+            return
+
+    db.set_verify(interaction.guild.id, rid, cid)
+    if cid is not None:
+        await interaction.response.send_message(
+            localized("verify_set", lang, role_id=rid, channel_id=cid)
+        )
+    else:
+        await interaction.response.send_message(
+            localized("verify_set_no_channel", lang, role_id=rid)
+        )
+
 async def _check_report_access(interaction: discord.Interaction):
     """Returns (guild_row, lang, network) or (None, lang, None) after responding with an error."""
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
@@ -369,6 +493,16 @@ async def ban_cmd(interaction: discord.Interaction, user_id: str, duration: str,
 async def on_member_join(member: discord.Member):
     if member.bot:
         return
+
+    verify_row = db.get_verify(member.guild.id)
+    if verify_row and db.is_verified(member.id) and not db.has_verify_grant(member.guild.id, member.id):
+        guild_row = db.get_guild(member.guild.id)
+        lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+        try:
+            await _grant_verify(member, verify_row, guild_row, lang, cross_server=True)
+        except Exception:
+            pass
+
     role_id = db.get_autorole(member.guild.id)
     if not role_id:
         return
@@ -385,6 +519,11 @@ async def on_message(message: discord.Message):
         return
     if not message.guild:
         return
+
+    try:
+        await handle_verification(message)
+    except Exception:
+        pass
 
     guard = db.get_guard(message.channel.id)
     if not guard:
@@ -650,6 +789,7 @@ async def help_cmd(interaction: discord.Interaction):
         localized("help_cmd_guard", lang),
         localized("help_cmd_dm", lang),
         localized("help_cmd_autorole", lang),
+        localized("help_cmd_setverify", lang),
         localized("help_cmd_ban", lang),
         localized("help_cmd_report", lang),
         localized("help_cmd_links", lang),
