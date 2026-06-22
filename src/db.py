@@ -52,6 +52,31 @@ def init():
         kind TEXT NOT NULL,
         value TEXT NOT NULL UNIQUE
     );
+
+    CREATE TABLE IF NOT EXISTS verify_settings (
+        guild_id TEXT PRIMARY KEY,
+        role_id TEXT NOT NULL,
+        channel_id TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS verified_users (
+        user_id TEXT PRIMARY KEY,
+        origin_guild_id TEXT,
+        verified_at INTEGER
+    );
+
+    CREATE TABLE IF NOT EXISTS verify_grants (
+        guild_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        PRIMARY KEY (guild_id, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS user_activity (
+        guild_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        first_date TEXT NOT NULL,
+        PRIMARY KEY (guild_id, user_id)
+    );
     """)
     conn.commit()
     cols = [r[1] for r in cur.execute("PRAGMA table_info(guilds)").fetchall()]
@@ -180,6 +205,67 @@ def remove_banned_link(link_id):
     conn.commit()
     return cur.rowcount > 0
 
+def set_verify(guild_id, role_id, channel_id=None):
+    cur.execute(
+        "INSERT OR REPLACE INTO verify_settings (guild_id, role_id, channel_id) VALUES (?,?,?)",
+        (str(guild_id), str(role_id), str(channel_id) if channel_id is not None else None)
+    )
+    conn.commit()
+
+def get_verify(guild_id):
+    return cur.execute(
+        "SELECT * FROM verify_settings WHERE guild_id=?",
+        (str(guild_id),)
+    ).fetchone()
+
+def remove_verify(guild_id):
+    cur.execute("DELETE FROM verify_settings WHERE guild_id=?", (str(guild_id),))
+    conn.commit()
+
+def is_verified(user_id):
+    """Global, cross-server verification status."""
+    row = cur.execute(
+        "SELECT 1 FROM verified_users WHERE user_id=?",
+        (str(user_id),)
+    ).fetchone()
+    return row is not None
+
+def add_verified(user_id, origin_guild_id=None):
+    cur.execute(
+        "INSERT OR IGNORE INTO verified_users (user_id, origin_guild_id, verified_at) VALUES (?,?,?)",
+        (str(user_id), str(origin_guild_id) if origin_guild_id is not None else None, int(time.time()))
+    )
+    conn.commit()
+
+def has_verify_grant(guild_id, user_id):
+    """Whether the verify role was already granted and announced on this server."""
+    row = cur.execute(
+        "SELECT 1 FROM verify_grants WHERE guild_id=? AND user_id=?",
+        (str(guild_id), str(user_id))
+    ).fetchone()
+    return row is not None
+
+def add_verify_grant(guild_id, user_id):
+    cur.execute(
+        "INSERT OR IGNORE INTO verify_grants (guild_id, user_id) VALUES (?,?)",
+        (str(guild_id), str(user_id))
+    )
+    conn.commit()
+
+def get_first_seen(guild_id, user_id):
+    row = cur.execute(
+        "SELECT first_date FROM user_activity WHERE guild_id=? AND user_id=?",
+        (str(guild_id), str(user_id))
+    ).fetchone()
+    return row["first_date"] if row else None
+
+def set_first_seen(guild_id, user_id, date_str):
+    cur.execute(
+        "INSERT OR IGNORE INTO user_activity (guild_id, user_id, first_date) VALUES (?,?,?)",
+        (str(guild_id), str(user_id), date_str)
+    )
+    conn.commit()
+
 def remove_guild_data(guild_id):
     gid = str(guild_id)
     cur.execute("DELETE FROM guilds WHERE guild_id=?", (gid,))
@@ -188,6 +274,9 @@ def remove_guild_data(guild_id):
     cur.execute("DELETE FROM active_bans WHERE guild_id=?", (gid,))
     cur.execute("DELETE FROM autoroles WHERE guild_id=?", (gid,))
     cur.execute("DELETE FROM guild_admins WHERE guild_id=?", (gid,))
+    cur.execute("DELETE FROM verify_settings WHERE guild_id=?", (gid,))
+    cur.execute("DELETE FROM verify_grants WHERE guild_id=?", (gid,))
+    cur.execute("DELETE FROM user_activity WHERE guild_id=?", (gid,))
     conn.commit()
 
 def get_expired_bans():
