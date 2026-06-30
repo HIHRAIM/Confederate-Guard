@@ -24,11 +24,12 @@ async def send_service_event(event_key):
 
 async def send_db_backup():
     import io
+    from backup_crypto import build_encrypted_backup, encrypted_filename
     try:
-        with open("guard.db", "rb") as f:
-            data = f.read()
+        data = build_encrypted_backup("guard.db")
     except Exception:
         return
+    fname = encrypted_filename("guard.db")
 
     for channel_id in BACKUP_CHATS.get("discord", set()):
         try:
@@ -39,7 +40,7 @@ async def send_db_backup():
                 except Exception:
                     continue
             if ch:
-                await ch.send(file=discord.File(io.BytesIO(data), filename="guard.db"))
+                await ch.send(file=discord.File(io.BytesIO(data), filename=fname))
         except Exception:
             pass
 
@@ -49,12 +50,24 @@ async def backup_loop():
         await asyncio.sleep(12 * 3600)
         await send_db_backup()
 
+async def retention_loop():
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        try:
+            db.cleanup_expired_user_data()
+            db.cleanup_old_loc_suggestions()
+        except Exception:
+            pass
+        await asyncio.sleep(24 * 3600)
+
 async def main():
     db.init()
+    db.cleanup_expired_user_data()
 
     await asyncio.sleep(0)
     task = asyncio.create_task(bot.start(BOT_TOKEN))
     asyncio.get_event_loop().create_task(backup_loop())
+    asyncio.get_event_loop().create_task(retention_loop())
 
     await asyncio.sleep(5)
     await send_service_event("bot_started")
@@ -63,7 +76,6 @@ async def main():
         await task
     finally:
         await send_service_event("bot_stopped")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

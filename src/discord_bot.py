@@ -1,14 +1,21 @@
 import discord
 from discord import app_commands
 import asyncio
+import io
+import os
+import secrets
 import time
 import traceback
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 import db
+import utils
+from config import VERIFIED, UNVERIFIED, SUPPORT_CHATS
 from utils import (
     is_admin, get_guild_lang, localized,
-    parse_duration, format_duration, message_has_spam,
+    parse_duration, parse_global_duration, format_duration, message_has_spam,
     classify_banned_link, message_has_banned_link,
+    language_name, available_locales, locale_stats, locale_bar, compare_reply,
+    LANG_ORDER, LOCALE_STATUS_EMOJI,
     SUPPORTED_LANGS, DEFAULT_LANG
 )
 
@@ -23,6 +30,7 @@ class GuardBot(discord.Client):
     async def setup_hook(self):
         await self.tree.sync()
         asyncio.create_task(unban_loop(self))
+        asyncio.create_task(status_loop(self))
 
     async def on_ready(self):
         print(f"Logged in as {self.user} (ID: {self.user.id})")
@@ -42,7 +50,7 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
     except Exception:
         pass
 
-@bot.tree.command(name="setup", description="Register server: set language and log channel")
+@bot.tree.command(name="setup", description="register the server: language, log channel, network")
 @app_commands.describe(
     lang="Language code (ru, uk, pl, en, es, pt)",
     channel_id="ID of the channel for ban logs",
@@ -81,7 +89,7 @@ async def setup_cmd(interaction: discord.Interaction, lang: str, channel_id: str
             localized("setup_success", lang, lang=lang, channel_id=cid)
         )
 
-@bot.tree.command(name="guard", description="Enable spam guard on this channel")
+@bot.tree.command(name="guard", description="enable spam guard on this channel")
 @app_commands.describe(
     duration="Ban duration (e.g. 30m, 2h, 1d, infinity)",
     reason="Reason shown in the ban"
@@ -123,7 +131,7 @@ async def guard_cmd(interaction: discord.Interaction, duration: str, reason: str
                   reason=reason)
     )
 
-@bot.tree.command(name="dm", description="Set custom DM message sent to users before banning")
+@bot.tree.command(name="dm", description="set the DM text sent before a ban ({{server}} — server name)")
 @app_commands.describe(text="Message text (use {server} for server name)")
 async def dm_cmd(interaction: discord.Interaction, text: str):
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
@@ -144,7 +152,7 @@ async def dm_cmd(interaction: discord.Interaction, text: str):
     db.set_custom_dm(interaction.guild.id, text)
     await interaction.response.send_message(localized("dm_set", lang))
 
-@bot.tree.command(name="autorole", description="Set a role to be automatically given to all members")
+@bot.tree.command(name="autorole", description="automatically assign a role to all members")
 @app_commands.describe(role_id="ID of the role to assign automatically")
 async def autorole_cmd(interaction: discord.Interaction, role_id: str):
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
@@ -263,7 +271,174 @@ async def handle_verification(message: discord.Message):
         db.add_verified(member.id, guild.id)
         await _grant_verify(member, verify_row, guild_row, lang, cross_server=False)
 
-@bot.tree.command(name="setverify", description="Verify users who chatted on more than one day and give them a role")
+async def handle_verification_sync(message: discord.Message):
+    """Mirror bridge_bot's verification state changes into our database.
+
+    bridge_bot posts a bare user ID to the VERIFIED channel when a user consents
+    to message forwarding, and to the UNVERIFIED channel when a user unverifies
+    themselves. We add or remove the user from our cross-server verified database
+    accordingly.
+    """
+    content = (message.content or "").strip()
+    if not content.isdigit():
+        return
+    uid = int(content)
+
+    if message.channel.id in UNVERIFIED:
+        db.remove_verified(uid)
+        return
+
+    if db.is_verified(uid):
+        return
+    db.add_verified(uid, message.guild.id if message.guild else None)
+    await _announce_verified_sync(message.guild, uid)
+
+async def _announce_verified_sync(guild, uid):
+    """Announce a synced verification in the guild's announce/log channel."""
+    if guild is None:
+        return
+    guild_row = db.get_guild(guild.id)
+    if not guild_row:
+        return
+    lang = guild_row["lang"] if guild_row["lang"] in SUPPORTED_LANGS else DEFAULT_LANG
+
+    channel_id = None
+    verify_row = db.get_verify(guild.id)
+    if verify_row and verify_row["channel_id"]:
+        channel_id = verify_row["channel_id"]
+    if not channel_id:
+        channel_id = guild_row["log_channel_id"]
+    channel = await _get_channel(channel_id)
+    if not channel:
+        return
+
+    member = guild.get_member(uid)
+    user_obj = None
+    if member is None:
+        try:
+            user_obj = await bot.fetch_user(uid)
+        except Exception:
+            user_obj = None
+    mention = member.mention if member else f"<@{uid}>"
+    if member:
+        username = str(member)
+    elif user_obj:
+        username = str(user_obj)
+    else:
+        username = str(uid)
+
+    try:
+        await channel.send(
+            localized("verify_announce", lang, mention=mention, username=username, id=uid)
+        )
+    except Exception:
+        pass
+
+def _format_ban_reason_with_suffix(reason, lang, unban_at):
+    """Append the localized '(ban issued by bot <name>; end date: <date>)' suffix.
+
+    The suffix lands in the Discord audit-log reason (plain text), so we use a
+    human-readable UTC date rather than Discord timestamp markup.
+    """
+    bot_name = bot.user.display_name if bot.user else "bot"
+    end_date = datetime.fromtimestamp(int(unban_at), tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    suffix = localized("gban_enforce_reason_suffix", lang, bot=bot_name, date=end_date)
+    return f"{reason} {suffix}".strip()
+
+async def enforce_global_ban(guild, member_or_id, gban, guild_row, lang):
+    """Ban a network-banned user on `guild` for the time left on the network ban.
+
+    DMs the user, applies the ban (reason carries a localized suffix), schedules
+    the matching local unban, records the enforcement so /setgbans disable can
+    revert exactly these bans, and logs the action. Returns True if applied.
+    """
+    if isinstance(member_or_id, (discord.Member, discord.User)):
+        uid = member_or_id.id
+        member_obj = member_or_id
+    else:
+        uid = int(member_or_id)
+        member_obj = guild.get_member(uid)
+
+    unban_at = int(gban["unban_at"])
+    if unban_at <= int(time.time()):
+        return False
+    reason = gban["reason"] or ""
+
+    if member_obj is not None:
+        try:
+            await member_obj.send(
+                localized(
+                    "gban_enforce_dm", lang,
+                    server=guild.name, reason=reason, remaining=f"<t:{unban_at}:R>",
+                )
+            )
+        except Exception:
+            pass
+
+    try:
+        await guild.ban(
+            discord.Object(id=uid),
+            reason=_format_ban_reason_with_suffix(reason, lang, unban_at),
+            delete_message_days=0,
+        )
+    except Exception:
+        return False
+
+    db.add_active_ban(guild.id, uid, unban_at)
+    db.add_gban_enforcement(guild.id, uid)
+    db.record_ban(guild.id, uid)
+
+    if guild_row and guild_row["log_channel_id"]:
+        channel = await _get_channel(guild_row["log_channel_id"])
+        if channel:
+            origin_guild_id = gban["origin_guild_id"]
+            origin_guild = bot.get_guild(int(origin_guild_id)) if origin_guild_id else None
+            origin_name = origin_guild.name if origin_guild else (str(origin_guild_id) if origin_guild_id else "—")
+            mention = member_obj.mention if member_obj else f"<@{uid}>"
+            username = str(member_obj) if member_obj else str(uid)
+            banned_at = gban["banned_at"]
+            try:
+                await channel.send(
+                    localized(
+                        "gban_enforce_log", lang,
+                        mention=mention, username=username, id=uid,
+                        origin_server=origin_name,
+                        issued=(f"<t:{int(banned_at)}:F>" if banned_at else "—"),
+                        remaining=f"<t:{unban_at}:R>",
+                    )
+                )
+            except Exception:
+                pass
+    return True
+
+async def notify_prior_network_ban(member: discord.Member, guild_row, lang):
+    """Alert admins if `member` was ever banned on any server in this network."""
+    network = guild_row["network"]
+    if network is None:
+        return
+    rows = db.get_network_ban_history(network, member.id)
+    if not rows:
+        return
+
+    origin_guild_id = rows[0]["guild_id"]
+    origin_guild = bot.get_guild(int(origin_guild_id)) if origin_guild_id else None
+    origin_name = origin_guild.name if origin_guild else str(origin_guild_id)
+
+    channel = await _get_channel(guild_row["log_channel_id"])
+    if not channel:
+        return
+    try:
+        await channel.send(
+            localized(
+                "network_ban_notice", lang,
+                mention=member.mention, username=str(member), id=member.id,
+                server=origin_name,
+            )
+        )
+    except Exception:
+        pass
+
+@bot.tree.command(name="setverify", description="give a role to members who wrote on more than one day (shared cross-server database)")
 @app_commands.describe(
     role_id="ID of the role to give verified users",
     channel_id="ID of the announcement channel (optional, defaults to the /setup log channel)"
@@ -319,109 +494,7 @@ async def setverify_cmd(interaction: discord.Interaction, role_id: str, channel_
             localized("verify_set_no_channel", lang, role_id=rid)
         )
 
-async def _check_report_access(interaction: discord.Interaction):
-    """Returns (guild_row, lang, network) or (None, lang, None) after responding with an error."""
-    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
-    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
-
-    if not is_admin(interaction.user.id, interaction.guild_id):
-        await interaction.response.send_message(
-            localized("setup_no_perm", lang), ephemeral=True
-        )
-        return None, lang, None
-
-    if not guild_row:
-        await interaction.response.send_message(
-            localized("report_no_setup", lang), ephemeral=True
-        )
-        return None, lang, None
-
-    network = guild_row["network"]
-    if network is None:
-        await interaction.response.send_message(
-            localized("report_no_network", lang), ephemeral=True
-        )
-        return None, lang, None
-
-    return guild_row, lang, network
-
-async def _send_report(interaction: discord.Interaction, reported_msg: discord.Message, lang, network):
-    server_name = interaction.guild.name
-
-    network_guilds = db.get_network_guilds(network)
-    await interaction.response.send_message(localized("report_sent", lang), ephemeral=True)
-
-    for row in network_guilds:
-        if int(row["guild_id"]) == interaction.guild.id:
-            continue
-        log_cid = int(row["log_channel_id"])
-        log_ch = bot.get_channel(log_cid)
-        if not log_ch:
-            try:
-                log_ch = await bot.fetch_channel(log_cid)
-            except Exception:
-                continue
-        report_text = localized(
-            "report_text", row["lang"],
-            server=server_name,
-            nick=reported_msg.author.display_name,
-            content=reported_msg.content or "",
-            user_id=reported_msg.author.id
-        )
-        try:
-            await log_ch.send(report_text)
-        except Exception:
-            pass
-
-@bot.tree.command(name="report", description="Report a message to the network log channels")
-@app_commands.describe(
-    message_id="ID of the message to report (optional, defaults to the latest message in this channel)"
-)
-async def report_cmd(interaction: discord.Interaction, message_id: str = None):
-    guild_row, lang, network = await _check_report_access(interaction)
-    if not guild_row:
-        return
-
-    reported_msg = None
-    if message_id is not None:
-        try:
-            mid = int(message_id.strip())
-        except ValueError:
-            await interaction.response.send_message(
-                localized("report_invalid_message_id", lang), ephemeral=True
-            )
-            return
-        for channel in interaction.guild.text_channels:
-            try:
-                reported_msg = await channel.fetch_message(mid)
-                break
-            except Exception:
-                continue
-    else:
-        try:
-            async for msg in interaction.channel.history(limit=50):
-                if msg.author.id != interaction.user.id and msg.author.id != bot.user.id:
-                    reported_msg = msg
-                    break
-        except Exception:
-            pass
-
-    if reported_msg is None:
-        await interaction.response.send_message(
-            localized("report_message_not_found", lang), ephemeral=True
-        )
-        return
-
-    await _send_report(interaction, reported_msg, lang, network)
-
-@bot.tree.context_menu(name="report")
-async def report_context_menu(interaction: discord.Interaction, message: discord.Message):
-    guild_row, lang, network = await _check_report_access(interaction)
-    if not guild_row:
-        return
-    await _send_report(interaction, message, lang, network)
-
-@bot.tree.command(name="ban", description="Ban a user by ID (works even if not on the server)")
+@bot.tree.command(name="ban", description="ban a user by ID")
 @app_commands.describe(
     user_id="ID of the user to ban",
     duration="Ban duration (e.g. 30m, 2h, 1d, infinity)",
@@ -461,6 +534,8 @@ async def ban_cmd(interaction: discord.Interaction, user_id: str, duration: str,
         )
         return
 
+    db.record_ban(interaction.guild.id, uid)
+
     if seconds is not None:
         db.add_active_ban(interaction.guild.id, uid, int(time.time()) + seconds)
 
@@ -489,10 +564,238 @@ async def ban_cmd(interaction: discord.Interaction, user_id: str, duration: str,
             except Exception:
                 pass
 
+@bot.tree.command(name="globanban", description="ban on this server and across the whole network (duration: 1h, 2m=months, 3y=years, infinity=10 y...")
+@app_commands.describe(
+    user_id="ID of the user to ban",
+    reason="Reason for the ban",
+    duration="Duration: 1h, 1d, 1w, 2m (months), 3y (years), or infinity (10 years); max 10 years",
+)
+async def globanban_cmd(interaction: discord.Interaction, user_id: str, reason: str, duration: str):
+    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
+        return
+
+    try:
+        uid = int(user_id.strip())
+    except ValueError:
+        await interaction.response.send_message(localized("ban_cmd_invalid_id", lang), ephemeral=True)
+        return
+
+    try:
+        seconds = parse_global_duration(duration)
+    except ValueError:
+        await interaction.response.send_message(localized("global_duration_invalid", lang), ephemeral=True)
+        return
+
+    if not guild_row or guild_row["network"] is None:
+        await interaction.response.send_message(localized("globanban_no_network", lang), ephemeral=True)
+        return
+
+    network = guild_row["network"]
+    now = int(time.time())
+    unban_at = now + seconds
+
+    try:
+        target = interaction.guild.get_member(uid) or await bot.fetch_user(uid)
+        if target:
+            await target.send(
+                localized("globanban_dm", lang, server=interaction.guild.name,
+                          reason=reason, remaining=f"<t:{unban_at}:R>")
+            )
+    except Exception:
+        pass
+
+    try:
+        await interaction.guild.ban(discord.Object(id=uid), reason=reason, delete_message_days=0)
+    except Exception as e:
+        await interaction.response.send_message(
+            localized("ban_cmd_failed", lang, user_id=uid, error=str(e)), ephemeral=True
+        )
+        return
+
+    db.add_active_ban(interaction.guild.id, uid, unban_at)
+    db.record_ban(interaction.guild.id, uid)
+    db.add_global_ban(network, uid, reason, interaction.guild.id, now, unban_at)
+
+    await interaction.response.send_message(
+        localized("globanban_success", lang,
+                  user_id=uid, network=network, reason=reason, unban=f"<t:{unban_at}:F>")
+    )
+
+    if guild_row["log_channel_id"]:
+        log_channel = await _get_channel(guild_row["log_channel_id"])
+        if log_channel:
+            try:
+                await log_channel.send(
+                    localized("globanban_log", lang,
+                              user_id=uid, network=network, admin=str(interaction.user),
+                              reason=reason, unban=f"<t:{unban_at}:F>")
+                )
+            except Exception:
+                pass
+
+    gban = db.get_global_ban(network, uid)
+    for g in db.get_network_guilds(network):
+        gid = int(g["guild_id"])
+        if gid == interaction.guild.id or not db.is_gbans_enabled(gid):
+            continue
+        other_guild = bot.get_guild(gid)
+        if not other_guild:
+            continue
+        member = other_guild.get_member(uid)
+        if member is None:
+            continue
+        other_lang = g["lang"] if g["lang"] in SUPPORTED_LANGS else DEFAULT_LANG
+        try:
+            await enforce_global_ban(other_guild, member, gban, g, other_lang)
+        except Exception:
+            pass
+
+@bot.tree.command(name="globalunban", description="lift a global ban and unban across the network")
+@app_commands.describe(user_id="ID of the user to globally unban")
+async def globalunban_cmd(interaction: discord.Interaction, user_id: str):
+    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
+        return
+
+    try:
+        uid = int(user_id.strip())
+    except ValueError:
+        await interaction.response.send_message(localized("ban_cmd_invalid_id", lang), ephemeral=True)
+        return
+
+    if not guild_row or guild_row["network"] is None:
+        await interaction.response.send_message(localized("globanban_no_network", lang), ephemeral=True)
+        return
+
+    network = guild_row["network"]
+    gban = db.get_global_ban(network, uid)
+    if not gban:
+        await interaction.response.send_message(
+            localized("globalunban_not_banned", lang, user_id=uid), ephemeral=True
+        )
+        return
+
+    db.remove_global_ban(network, uid)
+    origin_guild_id = str(gban["origin_guild_id"]) if gban["origin_guild_id"] else None
+
+    count = 0
+    for g in db.get_network_guilds(network):
+        gid = int(g["guild_id"])
+        enforced = str(uid) in db.get_gban_enforcements(gid)
+        is_origin = origin_guild_id is not None and str(gid) == origin_guild_id
+        if not (enforced or is_origin):
+            continue
+        guild_obj = bot.get_guild(gid)
+        if guild_obj:
+            try:
+                await guild_obj.unban(discord.Object(id=uid))
+            except Exception:
+                pass
+        db.remove_active_ban(gid, uid)
+        db.remove_gban_enforcement(gid, uid)
+        count += 1
+
+    await interaction.response.send_message(
+        localized("globalunban_success", lang, user_id=uid, count=count)
+    )
+
+@bot.tree.command(name="setgbans", description="enable/disable enforcement of network bans on this server")
+@app_commands.describe(mode="enable or disable")
+async def setgbans_cmd(interaction: discord.Interaction, mode: str):
+    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id, interaction.guild_id):
+        await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
+        return
+
+    mode = mode.lower().strip()
+    if mode not in ("enable", "disable"):
+        await interaction.response.send_message(localized("setgbans_usage", lang), ephemeral=True)
+        return
+
+    if not guild_row:
+        await interaction.response.send_message(localized("guard_no_setup", DEFAULT_LANG), ephemeral=True)
+        return
+
+    await interaction.response.defer(thinking=True)
+
+    if mode == "enable":
+        db.set_gbans_enabled(interaction.guild.id, True)
+        network = guild_row["network"]
+        gbans = {}
+        if network is not None:
+            gbans = {str(g["user_id"]): g for g in db.get_active_global_bans_for_network(network)}
+            for member in list(interaction.guild.members):
+                if member.bot:
+                    continue
+                gban = gbans.get(str(member.id))
+                if not gban:
+                    continue
+                try:
+                    await enforce_global_ban(interaction.guild, member, gban, guild_row, lang)
+                except Exception:
+                    pass
+        await interaction.followup.send(localized("setgbans_enabled", lang, count=len(gbans)))
+    else:
+        db.set_gbans_enabled(interaction.guild.id, False)
+        count = 0
+        for uid_str in db.get_gban_enforcements(interaction.guild.id):
+            try:
+                await interaction.guild.unban(discord.Object(id=int(uid_str)))
+            except Exception:
+                pass
+            db.remove_active_ban(interaction.guild.id, uid_str)
+            count += 1
+        db.clear_gban_enforcements(interaction.guild.id)
+        await interaction.followup.send(localized("setgbans_disabled", lang, count=count))
+
+@bot.tree.command(name="setappeal", description="text appended on a new line to the ban message")
+@app_commands.describe(text="Appeal text appended to the spam ban message")
+async def setappeal_cmd(interaction: discord.Interaction, text: str):
+    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id, interaction.guild_id):
+        await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
+        return
+
+    if not guild_row:
+        await interaction.response.send_message(localized("appeal_no_setup", DEFAULT_LANG), ephemeral=True)
+        return
+
+    db.set_appeal(interaction.guild.id, text)
+    await interaction.response.send_message(localized("appeal_set", lang))
+
 @bot.event
 async def on_member_join(member: discord.Member):
     if member.bot:
         return
+
+    guild_row = db.get_guild(member.guild.id)
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if guild_row and guild_row["network"] is not None and db.is_gbans_enabled(member.guild.id):
+        gban = db.get_active_global_ban(guild_row["network"], member.id)
+        if gban:
+            try:
+                if await enforce_global_ban(member.guild, member, gban, guild_row, lang):
+                    return
+            except Exception:
+                pass
+
+    if guild_row and guild_row["network"] is not None:
+        try:
+            await notify_prior_network_ban(member, guild_row, lang)
+        except Exception:
+            pass
 
     verify_row = db.get_verify(member.guild.id)
     if verify_row and db.is_verified(member.id) and not db.has_verify_grant(member.guild.id, member.id):
@@ -515,6 +818,11 @@ async def on_member_join(member: discord.Member):
 
 @bot.event
 async def on_message(message: discord.Message):
+    if message.channel.id in VERIFIED or message.channel.id in UNVERIFIED:
+        if message.author.id != bot.user.id:
+            await handle_verification_sync(message)
+        return
+
     if message.author.bot or message.webhook_id:
         return
     if not message.guild:
@@ -553,9 +861,12 @@ async def on_message(message: discord.Message):
 
     custom_dm = db.get_custom_dm(message.guild.id) if guild_row else None
     if custom_dm:
-        dm_text = custom_dm.replace("{server}", message.guild.name)
+        dm_text = custom_dm.replace("{server}", message.guild.name).replace("{reason}", reason)
     else:
-        dm_text = localized("ban_dm", lang, server=message.guild.name)
+        dm_text = localized("ban_dm", lang, server=message.guild.name, reason=reason)
+    appeal = db.get_appeal(message.guild.id) if guild_row else None
+    if appeal:
+        dm_text = f"{dm_text}\n{appeal}"
     try:
         await member.send(dm_text)
     except Exception:
@@ -565,6 +876,8 @@ async def on_message(message: discord.Message):
         await message.guild.ban(member, reason=reason, delete_message_days=0)
     except Exception:
         return
+
+    db.record_ban(message.guild.id, member.id)
 
     cutoff = discord.utils.utcnow() - timedelta(hours=24)
     for channel in message.guild.text_channels:
@@ -602,7 +915,7 @@ async def on_message(message: discord.Message):
             except Exception:
                 pass
 
-@bot.tree.command(name="setadmin", description="Add a user as a server admin")
+@bot.tree.command(name="setadmin", description="add a server admin")
 @app_commands.describe(user_id="ID of the user to grant admin rights on this server")
 async def setadmin_cmd(interaction: discord.Interaction, user_id: str):
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
@@ -633,7 +946,14 @@ async def setadmin_cmd(interaction: discord.Interaction, user_id: str):
         localized("setadmin_success", lang, user_id=uid)
     )
 
-@bot.tree.command(name="remadmin", description="Remove a user's server admin status (bot admins)")
+    try:
+        user = interaction.guild.get_member(uid) or await bot.fetch_user(uid)
+        if user:
+            await user.send(localized("setadmin_dm", lang, server=interaction.guild.name))
+    except Exception:
+        pass
+
+@bot.tree.command(name="remadmin", description="remove a user's server admin status")
 @app_commands.describe(user_id="ID of the user to revoke admin rights on this server")
 async def remadmin_cmd(interaction: discord.Interaction, user_id: str):
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
@@ -664,7 +984,7 @@ async def remadmin_cmd(interaction: discord.Interaction, user_id: str):
         localized("remadmin_success", lang, user_id=uid)
     )
 
-@bot.tree.command(name="banlink", description="Add a link or Discord invite to the banned list (bot admins)")
+@bot.tree.command(name="banlink", description="add a link or invite code to the banned list")
 @app_commands.describe(link="A URL (evil.com) or a Discord invite code/link (fXaxuYdN or discord.gg/fXaxuYdN)")
 async def banlink_cmd(interaction: discord.Interaction, link: str):
     lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
@@ -691,7 +1011,7 @@ async def banlink_cmd(interaction: discord.Interaction, link: str):
             localized("banlink_added_url", lang, url=value), ephemeral=True
         )
 
-@bot.tree.command(name="unbanlink", description="Remove a link from the banned list by its number (bot admins)")
+@bot.tree.command(name="unbanlink", description="remove a link from the banned list (number shown in /links)")
 @app_commands.describe(link_id="Number of the link as shown in /links")
 async def unbanlink_cmd(interaction: discord.Interaction, link_id: int):
     lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
@@ -756,7 +1076,7 @@ class LinksView(discord.ui.View):
             embed=_links_embed(self.lang, self.rows, self.page, self.pages), view=self
         )
 
-@bot.tree.command(name="links", description="Show the list of banned links")
+@bot.tree.command(name="links", description="list of banned links")
 async def links_cmd(interaction: discord.Interaction):
     lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
 
@@ -780,9 +1100,16 @@ async def links_cmd(interaction: discord.Interaction):
     else:
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-@bot.tree.command(name="help", description="Show the list of commands")
+@bot.tree.command(name="help", description="show this command list")
 async def help_cmd(interaction: discord.Interaction):
     lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+
+    everyone_lines = "\n".join([
+        localized("help_cmd_help", lang),
+        localized("help_cmd_locale", lang),
+        localized("help_cmd_loc_compare", lang),
+        localized("help_cmd_loc_suggest", lang),
+    ])
 
     server_admin_lines = "\n".join([
         localized("help_cmd_setup", lang),
@@ -791,11 +1118,14 @@ async def help_cmd(interaction: discord.Interaction):
         localized("help_cmd_autorole", lang),
         localized("help_cmd_setverify", lang),
         localized("help_cmd_ban", lang),
-        localized("help_cmd_report", lang),
+        localized("help_cmd_setgbans", lang),
+        localized("help_cmd_setappeal", lang),
         localized("help_cmd_links", lang),
     ])
 
     bot_admin_lines = "\n".join([
+        localized("help_cmd_globanban", lang),
+        localized("help_cmd_globalunban", lang),
         localized("help_cmd_banlink", lang),
         localized("help_cmd_unbanlink", lang),
         localized("help_cmd_setadmin", lang),
@@ -803,18 +1133,20 @@ async def help_cmd(interaction: discord.Interaction):
         localized("help_cmd_backup", lang),
         localized("help_cmd_list_chats", lang),
         localized("help_cmd_force_leave", lang),
+        localized("help_cmd_loc_reply", lang),
     ])
 
     embed = discord.Embed(
         title=localized("help_title", lang),
         color=discord.Color.blurple()
     )
+    embed.add_field(name=localized("help_section_everyone", lang), value=everyone_lines, inline=False)
     embed.add_field(name=localized("help_section_server_admins", lang), value=server_admin_lines, inline=False)
     embed.add_field(name=localized("help_section_bot_admins", lang), value=bot_admin_lines, inline=False)
 
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
-@bot.tree.command(name="list_chats", description="List all servers the bot is in (bot admins)")
+@bot.tree.command(name="list_chats", description="list of servers the bot is in")
 async def list_chats_cmd(interaction: discord.Interaction):
     lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
 
@@ -843,7 +1175,7 @@ async def list_chats_cmd(interaction: discord.Interaction):
     else:
         await interaction.response.send_message(msg, ephemeral=True)
 
-@bot.tree.command(name="force_leave", description="Force the bot to leave a server by ID (bot admins)")
+@bot.tree.command(name="force_leave", description="make the bot leave a server")
 @app_commands.describe(server_id="ID of the server the bot should leave")
 async def force_leave_cmd(interaction: discord.Interaction, server_id: str):
     lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
@@ -883,21 +1215,200 @@ async def force_leave_cmd(interaction: discord.Interaction, server_id: str):
         localized("force_leave_success", lang, guild_id=gid), ephemeral=True
     )
 
-@bot.tree.command(name="backup", description="Send current database backup")
+@bot.tree.command(name="backup", description="get a database backup")
 async def backup_cmd(interaction: discord.Interaction):
     if not is_admin(interaction.user.id):
         await interaction.response.send_message("No permission", ephemeral=True)
         return
     import io
+    from backup_crypto import build_encrypted_backup, encrypted_filename
     try:
-        with open("guard.db", "rb") as f:
-            data = f.read()
+        data = build_encrypted_backup("guard.db")
     except Exception as e:
-        await interaction.response.send_message(f"Failed to read database: {e}", ephemeral=True)
+        await interaction.response.send_message(f"Failed to build backup: {e}", ephemeral=True)
         return
     await interaction.response.send_message(
-        file=discord.File(io.BytesIO(data), filename="guard.db")
+        file=discord.File(io.BytesIO(data), filename=encrypted_filename("guard.db"))
     )
+
+_locale_file_cooldown = {}
+
+def _locale_cooldown_ok(bucket):
+    """10-minute cooldown per server for the /locale <lang> file download."""
+    now = time.time()
+    if now - _locale_file_cooldown.get(bucket, 0) < 600:
+        return False
+    _locale_file_cooldown[bucket] = now
+    return True
+
+async def post_loc_suggestion(*, lang, key, suggestion, code, ui_lang, username, user_id, avatar_url=None):
+    """Post a localization suggestion to the Discord support chat(s)."""
+    body = localized("loc_suggest_support_body", ui_lang,
+                     suggestion=suggestion, name=language_name(lang), lang=lang, key=key)
+    footer = f"{username} │ ID: {user_id} │ {code}"
+    for cid in SUPPORT_CHATS.get("discord", set()):
+        channel = await _get_channel(cid)
+        if not channel:
+            continue
+        embed = discord.Embed(description=body)
+        embed.set_footer(text=footer, icon_url=avatar_url)
+        try:
+            await channel.send(embed=embed)
+        except Exception:
+            pass
+
+async def post_loc_reply(*, admin, code, ui_lang, title, body):
+    """Publish an admin's /loc-reply to the Discord support chat(s)."""
+    prefix = localized("loc_reply_support_prefix", ui_lang, admin=admin, code=code)
+    for cid in SUPPORT_CHATS.get("discord", set()):
+        channel = await _get_channel(cid)
+        if not channel:
+            continue
+        try:
+            await channel.send(embed=discord.Embed(title=title, description=f"{prefix}\n\n{body}"))
+        except Exception:
+            pass
+
+@bot.tree.command(name="locale", description="localization status, or a language's file")
+@app_commands.describe(lang="Language code (optional). With a code, sends that language's localization file.")
+async def locale_cmd(interaction: discord.Interaction, lang: str = None):
+    glang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+
+    if not lang or not lang.strip():
+        lines = [localized("loc_list_header", glang)]
+        for code in available_locales():
+            st = locale_stats(code)
+            lines.append(f"{language_name(code)} (`{code}`): {locale_bar(code)} {st['percent']}%")
+        lines.append("")
+        lines.append(localized("loc_list_footer", glang))
+        await interaction.response.send_message("\n".join(lines))
+        return
+
+    code = lang.strip().lower()
+    if code not in available_locales():
+        await interaction.response.send_message(
+            localized("loc_unknown_lang", glang, lang=code, supported=", ".join(available_locales())),
+            ephemeral=True
+        )
+        return
+
+    bucket = interaction.guild_id or interaction.user.id
+    if not _locale_cooldown_ok(bucket):
+        await interaction.response.send_message(localized("loc_cooldown", glang), ephemeral=True)
+        return
+
+    path = os.path.join(os.path.dirname(utils.__file__), "i18n", f"{code}.json")
+    st = locale_stats(code)
+    caption = localized("loc_file_caption", glang, name=language_name(code), code=code, percent=st["percent"])
+    try:
+        await interaction.response.send_message(caption, file=discord.File(path, filename=f"{code}.json"))
+    except Exception:
+        await interaction.response.send_message(caption, ephemeral=True)
+
+@bot.tree.command(name="loc-compare", description="compare a reply across languages")
+@app_commands.describe(key="Reply code (as shown in the localization file)")
+async def loc_compare_cmd(interaction: discord.Interaction, key: str):
+    glang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+    key = key.strip()
+    data = compare_reply(key)
+    if data is None:
+        await interaction.response.send_message(localized("loc_compare_not_found", glang, key=key), ephemeral=True)
+        return
+
+    lines = [localized("loc_compare_header", glang, key=key)]
+    for code in LANG_ORDER:
+        if code not in data:
+            continue
+        status, text = data[code]
+        emoji = LOCALE_STATUS_EMOJI.get(status, "")
+        if text is None:
+            shown = localized("loc_compare_untranslated", glang)
+        else:
+            shown = str(text)
+            if len(shown) > 300:
+                shown = shown[:297] + "..."
+        lines.append(f"{emoji} {language_name(code)}: {shown}")
+    msg = "\n".join(lines)
+    if len(msg) > 1990:
+        msg = msg[:1990]
+    await interaction.response.send_message(msg)
+
+@bot.tree.command(name="loc-suggest", description="suggest a localization")
+@app_commands.describe(language="Language code", code="Reply code", text="Suggested text")
+async def loc_suggest_cmd(interaction: discord.Interaction, language: str, code: str, text: str):
+    glang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+    language = language.strip().lower()
+    if language not in SUPPORTED_LANGS:
+        await interaction.response.send_message(
+            localized("loc_unknown_lang", glang, lang=language, supported=", ".join(available_locales())),
+            ephemeral=True
+        )
+        return
+    if not SUPPORT_CHATS.get("discord"):
+        await interaction.response.send_message(localized("loc_suggest_no_support", glang), ephemeral=True)
+        return
+
+    msg_code = secrets.token_hex(4)
+    db.add_loc_suggestion(msg_code, "discord", interaction.user.id, str(interaction.user),
+                          language, code.strip(), text, glang)
+    avatar_url = None
+    try:
+        avatar_url = interaction.user.display_avatar.url
+    except Exception:
+        avatar_url = None
+    await post_loc_suggestion(lang=language, key=code.strip(), suggestion=text, code=msg_code,
+                              ui_lang=glang, username=str(interaction.user),
+                              user_id=interaction.user.id, avatar_url=avatar_url)
+    await interaction.response.send_message(localized("loc_suggest_confirm", glang, code=msg_code), ephemeral=True)
+
+@bot.tree.command(name="loc-reply", description="reply to a localization suggestion (bot admins)")
+@app_commands.describe(code="Message code from the suggestion", text="Reply text")
+async def loc_reply_cmd(interaction: discord.Interaction, code: str, text: str):
+    glang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(localized("no_permission", glang), ephemeral=True)
+        return
+
+    row = db.get_loc_suggestion(code.strip())
+    if not row:
+        await interaction.response.send_message(localized("loc_reply_not_found", glang, code=code), ephemeral=True)
+        return
+
+    ui_lang = row["ui_lang"] or DEFAULT_LANG
+    title = localized("loc_reply_dm_title", ui_lang)
+    body = localized("loc_reply_dm_body", ui_lang,
+                     suggestion=row["suggestion"], reply=text,
+                     name=language_name(row["lang"]), lang=row["lang"], key=row["rkey"])
+
+    ok = False
+    if row["platform"] == "discord":
+        try:
+            user = await bot.fetch_user(int(row["user_id"]))
+            await user.send(embed=discord.Embed(title=title, description=body))
+            ok = True
+        except Exception:
+            ok = False
+
+    await post_loc_reply(admin=str(interaction.user), code=code.strip(),
+                         ui_lang=ui_lang, title=title, body=body)
+
+    if ok:
+        db.delete_loc_suggestion(code.strip())
+        await interaction.response.send_message(localized("loc_reply_sent", glang), ephemeral=True)
+    else:
+        await interaction.response.send_message(localized("loc_reply_failed", glang), ephemeral=True)
+
+async def status_loop(client: discord.Client):
+    await client.wait_until_ready()
+    while not client.is_closed():
+        try:
+            text = utils.get_next_status_text(len(client.guilds))
+            await client.change_presence(
+                activity=discord.Activity(type=discord.ActivityType.watching, name=text)
+            )
+        except Exception:
+            pass
+        await asyncio.sleep(60)
 
 async def unban_loop(client: discord.Client):
     await client.wait_until_ready()
@@ -912,6 +1423,8 @@ async def unban_loop(client: discord.Client):
                     except Exception:
                         pass
                 db.remove_active_ban(row["guild_id"], row["user_id"])
+                db.remove_gban_enforcement(row["guild_id"], row["user_id"])
+            db.cleanup_expired_global_bans()
         except Exception:
             pass
         await asyncio.sleep(60)

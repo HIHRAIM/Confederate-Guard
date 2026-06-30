@@ -1,0 +1,502 @@
+{
+  "appeal_no_setup": {
+    "status": "unverified",
+    "text": "Run /setup first to register this server."
+  },
+  "appeal_set": {
+    "status": "unverified",
+    "text": "Appeal text appended to the ban message has been updated."
+  },
+  "autorole_done": {
+    "status": "unverified",
+    "text": "Done. Role assigned to {count} members."
+  },
+  "autorole_invalid_role": {
+    "status": "unverified",
+    "text": "Role with ID {role_id} not found on this server."
+  },
+  "autorole_no_setup": {
+    "status": "unverified",
+    "text": "Run /setup first to register this server."
+  },
+  "autorole_set": {
+    "status": "unverified",
+    "text": "Auto-role set to <@&{role_id}>. Assigning it to members who don't have it..."
+  },
+  "ban_cmd_failed": {
+    "status": "unverified",
+    "text": "Failed to ban user {user_id}: {error}"
+  },
+  "ban_cmd_invalid_id": {
+    "status": "unverified",
+    "text": "Invalid user ID."
+  },
+  "ban_cmd_log": {
+    "status": "unverified",
+    "text": "User {user_id} banned by admin {admin}. Duration: {duration}, reason: {reason}."
+  },
+  "ban_cmd_success": {
+    "status": "unverified",
+    "text": "User {user_id} banned. Duration: {duration}, reason: {reason}."
+  },
+  "ban_dm": {
+    "status": "unverified",
+    "text": "You have been permanently banned from {server} for: `{reason}`. You may be added to the cross-server spammer list and banned across the entire network that uses this bot."
+  },
+  "ban_log": {
+    "status": "unverified",
+    "text": "User {mention} ({username} {id}) banned for spam."
+  },
+  "banlink_added_invite": {
+    "status": "unverified",
+    "text": "Invite code `{code}` added to the banned list."
+  },
+  "banlink_added_url": {
+    "status": "unverified",
+    "text": "Link `{url}` added to the banned list."
+  },
+  "banlink_exists": {
+    "status": "unverified",
+    "text": "This link is already in the banned list."
+  },
+  "bot_started": {
+    "status": "unverified",
+    "text": "🤖 Bot started."
+  },
+  "bot_stopped": {
+    "status": "unverified",
+    "text": "🛑 Bot stopped."
+  },
+  "dm_no_setup": {
+    "status": "unverified",
+    "text": "Run /setup first to register this server."
+  },
+  "dm_set": {
+    "status": "unverified",
+    "text": "DM message updated."
+  },
+  "duration_infinity": {
+    "status": "unverified",
+    "text": "permanent"
+  },
+  "duration_invalid": {
+    "status": "unverified",
+    "text": "Invalid duration format. Use: 30s, 5m, 2h, 1d, 1w, or infinity."
+  },
+  "force_leave_failed": {
+    "status": "unverified",
+    "text": "Failed to leave the server: {error}"
+  },
+  "force_leave_invalid_id": {
+    "status": "unverified",
+    "text": "Invalid server ID."
+  },
+  "force_leave_not_member": {
+    "status": "unverified",
+    "text": "The bot is not a member of that server."
+  },
+  "force_leave_success": {
+    "status": "unverified",
+    "text": "The bot left server {guild_id} and its data was removed from the database."
+  },
+  "gban_enforce_dm": {
+    "status": "unverified",
+    "text": "You cannot join the server {server} because you are banned across our server network.\n\nReason: {reason}\nTime left until unban: {remaining}"
+  },
+  "gban_enforce_log": {
+    "status": "unverified",
+    "text": "User {mention} ({username} {id}) banned: the network ban was issued on server {origin_server}, {issued}. Time left until unban: {remaining}."
+  },
+  "gban_enforce_reason_suffix": {
+    "status": "unverified",
+    "text": "(ban issued by bot {bot}; ban end date: {date})"
+  },
+  "global_duration_invalid": {
+    "status": "unverified",
+    "text": "Invalid duration format. Use: 1h (hours), 1d (days), 1w (weeks), 2m (months), 3y (years) or infinity (10 years). Maximum is 10 years."
+  },
+  "globalunban_not_banned": {
+    "status": "unverified",
+    "text": "User {user_id} has no global ban in this network."
+  },
+  "globalunban_success": {
+    "status": "unverified",
+    "text": "The global ban on user {user_id} has been lifted. Unbanned on servers: {count}."
+  },
+  "globanban_dm": {
+    "status": "unverified",
+    "text": "You have been banned across our server network.\n\nReason: {reason}\nTime left until unban: {remaining}"
+  },
+  "globanban_log": {
+    "status": "unverified",
+    "text": "User {user_id} has been banned across network {network} by admin {admin}. Reason: {reason}. Unban: {unban}."
+  },
+  "globanban_no_network": {
+    "status": "unverified",
+    "text": "This server is not part of any network. Set a network in /setup."
+  },
+  "globanban_success": {
+    "status": "unverified",
+    "text": "User {user_id} has been banned on this server and added to network {network}. Reason: {reason}. Unban: {unban}."
+  },
+  "guard_already": {
+    "status": "unverified",
+    "text": "Guard is already enabled on this channel."
+  },
+  "guard_enabled": {
+    "status": "unverified",
+    "text": "Guard enabled on this channel. Duration of bans: {duration}, reason: {reason}."
+  },
+  "guard_no_setup": {
+    "status": "unverified",
+    "text": "Run /setup first to register this server."
+  },
+  "help_cmd_autorole": {
+    "status": "unverified",
+    "text": "/autorole <role_id> — automatically assign a role to all members"
+  },
+  "help_cmd_backup": {
+    "status": "unverified",
+    "text": "/backup — get a database backup"
+  },
+  "help_cmd_ban": {
+    "status": "unverified",
+    "text": "/ban <user_id> <duration> <reason> — ban a user by ID"
+  },
+  "help_cmd_banlink": {
+    "status": "unverified",
+    "text": "/banlink <link or code> — add a link or invite code to the banned list"
+  },
+  "help_cmd_dm": {
+    "status": "unverified",
+    "text": "/dm <text> — set the DM text sent before a ban ({{server}} — server name)"
+  },
+  "help_cmd_force_leave": {
+    "status": "unverified",
+    "text": "/force_leave <server_id> — make the bot leave a server"
+  },
+  "help_cmd_globalunban": {
+    "status": "unverified",
+    "text": "/globalunban <user_id> — lift a global ban and unban across the network"
+  },
+  "help_cmd_globanban": {
+    "status": "unverified",
+    "text": "/globanban <user_id> <reason> <duration> — ban on this server and across the whole network (duration: 1h, 2m=months, 3y=years, infinity=10 years)"
+  },
+  "help_cmd_guard": {
+    "status": "unverified",
+    "text": "/guard <duration> <reason> — enable spam guard on this channel"
+  },
+  "help_cmd_help": {
+    "status": "unverified",
+    "text": "/help — show this command list"
+  },
+  "help_cmd_links": {
+    "status": "unverified",
+    "text": "/links — list of banned links"
+  },
+  "help_cmd_list_chats": {
+    "status": "unverified",
+    "text": "/list_chats — list of servers the bot is in"
+  },
+  "help_cmd_loc_compare": {
+    "status": "unverified",
+    "text": "/loc-compare <code> — compare a reply across languages"
+  },
+  "help_cmd_loc_reply": {
+    "status": "unverified",
+    "text": "/loc-reply <code> <text> — reply to a localization suggestion (bot admins)"
+  },
+  "help_cmd_loc_suggest": {
+    "status": "unverified",
+    "text": "/loc-suggest <lang> <code> <text> — suggest a localization"
+  },
+  "help_cmd_locale": {
+    "status": "unverified",
+    "text": "/locale [code] — localization status, or a language's file"
+  },
+  "help_cmd_remadmin": {
+    "status": "unverified",
+    "text": "/remadmin <user_id> — remove a user's server admin status"
+  },
+  "help_cmd_report": {
+    "status": "unverified",
+    "text": "/report [message_id] — send a report to the network log channels (or right-click a message → Apps → report)"
+  },
+  "help_cmd_setadmin": {
+    "status": "unverified",
+    "text": "/setadmin <user_id> — add a server admin"
+  },
+  "help_cmd_setappeal": {
+    "status": "unverified",
+    "text": "/setappeal <text> — text appended on a new line to the ban message"
+  },
+  "help_cmd_setgbans": {
+    "status": "unverified",
+    "text": "/setgbans <enable|disable> — enable/disable enforcement of network bans on this server"
+  },
+  "help_cmd_setup": {
+    "status": "unverified",
+    "text": "/setup <lang> <channel_id> [network] — register the server: language, log channel, network"
+  },
+  "help_cmd_setverify": {
+    "status": "unverified",
+    "text": "/setverify <role_id> [channel_id] — give a role to members who wrote on more than one day (shared cross-server database)"
+  },
+  "help_cmd_unbanlink": {
+    "status": "unverified",
+    "text": "/unbanlink <number> — remove a link from the banned list (number shown in /links)"
+  },
+  "help_section_bot_admins": {
+    "status": "unverified",
+    "text": "For bot admins"
+  },
+  "help_section_everyone": {
+    "status": "unverified",
+    "text": "For everyone"
+  },
+  "help_section_server_admins": {
+    "status": "unverified",
+    "text": "For server admins"
+  },
+  "help_title": {
+    "status": "unverified",
+    "text": "Bot commands"
+  },
+  "links_empty": {
+    "status": "unverified",
+    "text": "The banned links list is empty."
+  },
+  "links_kind_invite": {
+    "status": "unverified",
+    "text": "Invite"
+  },
+  "links_kind_url": {
+    "status": "unverified",
+    "text": "Link"
+  },
+  "links_page": {
+    "status": "unverified",
+    "text": "Page {page}/{pages}"
+  },
+  "links_title": {
+    "status": "unverified",
+    "text": "Banned links"
+  },
+  "list_chats_header": {
+    "status": "unverified",
+    "text": "**Discord servers:**"
+  },
+  "list_chats_too_long": {
+    "status": "unverified",
+    "text": "The list is long — uploading a file."
+  },
+  "loc_compare_header": {
+    "status": "unverified",
+    "text": "Comparison of reply `{key}` across languages:"
+  },
+  "loc_compare_not_found": {
+    "status": "unverified",
+    "text": "No reply with code `{key}` was found in the localizations."
+  },
+  "loc_compare_untranslated": {
+    "status": "unverified",
+    "text": "(untranslated)"
+  },
+  "loc_cooldown": {
+    "status": "unverified",
+    "text": "This file was requested recently. Try again later (at most once every 10 minutes per server/group)."
+  },
+  "loc_file_caption": {
+    "status": "unverified",
+    "text": "Localization: {name} ({code}). Verified: {percent}%."
+  },
+  "loc_list_footer": {
+    "status": "unverified",
+    "text": "Send /locale <code> to get the localization file."
+  },
+  "loc_list_header": {
+    "status": "unverified",
+    "text": "Available localization languages (🟩 verified, 🟧 unverified, 🟥 untranslated):"
+  },
+  "loc_reply_dm_body": {
+    "status": "unverified",
+    "text": "> {suggestion}\n{reply}\n\nLanguage: {name} / {lang}\nCode: {key}"
+  },
+  "loc_reply_dm_title": {
+    "status": "unverified",
+    "text": "Reply to your localization suggestion"
+  },
+  "loc_reply_failed": {
+    "status": "unverified",
+    "text": "Could not send a direct message to the user (their DMs may be closed)."
+  },
+  "loc_reply_not_found": {
+    "status": "unverified",
+    "text": "No message with code {code} was found."
+  },
+  "loc_reply_sent": {
+    "status": "unverified",
+    "text": "The reply has been sent to the user."
+  },
+  "loc_reply_support_prefix": {
+    "status": "unverified",
+    "text": "Reply from admin {admin} (code {code}):"
+  },
+  "loc_suggest_confirm": {
+    "status": "unverified",
+    "text": "Thanks! Your suggestion has been sent. Your message code: {code}"
+  },
+  "loc_suggest_no_support": {
+    "status": "unverified",
+    "text": "The support channel is not configured. Contact the bot administrator."
+  },
+  "loc_suggest_support_body": {
+    "status": "unverified",
+    "text": "{suggestion}\n\nLanguage: {name} / {lang}\nCode: {key}"
+  },
+  "loc_suggest_usage": {
+    "status": "unverified",
+    "text": "Usage: /loc-suggest <language> <reply code> <text>"
+  },
+  "loc_unknown_lang": {
+    "status": "unverified",
+    "text": "Unknown language: {lang}. Available: {supported}."
+  },
+  "network_ban_notice": {
+    "status": "unverified",
+    "text": "Administrators, note that user {mention} ({username} {id}) is banned on the server {server}."
+  },
+  "no_permission": {
+    "status": "unverified",
+    "text": "You don't have permission to use this command."
+  },
+  "remadmin_not_admin": {
+    "status": "unverified",
+    "text": "User {user_id} is not an admin of this server."
+  },
+  "remadmin_success": {
+    "status": "unverified",
+    "text": "User {user_id} is no longer an admin of this server."
+  },
+  "report_invalid_message_id": {
+    "status": "unverified",
+    "text": "Invalid message ID."
+  },
+  "report_message_not_found": {
+    "status": "unverified",
+    "text": "Message with this ID was not found on this server."
+  },
+  "report_no_network": {
+    "status": "unverified",
+    "text": "Server is not part of any network. Set a network in /setup."
+  },
+  "report_no_setup": {
+    "status": "unverified",
+    "text": "Run /setup first to register this server."
+  },
+  "report_sent": {
+    "status": "unverified",
+    "text": "Report sent to all log channels in the network."
+  },
+  "report_text": {
+    "status": "unverified",
+    "text": "[Discord | {server}] {nick}:\n{content}\nUser ID: {user_id}"
+  },
+  "setadmin_already": {
+    "status": "unverified",
+    "text": "User {user_id} is already an admin of this server."
+  },
+  "setadmin_dm": {
+    "status": "unverified",
+    "text": "I now recognize you as an administrator of the server {server}."
+  },
+  "setadmin_invalid_id": {
+    "status": "unverified",
+    "text": "Invalid user ID."
+  },
+  "setadmin_success": {
+    "status": "unverified",
+    "text": "User {user_id} has been added as an admin of this server."
+  },
+  "setgbans_disabled": {
+    "status": "unverified",
+    "text": "Global bans disabled. Users unbanned: {count}."
+  },
+  "setgbans_enabled": {
+    "status": "unverified",
+    "text": "Global bans enabled. Users banned across the network will be banned on this server. Total banned across the network: {count}."
+  },
+  "setgbans_usage": {
+    "status": "unverified",
+    "text": "Usage: /setgbans enable | /setgbans disable"
+  },
+  "setup_invalid_channel": {
+    "status": "unverified",
+    "text": "Invalid channel ID."
+  },
+  "setup_no_perm": {
+    "status": "unverified",
+    "text": "You don't have permission to use this command."
+  },
+  "setup_success": {
+    "status": "unverified",
+    "text": "Server registered. Language: {lang}, log channel: <#{channel_id}>."
+  },
+  "setup_success_network": {
+    "status": "unverified",
+    "text": "Server registered. Language: {lang}, log channel: <#{channel_id}>, network: {network}."
+  },
+  "setup_unknown_lang": {
+    "status": "unverified",
+    "text": "Unknown language: {lang}. Supported: {supported}."
+  },
+  "status_communities_forms": {
+    "status": "unverified",
+    "text": [
+      "community",
+      "communities",
+      "communities"
+    ]
+  },
+  "status_template": {
+    "status": "unverified",
+    "text": "Guarding {servers} {servers_word}"
+  },
+  "unbanlink_not_found": {
+    "status": "unverified",
+    "text": "Link number {link_id} was not found."
+  },
+  "unbanlink_success": {
+    "status": "unverified",
+    "text": "Link number {link_id} removed from the banned list."
+  },
+  "verify_announce": {
+    "status": "unverified",
+    "text": "User {mention} ({username} {id}) has been verified."
+  },
+  "verify_announce_cross": {
+    "status": "unverified",
+    "text": "User {mention} ({username} {id}) has been verified (due to verification on another server)."
+  },
+  "verify_invalid_channel": {
+    "status": "unverified",
+    "text": "Invalid channel ID."
+  },
+  "verify_invalid_role": {
+    "status": "unverified",
+    "text": "Role with ID {role_id} not found on this server."
+  },
+  "verify_no_setup": {
+    "status": "unverified",
+    "text": "Run /setup first to register this server."
+  },
+  "verify_set": {
+    "status": "unverified",
+    "text": "Verification configured. Role: <@&{role_id}>, channel: <#{channel_id}>."
+  },
+  "verify_set_no_channel": {
+    "status": "unverified",
+    "text": "Verification configured. Role: <@&{role_id}>. Announcements go to the /setup log channel."
+  }
+}

@@ -1,0 +1,502 @@
+{
+  "appeal_no_setup": {
+    "status": "unverified",
+    "text": "Спочатку виконайте /setup для реєстрації сервера."
+  },
+  "appeal_set": {
+    "status": "unverified",
+    "text": "Текст апеляції для повідомлення про бан оновлено."
+  },
+  "autorole_done": {
+    "status": "unverified",
+    "text": "Готово. Роль видано {count} учасникам."
+  },
+  "autorole_invalid_role": {
+    "status": "unverified",
+    "text": "Роль з ID {role_id} не знайдено на цьому сервері."
+  },
+  "autorole_no_setup": {
+    "status": "unverified",
+    "text": "Спочатку виконайте /setup для реєстрації сервера."
+  },
+  "autorole_set": {
+    "status": "unverified",
+    "text": "Роль для всіх встановлено: <@&{role_id}>. Видаю роль учасникам без неї..."
+  },
+  "ban_cmd_failed": {
+    "status": "unverified",
+    "text": "Не вдалося заблокувати користувача {user_id}: {error}"
+  },
+  "ban_cmd_invalid_id": {
+    "status": "unverified",
+    "text": "Невірний ID користувача."
+  },
+  "ban_cmd_log": {
+    "status": "unverified",
+    "text": "Користувача {user_id} заблоковано адміністратором {admin}. Тривалість: {duration}, причина: {reason}."
+  },
+  "ban_cmd_success": {
+    "status": "unverified",
+    "text": "Користувача {user_id} заблоковано. Тривалість: {duration}, причина: {reason}."
+  },
+  "ban_dm": {
+    "status": "unverified",
+    "text": "Вас було безстроково заблоковано на сервері {server} з причини: `{reason}`. Можливо, вас буде внесено до міжсерверного списку спамерів і заблоковано в усій мережі, що використовує цього бота."
+  },
+  "ban_log": {
+    "status": "unverified",
+    "text": "Користувача {mention} ({username} {id}) заблоковано за спам."
+  },
+  "banlink_added_invite": {
+    "status": "unverified",
+    "text": "Код запрошення `{code}` додано до заборонених."
+  },
+  "banlink_added_url": {
+    "status": "unverified",
+    "text": "Посилання `{url}` додано до заборонених."
+  },
+  "banlink_exists": {
+    "status": "unverified",
+    "text": "Це посилання вже є у списку заборонених."
+  },
+  "bot_started": {
+    "status": "unverified",
+    "text": "🤖 Бот запущено."
+  },
+  "bot_stopped": {
+    "status": "unverified",
+    "text": "🛑 Бот зупинено."
+  },
+  "dm_no_setup": {
+    "status": "unverified",
+    "text": "Спочатку виконайте /setup для реєстрації сервера."
+  },
+  "dm_set": {
+    "status": "unverified",
+    "text": "Повідомлення для ЛС оновлено."
+  },
+  "duration_infinity": {
+    "status": "unverified",
+    "text": "назавжди"
+  },
+  "duration_invalid": {
+    "status": "unverified",
+    "text": "Невірний формат тривалості. Використовуйте: 30s, 5m, 2h, 1d, 1w або infinity."
+  },
+  "force_leave_failed": {
+    "status": "unverified",
+    "text": "Не вдалося покинути сервер: {error}"
+  },
+  "force_leave_invalid_id": {
+    "status": "unverified",
+    "text": "Невірний ID сервера."
+  },
+  "force_leave_not_member": {
+    "status": "unverified",
+    "text": "Бот не знаходиться на цьому сервері."
+  },
+  "force_leave_success": {
+    "status": "unverified",
+    "text": "Бот покинув сервер {guild_id}, дані сервера видалено з бази."
+  },
+  "gban_enforce_dm": {
+    "status": "unverified",
+    "text": "Ви не можете приєднатися до сервера {server}, оскільки вас заблоковано в нашій мережі серверів.\n\nПричина: {reason}\nЗалишилось до зняття блокування: {remaining}"
+  },
+  "gban_enforce_log": {
+    "status": "unverified",
+    "text": "Користувача {mention} ({username} {id}) заблоковано: блокування по мережі видано на сервері {origin_server}, {issued}. Залишилось до зняття: {remaining}."
+  },
+  "gban_enforce_reason_suffix": {
+    "status": "unverified",
+    "text": "(бан видано ботом {bot}; дата завершення бану: {date})"
+  },
+  "global_duration_invalid": {
+    "status": "unverified",
+    "text": "Невірний формат терміну. Використовуйте: 1h (години), 1d (дні), 1w (тижні), 2m (місяці), 3y (роки) або infinity (10 років). Максимум — 10 років."
+  },
+  "globalunban_not_banned": {
+    "status": "unverified",
+    "text": "У користувача {user_id} немає глобального блокування в цій мережі."
+  },
+  "globalunban_success": {
+    "status": "unverified",
+    "text": "Глобальне блокування знято з користувача {user_id}. Розблоковано на серверах: {count}."
+  },
+  "globanban_dm": {
+    "status": "unverified",
+    "text": "Вас заблоковано в нашій мережі серверів.\n\nПричина: {reason}\nЗалишилось до зняття блокування: {remaining}"
+  },
+  "globanban_log": {
+    "status": "unverified",
+    "text": "Користувача {user_id} заблоковано в усій мережі {network} адміністратором {admin}. Причина: {reason}. Зняття блокування: {unban}."
+  },
+  "globanban_no_network": {
+    "status": "unverified",
+    "text": "Цей сервер не входить до жодної мережі. Вкажіть мережу у /setup."
+  },
+  "globanban_success": {
+    "status": "unverified",
+    "text": "Користувача {user_id} заблоковано на цьому сервері та додано до мережі {network}. Причина: {reason}. Зняття блокування: {unban}."
+  },
+  "guard_already": {
+    "status": "unverified",
+    "text": "Охорону вже увімкнено в цьому каналі."
+  },
+  "guard_enabled": {
+    "status": "unverified",
+    "text": "Охорону увімкнено в цьому каналі. Тривалість: {duration}, причина: {reason}."
+  },
+  "guard_no_setup": {
+    "status": "unverified",
+    "text": "Спочатку виконайте /setup для реєстрації сервера."
+  },
+  "help_cmd_autorole": {
+    "status": "unverified",
+    "text": "/autorole <role_id> — автоматично видавати роль усім учасникам"
+  },
+  "help_cmd_backup": {
+    "status": "unverified",
+    "text": "/backup — отримати резервну копію бази даних"
+  },
+  "help_cmd_ban": {
+    "status": "unverified",
+    "text": "/ban <user_id> <тривалість> <причина> — забанити користувача за ID"
+  },
+  "help_cmd_banlink": {
+    "status": "unverified",
+    "text": "/banlink <посилання або код> — додати посилання або код запрошення до заборонених"
+  },
+  "help_cmd_dm": {
+    "status": "unverified",
+    "text": "/dm <текст> — задати текст ПП перед баном ({{server}} — назва сервера)"
+  },
+  "help_cmd_force_leave": {
+    "status": "unverified",
+    "text": "/force_leave <server_id> — вивести бота з сервера"
+  },
+  "help_cmd_globalunban": {
+    "status": "unverified",
+    "text": "/globalunban <user_id> — зняти глобальне блокування та розблокувати в мережі"
+  },
+  "help_cmd_globanban": {
+    "status": "unverified",
+    "text": "/globanban <user_id> <причина> <термін> — забанити на цьому сервері та в усій мережі (термін: 1h, 2m=місяці, 3y=роки, infinity=10 років)"
+  },
+  "help_cmd_guard": {
+    "status": "unverified",
+    "text": "/guard <тривалість> <причина> — увімкнути охорону від спаму в цьому каналі"
+  },
+  "help_cmd_help": {
+    "status": "unverified",
+    "text": "/help — показати список команд"
+  },
+  "help_cmd_links": {
+    "status": "unverified",
+    "text": "/links — список заборонених посилань"
+  },
+  "help_cmd_list_chats": {
+    "status": "unverified",
+    "text": "/list_chats — список серверів, на яких є бот"
+  },
+  "help_cmd_loc_compare": {
+    "status": "unverified",
+    "text": "/loc-compare <код> — порівняння репліки за мовами"
+  },
+  "help_cmd_loc_reply": {
+    "status": "unverified",
+    "text": "/loc-reply <код> <текст> — відповісти на пропозицію локалізації (адміни бота)"
+  },
+  "help_cmd_loc_suggest": {
+    "status": "unverified",
+    "text": "/loc-suggest <мова> <код> <текст> — запропонувати варіант локалізації"
+  },
+  "help_cmd_locale": {
+    "status": "unverified",
+    "text": "/locale [код] — статус локалізації або файл обраної мови"
+  },
+  "help_cmd_remadmin": {
+    "status": "unverified",
+    "text": "/remadmin <user_id> — позбавити користувача статусу адміна сервера"
+  },
+  "help_cmd_report": {
+    "status": "unverified",
+    "text": "/report [message_id] — надіслати скаргу в лог-канали мережі (або ПКМ на повідомленні → Apps → report)"
+  },
+  "help_cmd_setadmin": {
+    "status": "unverified",
+    "text": "/setadmin <user_id> — призначити адміністратора сервера"
+  },
+  "help_cmd_setappeal": {
+    "status": "unverified",
+    "text": "/setappeal <текст> — текст, що додається новим рядком до повідомлення про бан"
+  },
+  "help_cmd_setgbans": {
+    "status": "unverified",
+    "text": "/setgbans <enable|disable> — увімкнути/вимкнути застосування мережевих банів на цьому сервері"
+  },
+  "help_cmd_setup": {
+    "status": "unverified",
+    "text": "/setup <мова> <channel_id> [мережа] — зареєструвати сервер: мова, лог-канал, мережа"
+  },
+  "help_cmd_setverify": {
+    "status": "unverified",
+    "text": "/setverify <role_id> [channel_id] — видавати роль учасникам, що писали в різні дні (спільна база між серверами)"
+  },
+  "help_cmd_unbanlink": {
+    "status": "unverified",
+    "text": "/unbanlink <номер> — видалити посилання із заборонених (номер — у /links)"
+  },
+  "help_section_bot_admins": {
+    "status": "unverified",
+    "text": "Для адмінів бота"
+  },
+  "help_section_everyone": {
+    "status": "unverified",
+    "text": "Для всіх"
+  },
+  "help_section_server_admins": {
+    "status": "unverified",
+    "text": "Для адмінів серверів"
+  },
+  "help_title": {
+    "status": "unverified",
+    "text": "Команди бота"
+  },
+  "links_empty": {
+    "status": "unverified",
+    "text": "Список заборонених посилань порожній."
+  },
+  "links_kind_invite": {
+    "status": "unverified",
+    "text": "Запрошення"
+  },
+  "links_kind_url": {
+    "status": "unverified",
+    "text": "Посилання"
+  },
+  "links_page": {
+    "status": "unverified",
+    "text": "Сторінка {page}/{pages}"
+  },
+  "links_title": {
+    "status": "unverified",
+    "text": "Заборонені посилання"
+  },
+  "list_chats_header": {
+    "status": "unverified",
+    "text": "**Discord-сервери:**"
+  },
+  "list_chats_too_long": {
+    "status": "unverified",
+    "text": "Список великий — завантажую файл."
+  },
+  "loc_compare_header": {
+    "status": "unverified",
+    "text": "Порівняння репліки `{key}` за мовами:"
+  },
+  "loc_compare_not_found": {
+    "status": "unverified",
+    "text": "Репліку з кодом `{key}` не знайдено в локалізаціях."
+  },
+  "loc_compare_untranslated": {
+    "status": "unverified",
+    "text": "(не перекладено)"
+  },
+  "loc_cooldown": {
+    "status": "unverified",
+    "text": "Цей файл уже запитували нещодавно. Спробуйте пізніше (не частіше ніж раз на 10 хвилин на сервер/групу)."
+  },
+  "loc_file_caption": {
+    "status": "unverified",
+    "text": "Локалізація: {name} ({code}). Перевірено: {percent}%."
+  },
+  "loc_list_footer": {
+    "status": "unverified",
+    "text": "Надішліть /locale <код>, щоб отримати файл локалізації."
+  },
+  "loc_list_header": {
+    "status": "unverified",
+    "text": "Доступні мови локалізації (🟩 перевірено, 🟧 не перевірено, 🟥 не перекладено):"
+  },
+  "loc_reply_dm_body": {
+    "status": "unverified",
+    "text": "> {suggestion}\n{reply}\n\nМова: {name} / {lang}\nКод: {key}"
+  },
+  "loc_reply_dm_title": {
+    "status": "unverified",
+    "text": "Відповідь щодо вашої пропозиції локалізації"
+  },
+  "loc_reply_failed": {
+    "status": "unverified",
+    "text": "Не вдалося надіслати особисте повідомлення користувачу (можливо, закриті ПП)."
+  },
+  "loc_reply_not_found": {
+    "status": "unverified",
+    "text": "Повідомлення з кодом {code} не знайдено."
+  },
+  "loc_reply_sent": {
+    "status": "unverified",
+    "text": "Відповідь надіслано користувачу."
+  },
+  "loc_reply_support_prefix": {
+    "status": "unverified",
+    "text": "Відповідь адміністратора {admin} (код {code}):"
+  },
+  "loc_suggest_confirm": {
+    "status": "unverified",
+    "text": "Дякуємо! Вашу пропозицію надіслано команді. Код вашого повідомлення: {code}"
+  },
+  "loc_suggest_no_support": {
+    "status": "unverified",
+    "text": "Канал підтримки не налаштовано. Зверніться до адміністратора бота."
+  },
+  "loc_suggest_support_body": {
+    "status": "unverified",
+    "text": "{suggestion}\n\nМова: {name} / {lang}\nКод: {key}"
+  },
+  "loc_suggest_usage": {
+    "status": "unverified",
+    "text": "Використання: /loc-suggest <мова> <код репліки> <текст>"
+  },
+  "loc_unknown_lang": {
+    "status": "unverified",
+    "text": "Невідома мова: {lang}. Доступні: {supported}."
+  },
+  "network_ban_notice": {
+    "status": "unverified",
+    "text": "Адміністратори, зверніть увагу, що користувача {mention} ({username} {id}) заблоковано на сервері {server}."
+  },
+  "no_permission": {
+    "status": "unverified",
+    "text": "У вас немає прав для використання цієї команди."
+  },
+  "remadmin_not_admin": {
+    "status": "unverified",
+    "text": "Користувач {user_id} не є адміністратором цього сервера."
+  },
+  "remadmin_success": {
+    "status": "unverified",
+    "text": "Користувача {user_id} позбавлено статусу адміністратора цього сервера."
+  },
+  "report_invalid_message_id": {
+    "status": "unverified",
+    "text": "Невірний ID повідомлення."
+  },
+  "report_message_not_found": {
+    "status": "unverified",
+    "text": "Повідомлення з таким ID не знайдено на цьому сервері."
+  },
+  "report_no_network": {
+    "status": "unverified",
+    "text": "Сервер не прив'язаний до жодної мережі. Вкажіть мережу у /setup."
+  },
+  "report_no_setup": {
+    "status": "unverified",
+    "text": "Спочатку виконайте /setup для реєстрації сервера."
+  },
+  "report_sent": {
+    "status": "unverified",
+    "text": "Скаргу надіслано в усі лог-канали мережі."
+  },
+  "report_text": {
+    "status": "unverified",
+    "text": "[Discord | {server}] {nick}:\n{content}\nID користувача: {user_id}"
+  },
+  "setadmin_already": {
+    "status": "unverified",
+    "text": "Користувач {user_id} вже є адміністратором цього сервера."
+  },
+  "setadmin_dm": {
+    "status": "unverified",
+    "text": "Тепер я визнаю Вас адміністратором сервера {server}."
+  },
+  "setadmin_invalid_id": {
+    "status": "unverified",
+    "text": "Невірний ID користувача."
+  },
+  "setadmin_success": {
+    "status": "unverified",
+    "text": "Користувача {user_id} додано до адміністраторів цього сервера."
+  },
+  "setgbans_disabled": {
+    "status": "unverified",
+    "text": "Глобальні бани вимкнено. Розблоковано користувачів: {count}."
+  },
+  "setgbans_enabled": {
+    "status": "unverified",
+    "text": "Глобальні бани увімкнено. Користувачі, забанені в мережі, блокуватимуться на цьому сервері. Усього в мережі заблоковано: {count}."
+  },
+  "setgbans_usage": {
+    "status": "unverified",
+    "text": "Використання: /setgbans enable | /setgbans disable"
+  },
+  "setup_invalid_channel": {
+    "status": "unverified",
+    "text": "Невірний ID каналу."
+  },
+  "setup_no_perm": {
+    "status": "unverified",
+    "text": "У вас немає прав для використання цієї команди."
+  },
+  "setup_success": {
+    "status": "unverified",
+    "text": "Сервер зареєстровано. Мова: {lang}, лог-канал: <#{channel_id}>."
+  },
+  "setup_success_network": {
+    "status": "unverified",
+    "text": "Сервер зареєстровано. Мова: {lang}, лог-канал: <#{channel_id}>, мережа: {network}."
+  },
+  "setup_unknown_lang": {
+    "status": "unverified",
+    "text": "Невідома мова: {lang}. Підтримуються: {supported}."
+  },
+  "status_communities_forms": {
+    "status": "unverified",
+    "text": [
+      "спільноту",
+      "спільноти",
+      "спільнот"
+    ]
+  },
+  "status_template": {
+    "status": "unverified",
+    "text": "На сторожі {servers} {servers_word}"
+  },
+  "unbanlink_not_found": {
+    "status": "unverified",
+    "text": "Посилання з номером {link_id} не знайдено."
+  },
+  "unbanlink_success": {
+    "status": "unverified",
+    "text": "Посилання з номером {link_id} видалено із заборонених."
+  },
+  "verify_announce": {
+    "status": "unverified",
+    "text": "Користувача {mention} ({username} {id}) верифіковано."
+  },
+  "verify_announce_cross": {
+    "status": "unverified",
+    "text": "Користувача {mention} ({username} {id}) верифіковано (через верифікацію на іншому сервері)."
+  },
+  "verify_invalid_channel": {
+    "status": "unverified",
+    "text": "Невірний ID каналу."
+  },
+  "verify_invalid_role": {
+    "status": "unverified",
+    "text": "Роль з ID {role_id} не знайдено на цьому сервері."
+  },
+  "verify_no_setup": {
+    "status": "unverified",
+    "text": "Спочатку виконайте /setup для реєстрації сервера."
+  },
+  "verify_set": {
+    "status": "unverified",
+    "text": "Верифікацію налаштовано. Роль: <@&{role_id}>, канал: <#{channel_id}>."
+  },
+  "verify_set_no_channel": {
+    "status": "unverified",
+    "text": "Верифікацію налаштовано. Роль: <@&{role_id}>. Сповіщення — в лог-канал із /setup."
+  }
+}

@@ -1,0 +1,502 @@
+{
+  "appeal_no_setup": {
+    "status": "verified",
+    "text": "Сначала выполните /setup для регистрации сервера."
+  },
+  "appeal_set": {
+    "status": "verified",
+    "text": "Текст апелляции для сообщения о бане обновлён."
+  },
+  "autorole_done": {
+    "status": "verified",
+    "text": "Готово. Роль выдана {count} участникам."
+  },
+  "autorole_invalid_role": {
+    "status": "verified",
+    "text": "Роль с ID {role_id} не найдена на этом сервере."
+  },
+  "autorole_no_setup": {
+    "status": "verified",
+    "text": "Сначала выполните /setup для регистрации сервера."
+  },
+  "autorole_set": {
+    "status": "verified",
+    "text": "Роль для всех установлена: <@&{role_id}>. Выдаю роль участникам без неё..."
+  },
+  "ban_cmd_failed": {
+    "status": "verified",
+    "text": "Не удалось заблокировать пользователя {user_id}: {error}"
+  },
+  "ban_cmd_invalid_id": {
+    "status": "verified",
+    "text": "Неверный ID пользователя."
+  },
+  "ban_cmd_log": {
+    "status": "verified",
+    "text": "Пользователь {user_id} заблокирован администратором {admin}. Длительность: {duration}, причина: {reason}."
+  },
+  "ban_cmd_success": {
+    "status": "verified",
+    "text": "Пользователь {user_id} заблокирован. Длительность: {duration}, причина: {reason}."
+  },
+  "ban_dm": {
+    "status": "verified",
+    "text": "Вы были бессрочно заблокированы на сервере {server} по причине: `{reason}`. Возможно, вы будете внесены в межсерверный список спамеров и заблокированы по всей сети, использующей этого бота."
+  },
+  "ban_log": {
+    "status": "verified",
+    "text": "Пользователь {mention} ({username} {id}) заблокирован за спам."
+  },
+  "banlink_added_invite": {
+    "status": "verified",
+    "text": "Код приглашения `{code}` добавлен в запрещённые."
+  },
+  "banlink_added_url": {
+    "status": "verified",
+    "text": "Ссылка `{url}` добавлена в запрещённые."
+  },
+  "banlink_exists": {
+    "status": "verified",
+    "text": "Эта ссылка уже есть в списке запрещённых."
+  },
+  "bot_started": {
+    "status": "verified",
+    "text": "🤖 Бот запущен."
+  },
+  "bot_stopped": {
+    "status": "verified",
+    "text": "🛑 Бот остановлен."
+  },
+  "dm_no_setup": {
+    "status": "verified",
+    "text": "Сначала выполните /setup для регистрации сервера."
+  },
+  "dm_set": {
+    "status": "verified",
+    "text": "Сообщение для ЛС обновлено."
+  },
+  "duration_infinity": {
+    "status": "verified",
+    "text": "навсегда"
+  },
+  "duration_invalid": {
+    "status": "verified",
+    "text": "Неверный формат длительности. Используйте: 30s, 5m, 2h, 1d, 1w или infinity."
+  },
+  "force_leave_failed": {
+    "status": "verified",
+    "text": "Не удалось покинуть сервер: {error}"
+  },
+  "force_leave_invalid_id": {
+    "status": "verified",
+    "text": "Неверный ID сервера."
+  },
+  "force_leave_not_member": {
+    "status": "verified",
+    "text": "Бот не находится на этом сервере."
+  },
+  "force_leave_success": {
+    "status": "verified",
+    "text": "Бот покинул сервер {guild_id}, данные сервера удалены из базы."
+  },
+  "gban_enforce_dm": {
+    "status": "verified",
+    "text": "Вы не можете присоединиться к серверу {server}, поскольку вы заблокированы в нашей сети серверов.\n\nПричина: {reason}\nОсталось до снятия блокировки: {remaining}"
+  },
+  "gban_enforce_log": {
+    "status": "verified",
+    "text": "Пользователь {mention} ({username} {id}) заблокирован: блокировка по сети выдана на сервере {origin_server}, {issued}. Осталось до снятия: {remaining}."
+  },
+  "gban_enforce_reason_suffix": {
+    "status": "verified",
+    "text": "(бан выдан ботом {bot}; дата окончания бана: {date})"
+  },
+  "global_duration_invalid": {
+    "status": "verified",
+    "text": "Неверный формат срока. Используйте: 1h (часы), 1d (дни), 1w (недели), 2m (месяцы), 3y (годы) или infinity (10 лет). Максимум — 10 лет."
+  },
+  "globalunban_not_banned": {
+    "status": "verified",
+    "text": "У пользователя {user_id} нет глобальной блокировки в этой сети."
+  },
+  "globalunban_success": {
+    "status": "verified",
+    "text": "Глобальная блокировка снята с пользователя {user_id}. Разблокирован на серверах: {count}."
+  },
+  "globanban_dm": {
+    "status": "verified",
+    "text": "Вы заблокированы в нашей сети серверов.\n\nПричина: {reason}\nОсталось до снятия блокировки: {remaining}"
+  },
+  "globanban_log": {
+    "status": "verified",
+    "text": "Пользователь {user_id} заблокирован по всей сети {network} администратором {admin}. Причина: {reason}. Снятие блокировки: {unban}."
+  },
+  "globanban_no_network": {
+    "status": "verified",
+    "text": "Этот сервер не входит ни в одну сеть. Укажите сеть в /setup."
+  },
+  "globanban_success": {
+    "status": "verified",
+    "text": "Пользователь {user_id} заблокирован на этом сервере и добавлен в сеть {network}. Причина: {reason}. Снятие блокировки: {unban}."
+  },
+  "guard_already": {
+    "status": "verified",
+    "text": "Охрана уже включена в этом канале."
+  },
+  "guard_enabled": {
+    "status": "verified",
+    "text": "Охрана включена в этом канале. Длительность для блокировок: {duration}, причина: {reason}."
+  },
+  "guard_no_setup": {
+    "status": "verified",
+    "text": "Сначала выполните /setup для регистрации сервера."
+  },
+  "help_cmd_autorole": {
+    "status": "verified",
+    "text": "/autorole <role_id> — автоматически выдавать роль всем участникам"
+  },
+  "help_cmd_backup": {
+    "status": "verified",
+    "text": "/backup — получить резервную копию базы данных"
+  },
+  "help_cmd_ban": {
+    "status": "verified",
+    "text": "/ban <user_id> <длительность> <причина> — забанить пользователя по ID"
+  },
+  "help_cmd_banlink": {
+    "status": "verified",
+    "text": "/banlink <ссылка или код> — добавить ссылку или код приглашения в запрещённые"
+  },
+  "help_cmd_dm": {
+    "status": "verified",
+    "text": "/dm <текст> — задать текст ЛС перед баном ({{server}} — название сервера)"
+  },
+  "help_cmd_force_leave": {
+    "status": "verified",
+    "text": "/force_leave <server_id> — вывести бота с сервера"
+  },
+  "help_cmd_globalunban": {
+    "status": "verified",
+    "text": "/globalunban <user_id> — снять глобальную блокировку и разблокировать по сети"
+  },
+  "help_cmd_globanban": {
+    "status": "verified",
+    "text": "/globanban <user_id> <причина> <срок> — забанить на этом сервере и по всей сети (срок: 1h, 2m=месяцы, 3y=годы, infinity=10 лет)"
+  },
+  "help_cmd_guard": {
+    "status": "verified",
+    "text": "/guard <длительность> <причина> — включить охрану от спама в этом канале"
+  },
+  "help_cmd_help": {
+    "status": "verified",
+    "text": "/help — показать список команд"
+  },
+  "help_cmd_links": {
+    "status": "verified",
+    "text": "/links — список запрещённых ссылок"
+  },
+  "help_cmd_list_chats": {
+    "status": "verified",
+    "text": "/list_chats — список серверов, на которых есть бот"
+  },
+  "help_cmd_loc_compare": {
+    "status": "verified",
+    "text": "/loc-compare <код> — сравнение реплики по языкам"
+  },
+  "help_cmd_loc_reply": {
+    "status": "verified",
+    "text": "/loc-reply <код> <текст> — ответить на предложение локализации (админы бота)"
+  },
+  "help_cmd_loc_suggest": {
+    "status": "verified",
+    "text": "/loc-suggest <язык> <код> <текст> — предложить вариант локализации"
+  },
+  "help_cmd_locale": {
+    "status": "verified",
+    "text": "/locale [код] — статус локализации или файл выбранного языка"
+  },
+  "help_cmd_remadmin": {
+    "status": "verified",
+    "text": "/remadmin <user_id> — лишить пользователя статуса админа сервера"
+  },
+  "help_cmd_report": {
+    "status": "verified",
+    "text": "/report [message_id] — отправить жалобу в лог-каналы сети (или ПКМ по сообщению → Apps → report)"
+  },
+  "help_cmd_setadmin": {
+    "status": "verified",
+    "text": "/setadmin <user_id> — назначить администратора сервера"
+  },
+  "help_cmd_setappeal": {
+    "status": "verified",
+    "text": "/setappeal <текст> — текст, добавляемый новой строкой в сообщение о бане"
+  },
+  "help_cmd_setgbans": {
+    "status": "verified",
+    "text": "/setgbans <enable|disable> — включить/выключить применение сетевых банов на этом сервере"
+  },
+  "help_cmd_setup": {
+    "status": "verified",
+    "text": "/setup <язык> <channel_id> [сеть] — зарегистрировать сервер: язык, лог-канал, сеть"
+  },
+  "help_cmd_setverify": {
+    "status": "verified",
+    "text": "/setverify <role_id> [channel_id] — выдавать роль участникам, писавшим в разные дни (общая база между серверами)"
+  },
+  "help_cmd_unbanlink": {
+    "status": "verified",
+    "text": "/unbanlink <номер> — удалить ссылку из запрещённых (номер — в /links)"
+  },
+  "help_section_bot_admins": {
+    "status": "verified",
+    "text": "Для админов бота"
+  },
+  "help_section_everyone": {
+    "status": "verified",
+    "text": "Для всех"
+  },
+  "help_section_server_admins": {
+    "status": "verified",
+    "text": "Для админов серверов"
+  },
+  "help_title": {
+    "status": "verified",
+    "text": "Команды бота"
+  },
+  "links_empty": {
+    "status": "verified",
+    "text": "Список запрещённых ссылок пуст."
+  },
+  "links_kind_invite": {
+    "status": "verified",
+    "text": "Приглашение"
+  },
+  "links_kind_url": {
+    "status": "verified",
+    "text": "Ссылка"
+  },
+  "links_page": {
+    "status": "verified",
+    "text": "Страница {page}/{pages}"
+  },
+  "links_title": {
+    "status": "verified",
+    "text": "Запрещённые ссылки"
+  },
+  "list_chats_header": {
+    "status": "verified",
+    "text": "**Discord-серверы:**"
+  },
+  "list_chats_too_long": {
+    "status": "verified",
+    "text": "Список большой — загружаю файл."
+  },
+  "loc_compare_header": {
+    "status": "verified",
+    "text": "Сравнение реплики `{key}` по языкам:"
+  },
+  "loc_compare_not_found": {
+    "status": "verified",
+    "text": "Реплика с кодом `{key}` не найдена в локализациях."
+  },
+  "loc_compare_untranslated": {
+    "status": "verified",
+    "text": "(не переведено)"
+  },
+  "loc_cooldown": {
+    "status": "verified",
+    "text": "Этот файл уже запрашивали недавно. Попробуйте позже (не чаще одного раза в 10 минут на сервер/группу)."
+  },
+  "loc_file_caption": {
+    "status": "verified",
+    "text": "Локализация: {name} ({code}). Проверено: {percent}%."
+  },
+  "loc_list_footer": {
+    "status": "verified",
+    "text": "Отправьте /locale <код>, чтобы получить файл локализации."
+  },
+  "loc_list_header": {
+    "status": "verified",
+    "text": "Доступные языки локализации (🟩 проверено, 🟧 не проверено, 🟥 не переведено):"
+  },
+  "loc_reply_dm_body": {
+    "status": "verified",
+    "text": "> {suggestion}\n{reply}\n\nЯзык: {name} / {lang}\nКод: {key}"
+  },
+  "loc_reply_dm_title": {
+    "status": "verified",
+    "text": "Ответ по вашему предложению локализации"
+  },
+  "loc_reply_failed": {
+    "status": "verified",
+    "text": "Не удалось отправить личное сообщение пользователю (возможно, закрыты ЛС)."
+  },
+  "loc_reply_not_found": {
+    "status": "verified",
+    "text": "Сообщение с кодом {code} не найдено."
+  },
+  "loc_reply_sent": {
+    "status": "verified",
+    "text": "Ответ отправлен пользователю."
+  },
+  "loc_reply_support_prefix": {
+    "status": "verified",
+    "text": "Ответ администратора {admin} (код {code}):"
+  },
+  "loc_suggest_confirm": {
+    "status": "verified",
+    "text": "Спасибо! Ваше предложение отправлено команде. Код вашего сообщения: {code}"
+  },
+  "loc_suggest_no_support": {
+    "status": "verified",
+    "text": "Канал поддержки не настроен. Обратитесь к администратору бота."
+  },
+  "loc_suggest_support_body": {
+    "status": "verified",
+    "text": "{suggestion}\n\nЯзык: {name} / {lang}\nКод: {key}"
+  },
+  "loc_suggest_usage": {
+    "status": "verified",
+    "text": "Использование: /loc-suggest <язык> <код реплики> <текст>"
+  },
+  "loc_unknown_lang": {
+    "status": "verified",
+    "text": "Неизвестный язык: {lang}. Доступны: {supported}."
+  },
+  "network_ban_notice": {
+    "status": "verified",
+    "text": "Администраторы, обратите внимание, что пользователь {mention} ({username} {id}) заблокирован на сервере {server}."
+  },
+  "no_permission": {
+    "status": "verified",
+    "text": "У вас нет прав для использования этой команды."
+  },
+  "remadmin_not_admin": {
+    "status": "verified",
+    "text": "Пользователь {user_id} не является администратором этого сервера."
+  },
+  "remadmin_success": {
+    "status": "verified",
+    "text": "Пользователь {user_id} лишён статуса администратора этого сервера."
+  },
+  "report_invalid_message_id": {
+    "status": "verified",
+    "text": "Неверный ID сообщения."
+  },
+  "report_message_not_found": {
+    "status": "verified",
+    "text": "Сообщение с таким ID не найдено на этом сервере."
+  },
+  "report_no_network": {
+    "status": "verified",
+    "text": "Сервер не привязан ни к одной сети. Укажите сеть в /setup."
+  },
+  "report_no_setup": {
+    "status": "verified",
+    "text": "Сначала выполните /setup для регистрации сервера."
+  },
+  "report_sent": {
+    "status": "verified",
+    "text": "Жалоба отправлена во все лог-каналы сети."
+  },
+  "report_text": {
+    "status": "verified",
+    "text": "[Discord | {server}] {nick}:\n{content}\nID пользователя: {user_id}"
+  },
+  "setadmin_already": {
+    "status": "verified",
+    "text": "Пользователь {user_id} уже является администратором этого сервера."
+  },
+  "setadmin_dm": {
+    "status": "verified",
+    "text": "Теперь я признаю Вас администратором сервера {server}."
+  },
+  "setadmin_invalid_id": {
+    "status": "verified",
+    "text": "Неверный ID пользователя."
+  },
+  "setadmin_success": {
+    "status": "verified",
+    "text": "Пользователь {user_id} добавлен в администраторы этого сервера."
+  },
+  "setgbans_disabled": {
+    "status": "verified",
+    "text": "Глобальные баны отключены. Разблокировано пользователей: {count}."
+  },
+  "setgbans_enabled": {
+    "status": "verified",
+    "text": "Глобальные баны включены. Пользователи, забаненные в сети, будут блокироваться на этом сервере. Всего в сети заблокировано: {count}."
+  },
+  "setgbans_usage": {
+    "status": "verified",
+    "text": "Использование: /setgbans enable | /setgbans disable"
+  },
+  "setup_invalid_channel": {
+    "status": "verified",
+    "text": "Неверный ID канала."
+  },
+  "setup_no_perm": {
+    "status": "verified",
+    "text": "У вас нет прав для использования этой команды."
+  },
+  "setup_success": {
+    "status": "verified",
+    "text": "Сервер зарегистрирован. Язык: {lang}, лог-канал: <#{channel_id}>."
+  },
+  "setup_success_network": {
+    "status": "verified",
+    "text": "Сервер зарегистрирован. Язык: {lang}, лог-канал: <#{channel_id}>, сеть: {network}."
+  },
+  "setup_unknown_lang": {
+    "status": "verified",
+    "text": "Неизвестный язык: {lang}. Поддерживаются: {supported}."
+  },
+  "status_communities_forms": {
+    "status": "verified",
+    "text": [
+      "сообщество",
+      "сообщества",
+      "сообществ"
+    ]
+  },
+  "status_template": {
+    "status": "verified",
+    "text": "На страже {servers} {servers_word}"
+  },
+  "unbanlink_not_found": {
+    "status": "verified",
+    "text": "Ссылка с номером {link_id} не найдена."
+  },
+  "unbanlink_success": {
+    "status": "verified",
+    "text": "Ссылка с номером {link_id} удалена из запрещённых."
+  },
+  "verify_announce": {
+    "status": "verified",
+    "text": "Пользователь {mention} ({username} {id}) верифицирован."
+  },
+  "verify_announce_cross": {
+    "status": "verified",
+    "text": "Пользователь {mention} ({username} {id}) верифицирован (из-за верификации на другом сервере)."
+  },
+  "verify_invalid_channel": {
+    "status": "verified",
+    "text": "Неверный ID канала."
+  },
+  "verify_invalid_role": {
+    "status": "verified",
+    "text": "Роль с ID {role_id} не найдена на этом сервере."
+  },
+  "verify_no_setup": {
+    "status": "verified",
+    "text": "Сначала выполните /setup для регистрации сервера."
+  },
+  "verify_set": {
+    "status": "verified",
+    "text": "Верификация настроена. Роль: <@&{role_id}>, канал: <#{channel_id}>."
+  },
+  "verify_set_no_channel": {
+    "status": "verified",
+    "text": "Верификация настроена. Роль: <@&{role_id}>. Уведомления — в лог-канал из /setup."
+  }
+}

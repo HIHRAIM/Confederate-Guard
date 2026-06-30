@@ -1,0 +1,502 @@
+{
+  "appeal_no_setup": {
+    "status": "unverified",
+    "text": "Najpierw uruchom /setup, aby zarejestrować serwer."
+  },
+  "appeal_set": {
+    "status": "unverified",
+    "text": "Tekst odwołania dołączany do wiadomości o banie został zaktualizowany."
+  },
+  "autorole_done": {
+    "status": "unverified",
+    "text": "Gotowe. Rola nadana {count} członkom."
+  },
+  "autorole_invalid_role": {
+    "status": "unverified",
+    "text": "Rola o ID {role_id} nie została znaleziona na tym serwerze."
+  },
+  "autorole_no_setup": {
+    "status": "unverified",
+    "text": "Najpierw uruchom /setup, aby zarejestrować serwer."
+  },
+  "autorole_set": {
+    "status": "unverified",
+    "text": "A roleta está definida para todos: <@&{role_id}>. Nadaję rolę członkom, którzy jej nie mają..."
+  },
+  "ban_cmd_failed": {
+    "status": "unverified",
+    "text": "Nie udało się zablokować użytkownika {user_id}: {error}"
+  },
+  "ban_cmd_invalid_id": {
+    "status": "unverified",
+    "text": "Nieprawidłowe ID użytkownika."
+  },
+  "ban_cmd_log": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} zablokowany przez administratora {admin}. Czas trwania: {duration}, powód: {reason}."
+  },
+  "ban_cmd_success": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} zablokowany. Czas trwania: {duration}, powód: {reason}."
+  },
+  "ban_dm": {
+    "status": "unverified",
+    "text": "Zostałeś bezterminowo zablokowany na serwerze {server} z powodu: `{reason}`. Możliwe, że zostaniesz dodany do międzyserwerowej listy spamerów i zablokowany w całej sieci korzystającej z tego bota."
+  },
+  "ban_log": {
+    "status": "unverified",
+    "text": "Użytkownik {mention} ({username} {id}) został zablokowany za spam."
+  },
+  "banlink_added_invite": {
+    "status": "unverified",
+    "text": "Kod zaproszenia `{code}` został dodany do zabronionych."
+  },
+  "banlink_added_url": {
+    "status": "unverified",
+    "text": "Link `{url}` został dodany do zabronionych."
+  },
+  "banlink_exists": {
+    "status": "unverified",
+    "text": "Ten link już znajduje się na liście zabronionych."
+  },
+  "bot_started": {
+    "status": "unverified",
+    "text": "🤖 Bot uruchomiony."
+  },
+  "bot_stopped": {
+    "status": "unverified",
+    "text": "🛑 Bot zatrzymany."
+  },
+  "dm_no_setup": {
+    "status": "unverified",
+    "text": "Najpierw uruchom /setup, aby zarejestrować serwer."
+  },
+  "dm_set": {
+    "status": "unverified",
+    "text": "Wiadomość prywatna zaktualizowana."
+  },
+  "duration_infinity": {
+    "status": "unverified",
+    "text": "na zawsze"
+  },
+  "duration_invalid": {
+    "status": "unverified",
+    "text": "Nieprawidłowy format czasu. Użyj: 30s, 5m, 2h, 1d, 1w lub infinity."
+  },
+  "force_leave_failed": {
+    "status": "unverified",
+    "text": "Nie udało się opuścić serwera: {error}"
+  },
+  "force_leave_invalid_id": {
+    "status": "unverified",
+    "text": "Nieprawidłowe ID serwera."
+  },
+  "force_leave_not_member": {
+    "status": "unverified",
+    "text": "Bot nie znajduje się na tym serwerze."
+  },
+  "force_leave_success": {
+    "status": "unverified",
+    "text": "Bot opuścił serwer {guild_id}, dane serwera usunięto z bazy."
+  },
+  "gban_enforce_dm": {
+    "status": "unverified",
+    "text": "Nie możesz dołączyć do serwera {server}, ponieważ jesteś zablokowany w naszej sieci serwerów.\n\nPowód: {reason}\nPozostało do zdjęcia blokady: {remaining}"
+  },
+  "gban_enforce_log": {
+    "status": "unverified",
+    "text": "Użytkownik {mention} ({username} {id}) został zablokowany: ban sieciowy nadano na serwerze {origin_server}, {issued}. Pozostało do zdjęcia: {remaining}."
+  },
+  "gban_enforce_reason_suffix": {
+    "status": "unverified",
+    "text": "(ban nadany przez bota {bot}; data zakończenia banu: {date})"
+  },
+  "global_duration_invalid": {
+    "status": "unverified",
+    "text": "Nieprawidłowy format czasu. Użyj: 1h (godziny), 1d (dni), 1w (tygodnie), 2m (miesiące), 3y (lata) lub infinity (10 lat). Maksimum — 10 lat."
+  },
+  "globalunban_not_banned": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} nie ma globalnej blokady w tej sieci."
+  },
+  "globalunban_success": {
+    "status": "unverified",
+    "text": "Globalna blokada użytkownika {user_id} została zdjęta. Odblokowano na serwerach: {count}."
+  },
+  "globanban_dm": {
+    "status": "unverified",
+    "text": "Zostałeś zablokowany w naszej sieci serwerów.\n\nPowód: {reason}\nPozostało do zdjęcia blokady: {remaining}"
+  },
+  "globanban_log": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} został zablokowany w całej sieci {network} przez administratora {admin}. Powód: {reason}. Odblokowanie: {unban}."
+  },
+  "globanban_no_network": {
+    "status": "unverified",
+    "text": "Ten serwer nie należy do żadnej sieci. Ustaw sieć w /setup."
+  },
+  "globanban_success": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} został zablokowany na tym serwerze i dodany do sieci {network}. Powód: {reason}. Odblokowanie: {unban}."
+  },
+  "guard_already": {
+    "status": "unverified",
+    "text": "Ochrona jest już włączona na tym kanale."
+  },
+  "guard_enabled": {
+    "status": "unverified",
+    "text": "Ochrona włączona na tym kanale. Czas trwania blokad: {duration}, powód: {reason}."
+  },
+  "guard_no_setup": {
+    "status": "unverified",
+    "text": "Najpierw uruchom /setup, aby zarejestrować serwer."
+  },
+  "help_cmd_autorole": {
+    "status": "unverified",
+    "text": "/autorole <role_id> — automatycznie nadawać rolę wszystkim członkom"
+  },
+  "help_cmd_backup": {
+    "status": "unverified",
+    "text": "/backup — pobrać kopię zapasową bazy danych"
+  },
+  "help_cmd_ban": {
+    "status": "unverified",
+    "text": "/ban <user_id> <czas> <powód> — zbanować użytkownika po ID"
+  },
+  "help_cmd_banlink": {
+    "status": "unverified",
+    "text": "/banlink <link lub kod> — dodać link lub kod zaproszenia do zabronionych"
+  },
+  "help_cmd_dm": {
+    "status": "unverified",
+    "text": "/dm <tekst> — ustawić treść wiadomości prywatnej przed banem ({{server}} — nazwa serwera)"
+  },
+  "help_cmd_force_leave": {
+    "status": "unverified",
+    "text": "/force_leave <server_id> — usunąć bota z serwera"
+  },
+  "help_cmd_globalunban": {
+    "status": "unverified",
+    "text": "/globalunban <user_id> — zdjąć globalną blokadę i odblokować w sieci"
+  },
+  "help_cmd_globanban": {
+    "status": "unverified",
+    "text": "/globanban <user_id> <powód> <czas> — zbanować na tym serwerze i w całej sieci (czas: 1h, 2m=miesiące, 3y=lata, infinity=10 lat)"
+  },
+  "help_cmd_guard": {
+    "status": "unverified",
+    "text": "/guard <czas> <powód> — włączyć ochronę przed spamem na tym kanale"
+  },
+  "help_cmd_help": {
+    "status": "unverified",
+    "text": "/help — pokazać listę komend"
+  },
+  "help_cmd_links": {
+    "status": "unverified",
+    "text": "/links — lista zabronionych linków"
+  },
+  "help_cmd_list_chats": {
+    "status": "unverified",
+    "text": "/list_chats — lista serwerów, na których jest bot"
+  },
+  "help_cmd_loc_compare": {
+    "status": "unverified",
+    "text": "/loc-compare <kod> — porównanie tekstu według języków"
+  },
+  "help_cmd_loc_reply": {
+    "status": "unverified",
+    "text": "/loc-reply <kod> <tekst> — odpowiedzieć na propozycję lokalizacji (admini bota)"
+  },
+  "help_cmd_loc_suggest": {
+    "status": "unverified",
+    "text": "/loc-suggest <język> <kod> <tekst> — zaproponować tłumaczenie"
+  },
+  "help_cmd_locale": {
+    "status": "unverified",
+    "text": "/locale [kod] — status lokalizacji lub plik wybranego języka"
+  },
+  "help_cmd_remadmin": {
+    "status": "unverified",
+    "text": "/remadmin <user_id> — odebrać użytkownikowi status admina serwera"
+  },
+  "help_cmd_report": {
+    "status": "unverified",
+    "text": "/report [message_id] — wysłać zgłoszenie do kanałów logów sieci (lub PPM na wiadomości → Apps → report)"
+  },
+  "help_cmd_setadmin": {
+    "status": "unverified",
+    "text": "/setadmin <user_id> — mianować administratora serwera"
+  },
+  "help_cmd_setappeal": {
+    "status": "unverified",
+    "text": "/setappeal <tekst> — tekst dołączany w nowej linii do wiadomości o banie"
+  },
+  "help_cmd_setgbans": {
+    "status": "unverified",
+    "text": "/setgbans <enable|disable> — włączyć/wyłączyć egzekwowanie banów sieciowych na tym serwerze"
+  },
+  "help_cmd_setup": {
+    "status": "unverified",
+    "text": "/setup <język> <channel_id> [sieć] — zarejestrować serwer: język, kanał logów, sieć"
+  },
+  "help_cmd_setverify": {
+    "status": "unverified",
+    "text": "/setverify <role_id> [channel_id] — nadawać rolę członkom piszącym w różne dni (wspólna baza między serwerami)"
+  },
+  "help_cmd_unbanlink": {
+    "status": "unverified",
+    "text": "/unbanlink <numer> — usunąć link z zabronionych (numer — w /links)"
+  },
+  "help_section_bot_admins": {
+    "status": "unverified",
+    "text": "Dla adminów bota"
+  },
+  "help_section_everyone": {
+    "status": "unverified",
+    "text": "Dla wszystkich"
+  },
+  "help_section_server_admins": {
+    "status": "unverified",
+    "text": "Dla adminów serwerów"
+  },
+  "help_title": {
+    "status": "unverified",
+    "text": "Komendy bota"
+  },
+  "links_empty": {
+    "status": "unverified",
+    "text": "Lista zabronionych linków jest pusta."
+  },
+  "links_kind_invite": {
+    "status": "unverified",
+    "text": "Zaproszenie"
+  },
+  "links_kind_url": {
+    "status": "unverified",
+    "text": "Link"
+  },
+  "links_page": {
+    "status": "unverified",
+    "text": "Strona {page}/{pages}"
+  },
+  "links_title": {
+    "status": "unverified",
+    "text": "Zabronione linki"
+  },
+  "list_chats_header": {
+    "status": "unverified",
+    "text": "**Serwery Discord:**"
+  },
+  "list_chats_too_long": {
+    "status": "unverified",
+    "text": "Lista jest duża — wysyłam plik."
+  },
+  "loc_compare_header": {
+    "status": "unverified",
+    "text": "Porównanie tekstu `{key}` według języków:"
+  },
+  "loc_compare_not_found": {
+    "status": "unverified",
+    "text": "Nie znaleziono tekstu o kodzie `{key}` w lokalizacjach."
+  },
+  "loc_compare_untranslated": {
+    "status": "unverified",
+    "text": "(nieprzetłumaczone)"
+  },
+  "loc_cooldown": {
+    "status": "unverified",
+    "text": "Ten plik był niedawno pobierany. Spróbuj później (najwyżej raz na 10 minut na serwer/grupę)."
+  },
+  "loc_file_caption": {
+    "status": "unverified",
+    "text": "Lokalizacja: {name} ({code}). Zweryfikowano: {percent}%."
+  },
+  "loc_list_footer": {
+    "status": "unverified",
+    "text": "Wyślij /locale <kod>, aby otrzymać plik lokalizacji."
+  },
+  "loc_list_header": {
+    "status": "unverified",
+    "text": "Dostępne języki lokalizacji (🟩 zweryfikowane, 🟧 niezweryfikowane, 🟥 nieprzetłumaczone):"
+  },
+  "loc_reply_dm_body": {
+    "status": "unverified",
+    "text": "> {suggestion}\n{reply}\n\nJęzyk: {name} / {lang}\nKod: {key}"
+  },
+  "loc_reply_dm_title": {
+    "status": "unverified",
+    "text": "Odpowiedź na Twoją propozycję lokalizacji"
+  },
+  "loc_reply_failed": {
+    "status": "unverified",
+    "text": "Nie udało się wysłać wiadomości prywatnej do użytkownika (być może ma zablokowane DM)."
+  },
+  "loc_reply_not_found": {
+    "status": "unverified",
+    "text": "Nie znaleziono wiadomości o kodzie {code}."
+  },
+  "loc_reply_sent": {
+    "status": "unverified",
+    "text": "Odpowiedź wysłana do użytkownika."
+  },
+  "loc_reply_support_prefix": {
+    "status": "unverified",
+    "text": "Odpowiedź administratora {admin} (kod {code}):"
+  },
+  "loc_suggest_confirm": {
+    "status": "unverified",
+    "text": "Dziękujemy! Twoja propozycja została wysłana. Kod Twojej wiadomości: {code}"
+  },
+  "loc_suggest_no_support": {
+    "status": "unverified",
+    "text": "Kanał wsparcia nie jest skonfigurowany. Skontaktuj się z administratorem bota."
+  },
+  "loc_suggest_support_body": {
+    "status": "unverified",
+    "text": "{suggestion}\n\nJęzyk: {name} / {lang}\nKod: {key}"
+  },
+  "loc_suggest_usage": {
+    "status": "unverified",
+    "text": "Użycie: /loc-suggest <język> <kod tekstu> <tekst>"
+  },
+  "loc_unknown_lang": {
+    "status": "unverified",
+    "text": "Nieznany język: {lang}. Dostępne: {supported}."
+  },
+  "network_ban_notice": {
+    "status": "unverified",
+    "text": "Administratorzy, zwróćcie uwagę, że użytkownik {mention} ({username} {id}) jest zablokowany na serwerze {server}."
+  },
+  "no_permission": {
+    "status": "unverified",
+    "text": "Nie masz uprawnień do użycia tej komendy."
+  },
+  "remadmin_not_admin": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} nie jest administratorem tego serwera."
+  },
+  "remadmin_success": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} został pozbawiony statusu administratora tego serwera."
+  },
+  "report_invalid_message_id": {
+    "status": "unverified",
+    "text": "Nieprawidłowe ID wiadomości."
+  },
+  "report_message_not_found": {
+    "status": "unverified",
+    "text": "Wiadomość o podanym ID nie została znaleziona na tym serwerze."
+  },
+  "report_no_network": {
+    "status": "unverified",
+    "text": "Serwer nie jest przypisany do żadnej sieci. Ustaw sieć w /setup."
+  },
+  "report_no_setup": {
+    "status": "unverified",
+    "text": "Najpierw uruchom /setup, aby zarejestrować serwer."
+  },
+  "report_sent": {
+    "status": "unverified",
+    "text": "Zgłoszenie wysłano do wszystkich kanałów logów sieci."
+  },
+  "report_text": {
+    "status": "unverified",
+    "text": "[Discord | {server}] {nick}:\n{content}\nID użytkownika: {user_id}"
+  },
+  "setadmin_already": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} jest już administratorem tego serwera."
+  },
+  "setadmin_dm": {
+    "status": "unverified",
+    "text": "Od teraz uznaję Cię za administratora serwera {server}."
+  },
+  "setadmin_invalid_id": {
+    "status": "unverified",
+    "text": "Nieprawidłowe ID użytkownika."
+  },
+  "setadmin_success": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} został dodany jako administrator tego serwera."
+  },
+  "setgbans_disabled": {
+    "status": "unverified",
+    "text": "Globalne bany wyłączone. Odblokowano użytkowników: {count}."
+  },
+  "setgbans_enabled": {
+    "status": "unverified",
+    "text": "Globalne bany włączone. Użytkownicy zbanowani w sieci będą blokowani na tym serwerze. Łącznie w sieci zablokowano: {count}."
+  },
+  "setgbans_usage": {
+    "status": "unverified",
+    "text": "Użycie: /setgbans enable | /setgbans disable"
+  },
+  "setup_invalid_channel": {
+    "status": "unverified",
+    "text": "Nieprawidłowe ID kanału."
+  },
+  "setup_no_perm": {
+    "status": "unverified",
+    "text": "Nie masz uprawnień do użycia tej komendy."
+  },
+  "setup_success": {
+    "status": "unverified",
+    "text": "Serwer zarejestrowany. Język: {lang}, kanał logów: <#{channel_id}>."
+  },
+  "setup_success_network": {
+    "status": "unverified",
+    "text": "Serwer zarejestrowany. Język: {lang}, kanał logów: <#{channel_id}>, sieć: {network}."
+  },
+  "setup_unknown_lang": {
+    "status": "unverified",
+    "text": "Nieznany język: {lang}. Obsługiwane: {supported}."
+  },
+  "status_communities_forms": {
+    "status": "unverified",
+    "text": [
+      "społeczność",
+      "społeczności",
+      "społeczności"
+    ]
+  },
+  "status_template": {
+    "status": "unverified",
+    "text": "Na straży {servers} {servers_word}"
+  },
+  "unbanlink_not_found": {
+    "status": "unverified",
+    "text": "Link o numerze {link_id} nie został znaleziony."
+  },
+  "unbanlink_success": {
+    "status": "unverified",
+    "text": "Link o numerze {link_id} został usunięty z zabronionych."
+  },
+  "verify_announce": {
+    "status": "unverified",
+    "text": "Użytkownik {mention} ({username} {id}) został zweryfikowany."
+  },
+  "verify_announce_cross": {
+    "status": "unverified",
+    "text": "Użytkownik {mention} ({username} {id}) został zweryfikowany (z powodu weryfikacji na innym serwerze)."
+  },
+  "verify_invalid_channel": {
+    "status": "unverified",
+    "text": "Nieprawidłowe ID kanału."
+  },
+  "verify_invalid_role": {
+    "status": "unverified",
+    "text": "Rola o ID {role_id} nie została znaleziona na tym serwerze."
+  },
+  "verify_no_setup": {
+    "status": "unverified",
+    "text": "Najpierw uruchom /setup, aby zarejestrować serwer."
+  },
+  "verify_set": {
+    "status": "unverified",
+    "text": "Weryfikacja skonfigurowana. Rola: <@&{role_id}>, kanał: <#{channel_id}>."
+  },
+  "verify_set_no_channel": {
+    "status": "unverified",
+    "text": "Weryfikacja skonfigurowana. Rola: <@&{role_id}>. Powiadomienia — na kanał logów z /setup."
+  }
+}
