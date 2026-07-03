@@ -23,6 +23,10 @@
     "status": "unverified",
     "text": "El rol está establecido para todos: <@&{role_id}>. Asignando a miembros que no lo tienen..."
   },
+  "backup_failed": {
+    "status": "unverified",
+    "text": "No se pudo crear la copia de seguridad: {error}"
+  },
   "ban_cmd_failed": {
     "status": "unverified",
     "text": "No se pudo bloquear al usuario {user_id}: {error}"
@@ -113,7 +117,23 @@
   },
   "global_duration_invalid": {
     "status": "unverified",
-    "text": "Formato de duración inválido. Usa: 1h (horas), 1d (días), 1w (semanas), 2m (meses), 3y (años) o infinity (10 años). Máximo: 10 años."
+    "text": "Formato de duración inválido. Usa: 1h (horas), 1d (días), 2m (meses), 3y (años) o infinity (10 años). Máximo: 10 años."
+  },
+  "globalban_dm": {
+    "status": "unverified",
+    "text": "Has sido bloqueado en nuestra red de servidores.\n\nMotivo: {reason}\nTiempo restante hasta el desbloqueo: {remaining}"
+  },
+  "globalban_log": {
+    "status": "unverified",
+    "text": "El usuario {user_id} ha sido bloqueado en toda la red {network} por el administrador {admin}. Motivo: {reason}. Desbloqueo: {unban}."
+  },
+  "globalban_no_network": {
+    "status": "unverified",
+    "text": "Este servidor no pertenece a ninguna red. Establece una red en /setup."
+  },
+  "globalban_success": {
+    "status": "unverified",
+    "text": "El usuario {user_id} ha sido bloqueado en este servidor y añadido a la red {network}. Motivo: {reason}. Desbloqueo: {unban}."
   },
   "globalunban_not_banned": {
     "status": "unverified",
@@ -122,22 +142,6 @@
   "globalunban_success": {
     "status": "unverified",
     "text": "El bloqueo global del usuario {user_id} ha sido retirado. Desbloqueado en servidores: {count}."
-  },
-  "globanban_dm": {
-    "status": "unverified",
-    "text": "Has sido bloqueado en nuestra red de servidores.\n\nMotivo: {reason}\nTiempo restante hasta el desbloqueo: {remaining}"
-  },
-  "globanban_log": {
-    "status": "unverified",
-    "text": "El usuario {user_id} ha sido bloqueado en toda la red {network} por el administrador {admin}. Motivo: {reason}. Desbloqueo: {unban}."
-  },
-  "globanban_no_network": {
-    "status": "unverified",
-    "text": "Este servidor no pertenece a ninguna red. Establece una red en /setup."
-  },
-  "globanban_success": {
-    "status": "unverified",
-    "text": "El usuario {user_id} ha sido bloqueado en este servidor y añadido a la red {network}. Motivo: {reason}. Desbloqueo: {unban}."
   },
   "guard_already": {
     "status": "unverified",
@@ -175,13 +179,13 @@
     "status": "unverified",
     "text": "/force_leave <server_id> — hacer que el bot abandone un servidor"
   },
+  "help_cmd_globalban": {
+    "status": "unverified",
+    "text": "/globalban <user_id> <motivo> <duración> — banear en este servidor y en toda la red (duración: 1h, 2m=meses, 3y=años, infinity=10 años)"
+  },
   "help_cmd_globalunban": {
     "status": "unverified",
     "text": "/globalunban <user_id> — retirar un bloqueo global y desbloquear en la red"
-  },
-  "help_cmd_globanban": {
-    "status": "unverified",
-    "text": "/globanban <user_id> <motivo> <duración> — banear en este servidor y en toda la red (duración: 1h, 2m=meses, 3y=años, infinity=10 años)"
   },
   "help_cmd_guard": {
     "status": "unverified",
@@ -219,10 +223,6 @@
     "status": "unverified",
     "text": "/remadmin <user_id> — quitar el estado de admin del servidor a un usuario"
   },
-  "help_cmd_report": {
-    "status": "unverified",
-    "text": "/report [message_id] — enviar una denuncia a los canales de registro de la red (o clic derecho en un mensaje → Apps → report)"
-  },
   "help_cmd_setadmin": {
     "status": "unverified",
     "text": "/setadmin <user_id> — nombrar un administrador del servidor"
@@ -243,6 +243,10 @@
     "status": "unverified",
     "text": "/setverify <role_id> [channel_id] — dar un rol a los miembros que escribieron en distintos días (base compartida entre servidores)"
   },
+  "help_cmd_unban": {
+    "status": "unverified",
+    "text": "/unban <user_id> — desbanear a un usuario por ID en este servidor"
+  },
   "help_cmd_unbanlink": {
     "status": "unverified",
     "text": "/unbanlink <número> — eliminar un enlace de los prohibidos (el número aparece en /links)"
@@ -262,6 +266,10 @@
   "help_title": {
     "status": "unverified",
     "text": "Comandos del bot"
+  },
+  "internal_error": {
+    "status": "unverified",
+    "text": "Error interno: {error}"
   },
   "links_empty": {
     "status": "unverified",
@@ -379,30 +387,6 @@
     "status": "unverified",
     "text": "El usuario {user_id} ya no es administrador de este servidor."
   },
-  "report_invalid_message_id": {
-    "status": "unverified",
-    "text": "ID de mensaje inválido."
-  },
-  "report_message_not_found": {
-    "status": "unverified",
-    "text": "No se encontró ningún mensaje con este ID en este servidor."
-  },
-  "report_no_network": {
-    "status": "unverified",
-    "text": "El servidor no pertenece a ninguna red. Establece una red en /setup."
-  },
-  "report_no_setup": {
-    "status": "unverified",
-    "text": "Primero ejecuta /setup para registrar este servidor."
-  },
-  "report_sent": {
-    "status": "unverified",
-    "text": "Denuncia enviada a todos los canales de registro de la red."
-  },
-  "report_text": {
-    "status": "unverified",
-    "text": "[Discord | {server}] {nick}:\n{content}\nID del usuario: {user_id}"
-  },
   "setadmin_already": {
     "status": "unverified",
     "text": "El usuario {user_id} ya es administrador de este servidor."
@@ -462,6 +446,22 @@
   "status_template": {
     "status": "unverified",
     "text": "Protegiendo {servers} {servers_word}"
+  },
+  "unban_cmd_failed": {
+    "status": "unverified",
+    "text": "No se pudo desbanear al usuario {user_id}: {error}"
+  },
+  "unban_cmd_log": {
+    "status": "unverified",
+    "text": "El usuario {user_id} fue desbaneado por el administrador {admin}."
+  },
+  "unban_cmd_not_banned": {
+    "status": "unverified",
+    "text": "El usuario {user_id} no está baneado en este servidor."
+  },
+  "unban_cmd_success": {
+    "status": "unverified",
+    "text": "El usuario {user_id} ha sido desbaneado en este servidor."
   },
   "unbanlink_not_found": {
     "status": "unverified",

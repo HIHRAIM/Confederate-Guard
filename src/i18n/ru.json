@@ -23,6 +23,10 @@
     "status": "verified",
     "text": "Роль для всех установлена: <@&{role_id}>. Выдаю роль участникам без неё..."
   },
+  "backup_failed": {
+    "status": "unverified",
+    "text": "Не удалось создать резервную копию: {error}"
+  },
   "ban_cmd_failed": {
     "status": "verified",
     "text": "Не удалось заблокировать пользователя {user_id}: {error}"
@@ -113,7 +117,23 @@
   },
   "global_duration_invalid": {
     "status": "verified",
-    "text": "Неверный формат срока. Используйте: 1h (часы), 1d (дни), 1w (недели), 2m (месяцы), 3y (годы) или infinity (10 лет). Максимум — 10 лет."
+    "text": "Неверный формат срока. Используйте: 1h (часы), 1d (дни), 2m (месяцы), 3y (годы) или infinity (10 лет). Максимум — 10 лет."
+  },
+  "globalban_dm": {
+    "status": "verified",
+    "text": "Вы заблокированы в нашей сети серверов.\n\nПричина: {reason}\nОсталось до снятия блокировки: {remaining}"
+  },
+  "globalban_log": {
+    "status": "verified",
+    "text": "Пользователь {user_id} заблокирован по всей сети {network} администратором {admin}. Причина: {reason}. Снятие блокировки: {unban}."
+  },
+  "globalban_no_network": {
+    "status": "verified",
+    "text": "Этот сервер не входит ни в одну сеть. Укажите сеть в /setup."
+  },
+  "globalban_success": {
+    "status": "verified",
+    "text": "Пользователь {user_id} заблокирован на этом сервере и добавлен в сеть {network}. Причина: {reason}. Снятие блокировки: {unban}."
   },
   "globalunban_not_banned": {
     "status": "verified",
@@ -122,22 +142,6 @@
   "globalunban_success": {
     "status": "verified",
     "text": "Глобальная блокировка снята с пользователя {user_id}. Разблокирован на серверах: {count}."
-  },
-  "globanban_dm": {
-    "status": "verified",
-    "text": "Вы заблокированы в нашей сети серверов.\n\nПричина: {reason}\nОсталось до снятия блокировки: {remaining}"
-  },
-  "globanban_log": {
-    "status": "verified",
-    "text": "Пользователь {user_id} заблокирован по всей сети {network} администратором {admin}. Причина: {reason}. Снятие блокировки: {unban}."
-  },
-  "globanban_no_network": {
-    "status": "verified",
-    "text": "Этот сервер не входит ни в одну сеть. Укажите сеть в /setup."
-  },
-  "globanban_success": {
-    "status": "verified",
-    "text": "Пользователь {user_id} заблокирован на этом сервере и добавлен в сеть {network}. Причина: {reason}. Снятие блокировки: {unban}."
   },
   "guard_already": {
     "status": "verified",
@@ -175,13 +179,13 @@
     "status": "verified",
     "text": "/force_leave <server_id> — вывести бота с сервера"
   },
+  "help_cmd_globalban": {
+    "status": "unverified",
+    "text": "/globalban <user_id> <причина> <срок> — забанить на этом сервере и по всей сети (срок: 1h, 2m=месяцы, 3y=годы, infinity=10 лет)"
+  },
   "help_cmd_globalunban": {
     "status": "verified",
     "text": "/globalunban <user_id> — снять глобальную блокировку и разблокировать по сети"
-  },
-  "help_cmd_globanban": {
-    "status": "verified",
-    "text": "/globanban <user_id> <причина> <срок> — забанить на этом сервере и по всей сети (срок: 1h, 2m=месяцы, 3y=годы, infinity=10 лет)"
   },
   "help_cmd_guard": {
     "status": "verified",
@@ -219,10 +223,6 @@
     "status": "verified",
     "text": "/remadmin <user_id> — лишить пользователя статуса админа сервера"
   },
-  "help_cmd_report": {
-    "status": "verified",
-    "text": "/report [message_id] — отправить жалобу в лог-каналы сети (или ПКМ по сообщению → Apps → report)"
-  },
   "help_cmd_setadmin": {
     "status": "verified",
     "text": "/setadmin <user_id> — назначить администратора сервера"
@@ -243,6 +243,10 @@
     "status": "verified",
     "text": "/setverify <role_id> [channel_id] — выдавать роль участникам, писавшим в разные дни (общая база между серверами)"
   },
+  "help_cmd_unban": {
+    "status": "verified",
+    "text": "/unban <user_id> — разблокировать пользователя по ID на этом сервере"
+  },
   "help_cmd_unbanlink": {
     "status": "verified",
     "text": "/unbanlink <номер> — удалить ссылку из запрещённых (номер — в /links)"
@@ -262,6 +266,10 @@
   "help_title": {
     "status": "verified",
     "text": "Команды бота"
+  },
+  "internal_error": {
+    "status": "unverified",
+    "text": "Внутренняя ошибка: {error}"
   },
   "links_empty": {
     "status": "verified",
@@ -379,30 +387,6 @@
     "status": "verified",
     "text": "Пользователь {user_id} лишён статуса администратора этого сервера."
   },
-  "report_invalid_message_id": {
-    "status": "verified",
-    "text": "Неверный ID сообщения."
-  },
-  "report_message_not_found": {
-    "status": "verified",
-    "text": "Сообщение с таким ID не найдено на этом сервере."
-  },
-  "report_no_network": {
-    "status": "verified",
-    "text": "Сервер не привязан ни к одной сети. Укажите сеть в /setup."
-  },
-  "report_no_setup": {
-    "status": "verified",
-    "text": "Сначала выполните /setup для регистрации сервера."
-  },
-  "report_sent": {
-    "status": "verified",
-    "text": "Жалоба отправлена во все лог-каналы сети."
-  },
-  "report_text": {
-    "status": "verified",
-    "text": "[Discord | {server}] {nick}:\n{content}\nID пользователя: {user_id}"
-  },
   "setadmin_already": {
     "status": "verified",
     "text": "Пользователь {user_id} уже является администратором этого сервера."
@@ -462,6 +446,22 @@
   "status_template": {
     "status": "verified",
     "text": "На страже {servers} {servers_word}"
+  },
+  "unban_cmd_failed": {
+    "status": "verified",
+    "text": "Не удалось разблокировать пользователя {user_id}: {error}"
+  },
+  "unban_cmd_log": {
+    "status": "verified",
+    "text": "Пользователь {user_id} разблокирован администратором {admin}."
+  },
+  "unban_cmd_not_banned": {
+    "status": "verified",
+    "text": "Пользователь {user_id} не заблокирован на этом сервере."
+  },
+  "unban_cmd_success": {
+    "status": "verified",
+    "text": "Пользователь {user_id} разблокирован на этом сервере."
   },
   "unbanlink_not_found": {
     "status": "verified",

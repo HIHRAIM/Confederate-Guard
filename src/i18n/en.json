@@ -23,6 +23,10 @@
     "status": "unverified",
     "text": "Auto-role set to <@&{role_id}>. Assigning it to members who don't have it..."
   },
+  "backup_failed": {
+    "status": "unverified",
+    "text": "Failed to build the backup: {error}"
+  },
   "ban_cmd_failed": {
     "status": "unverified",
     "text": "Failed to ban user {user_id}: {error}"
@@ -113,7 +117,23 @@
   },
   "global_duration_invalid": {
     "status": "unverified",
-    "text": "Invalid duration format. Use: 1h (hours), 1d (days), 1w (weeks), 2m (months), 3y (years) or infinity (10 years). Maximum is 10 years."
+    "text": "Invalid duration format. Use: 1h (hours), 1d (days), 2m (months), 3y (years) or infinity (10 years). Maximum is 10 years."
+  },
+  "globalban_dm": {
+    "status": "unverified",
+    "text": "You have been banned across our server network.\n\nReason: {reason}\nTime left until unban: {remaining}"
+  },
+  "globalban_log": {
+    "status": "unverified",
+    "text": "User {user_id} has been banned across network {network} by admin {admin}. Reason: {reason}. Unban: {unban}."
+  },
+  "globalban_no_network": {
+    "status": "unverified",
+    "text": "This server is not part of any network. Set a network in /setup."
+  },
+  "globalban_success": {
+    "status": "unverified",
+    "text": "User {user_id} has been banned on this server and added to network {network}. Reason: {reason}. Unban: {unban}."
   },
   "globalunban_not_banned": {
     "status": "unverified",
@@ -122,22 +142,6 @@
   "globalunban_success": {
     "status": "unverified",
     "text": "The global ban on user {user_id} has been lifted. Unbanned on servers: {count}."
-  },
-  "globanban_dm": {
-    "status": "unverified",
-    "text": "You have been banned across our server network.\n\nReason: {reason}\nTime left until unban: {remaining}"
-  },
-  "globanban_log": {
-    "status": "unverified",
-    "text": "User {user_id} has been banned across network {network} by admin {admin}. Reason: {reason}. Unban: {unban}."
-  },
-  "globanban_no_network": {
-    "status": "unverified",
-    "text": "This server is not part of any network. Set a network in /setup."
-  },
-  "globanban_success": {
-    "status": "unverified",
-    "text": "User {user_id} has been banned on this server and added to network {network}. Reason: {reason}. Unban: {unban}."
   },
   "guard_already": {
     "status": "unverified",
@@ -175,13 +179,13 @@
     "status": "unverified",
     "text": "/force_leave <server_id> — make the bot leave a server"
   },
+  "help_cmd_globalban": {
+    "status": "unverified",
+    "text": "/globalban <user_id> <reason> <duration> — ban on this server and across the whole network (duration: 1h, 2m=months, 3y=years, infinity=10 years)"
+  },
   "help_cmd_globalunban": {
     "status": "unverified",
     "text": "/globalunban <user_id> — lift a global ban and unban across the network"
-  },
-  "help_cmd_globanban": {
-    "status": "unverified",
-    "text": "/globanban <user_id> <reason> <duration> — ban on this server and across the whole network (duration: 1h, 2m=months, 3y=years, infinity=10 years)"
   },
   "help_cmd_guard": {
     "status": "unverified",
@@ -219,10 +223,6 @@
     "status": "unverified",
     "text": "/remadmin <user_id> — remove a user's server admin status"
   },
-  "help_cmd_report": {
-    "status": "unverified",
-    "text": "/report [message_id] — send a report to the network log channels (or right-click a message → Apps → report)"
-  },
   "help_cmd_setadmin": {
     "status": "unverified",
     "text": "/setadmin <user_id> — add a server admin"
@@ -243,6 +243,10 @@
     "status": "unverified",
     "text": "/setverify <role_id> [channel_id] — give a role to members who wrote on more than one day (shared cross-server database)"
   },
+  "help_cmd_unban": {
+    "status": "unverified",
+    "text": "/unban <user_id> — unban a user by ID on this server"
+  },
   "help_cmd_unbanlink": {
     "status": "unverified",
     "text": "/unbanlink <number> — remove a link from the banned list (number shown in /links)"
@@ -262,6 +266,10 @@
   "help_title": {
     "status": "unverified",
     "text": "Bot commands"
+  },
+  "internal_error": {
+    "status": "unverified",
+    "text": "Internal error: {error}"
   },
   "links_empty": {
     "status": "unverified",
@@ -379,30 +387,6 @@
     "status": "unverified",
     "text": "User {user_id} is no longer an admin of this server."
   },
-  "report_invalid_message_id": {
-    "status": "unverified",
-    "text": "Invalid message ID."
-  },
-  "report_message_not_found": {
-    "status": "unverified",
-    "text": "Message with this ID was not found on this server."
-  },
-  "report_no_network": {
-    "status": "unverified",
-    "text": "Server is not part of any network. Set a network in /setup."
-  },
-  "report_no_setup": {
-    "status": "unverified",
-    "text": "Run /setup first to register this server."
-  },
-  "report_sent": {
-    "status": "unverified",
-    "text": "Report sent to all log channels in the network."
-  },
-  "report_text": {
-    "status": "unverified",
-    "text": "[Discord | {server}] {nick}:\n{content}\nUser ID: {user_id}"
-  },
   "setadmin_already": {
     "status": "unverified",
     "text": "User {user_id} is already an admin of this server."
@@ -462,6 +446,22 @@
   "status_template": {
     "status": "unverified",
     "text": "Guarding {servers} {servers_word}"
+  },
+  "unban_cmd_failed": {
+    "status": "unverified",
+    "text": "Failed to unban user {user_id}: {error}"
+  },
+  "unban_cmd_log": {
+    "status": "unverified",
+    "text": "User {user_id} was unbanned by admin {admin}."
+  },
+  "unban_cmd_not_banned": {
+    "status": "unverified",
+    "text": "User {user_id} is not banned on this server."
+  },
+  "unban_cmd_success": {
+    "status": "unverified",
+    "text": "User {user_id} has been unbanned on this server."
   },
   "unbanlink_not_found": {
     "status": "unverified",

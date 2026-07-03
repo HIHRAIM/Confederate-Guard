@@ -205,16 +205,16 @@ def parse_duration(text):
 GLOBAL_BAN_MAX_SECONDS = 10 * 365 * 86400
 
 def parse_global_duration(text):
-    """Duration for network-wide bans.
+    """Duration for network-wide bans and /ban.
 
-    Units differ from parse_duration: h=hours, d=days, w=weeks, m=months, y=years.
+    Only these units are accepted: h=hours, d=days, m=months, y=years.
     'infinity' means 10 years. Everything is capped at 10 years. Always returns a
     finite number of seconds (never None). Raises ValueError on invalid format.
     """
     text = text.strip().lower()
     if text == "infinity":
         return GLOBAL_BAN_MAX_SECONDS
-    m = re.fullmatch(r"(\d+)(h|d|w|m|y)", text)
+    m = re.fullmatch(r"(\d+)(h|d|m|y)", text)
     if not m:
         raise ValueError("invalid_duration")
     n = int(m.group(1))
@@ -222,7 +222,6 @@ def parse_global_duration(text):
     multipliers = {
         "h": 3600,
         "d": 86400,
-        "w": 604800,
         "m": 30 * 86400,
         "y": 365 * 86400,
     }
@@ -239,7 +238,11 @@ def format_duration(seconds, lang):
         return f"{seconds // 3600}h"
     if seconds < 604800:
         return f"{seconds // 86400}d"
-    return f"{seconds // 604800}w"
+    if seconds < 30 * 86400:
+        return f"{seconds // 604800}w"
+    if seconds < 365 * 86400:
+        return f"{seconds // (30 * 86400)}mo"
+    return f"{seconds // (365 * 86400)}y"
 
 def message_has_spam(message):
     """Returns True if the message contains a URL or any attachment (file, image, video, gif)."""

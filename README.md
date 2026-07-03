@@ -30,18 +30,18 @@ Confederate Guard is a Discord moderation bot that protects channels from spam b
    ```
 
 4. **Create config file**
-   - Edit `config.py`:
-     - Set `DISCORD_BOT_TOKEN` environment variable, or paste the token directly.
+   - Copy `config.example.py` to `src/config.py` and edit it:
+     - Set the `DISCORD_BOT_TOKEN` environment variable, or copy `src/.env.example` to `src/.env` and fill it in — the config loads it automatically (already-set environment variables take precedence).
      - `ADMINS` — set of numeric Discord user IDs with global bot-admin rights.
      - `SERVICE_CHATS["discord"]` — channel IDs where the bot sends startup/shutdown events.
      - `BACKUP_CHATS["discord"]` — channel IDs (numeric) where the bot sends automatic database backups every 12 hours.
      - `SUPPORT_CHATS["discord"]` — channel(s) that receive localization suggestions from `/loc-suggest` (as embeds). guard_bot only posts to the Discord chat(s).
-     - `VERIFIED` — Discord channel ID(s) where **bridge_bot** publishes a user's ID after they consent to forwarding. guard_bot reads these channels and adds the posted IDs to its cross-server verified database (announcing in the log channel). Use the same ID in both bots' configs.
-     - `UNVERIFIED` — Discord channel ID(s) where **bridge_bot** publishes a user's ID when they unverify themselves. guard_bot reads these channels and removes the posted IDs from its verified database (without removing any already-granted role). Use the same ID in both bots' configs.
+     - `VERIFIED` — Discord channel ID(s) where **bridge_bot** publishes a Discord user's ID after they consent to forwarding (only Discord IDs are ever posted there). guard_bot reads these channels and adds the posted IDs to its cross-server verified database, granting the verify role on the servers where the user is present. Use the same ID in both bots' configs.
+     - `UNVERIFIED` — Discord channel ID(s) where **bridge_bot** publishes a Discord user's ID when they unverify themselves. guard_bot reads these channels and removes the posted IDs from its verified database (without removing any already-granted role). Use the same ID in both bots' configs.
 
 5. **Run the bot**
    ```bash
-   python main.py
+   python src/main.py
    ```
 
 ---
@@ -65,7 +65,7 @@ Permission roles used below:
 1. Assigns the configured role to the member.
 2. Posts a notification in the configured channel — or, if no channel was given, in the `/setup` log channel.
 
-The verified-user database is **shared across all servers**. If a member was verified on one server and later joins (or writes in) another server that also has `/setverify` configured, they are verified there automatically as well. In that case the notification states that the verification carried over from another server. Each server announces a given member only once.
+The verified-user database is **shared across all servers**. When a member becomes verified (including verifications synced from bridge_bot), the role is granted right away on **every** server they are a member of that has `/setverify` configured — and also when they later join or write on such a server. For carried-over verifications the notification states that the verification came from another server. Each server announces a given member only once; on startup the bot silently backfills the role for already-verified members without announcements.
 
 ### Discord commands
 
@@ -73,7 +73,8 @@ The verified-user database is **shared across all servers**. If a member was ver
 |---|---|:---:|:---:|:---:|
 | `/setup <lang> <channel_id> [network]` | Register server: set language, log channel, and optional network ID | ❌ | ✅ | ✅ |
 | `/guard <duration> <reason>` | Enable spam guard on the current channel; detected spam triggers a ban with given duration and reason | ❌ | ✅ | ✅ |
-| `/ban <user_id> <duration> <reason>` | Ban a user by ID (works even if the user is not on the server) | ❌ | ✅ | ✅ |
+| `/ban <user_id> <duration> <reason>` | Ban a user by ID (works even if the user is not on the server) and delete their messages from the last 24 hours. Duration units: `1h`, `1d`, `2m` (months), `3y` (years), `infinity` (10 years); max 10 years | ❌ | ✅ | ✅ |
+| `/unban <user_id>` | Unban a user by ID on this server; also clears the scheduled-unban timer, network-ban enforcement marker and the prior-ban notice record | ❌ | ✅ | ✅ |
 | `/dm <text>` | Set a custom DM message sent to users before banning (use `{server}` for the server name) | ❌ | ✅ | ✅ |
 | `/autorole <role_id>` | Set a role to be automatically assigned to all members on join; immediately assigns it to existing members | ❌ | ✅ | ✅ |
 | `/setverify <role_id> [channel_id]` | Verify members who have chatted on more than one calendar day, give them a role, and announce it; the verified-user database is shared across all servers | ❌ | ✅ | ✅ |
@@ -86,7 +87,7 @@ The verified-user database is **shared across all servers**. If a member was ver
 | `/loc-suggest <lang> <code> <text>` | Suggest a localization; sent to the support chat | ✅ | ✅ | ✅ |
 | `/setadmin <user_id>` | Grant a user Server Admin rights on this server; DMs the user | ❌ | ❌ | ✅ |
 | `/remadmin <user_id>` | Revoke a user's Server Admin rights on this server | ❌ | ❌ | ✅ |
-| `/globanban <user_id> <reason> <duration>` | Ban on this server and add to the network ban list. Duration units: `1h`, `2m` (months), `3y` (years), `infinity` (10 years); max 10 years | ❌ | ❌ | ✅ |
+| `/globalban <user_id> <reason> <duration>` | Ban on this server (deleting the user's messages from the last 24 hours) and add to the network ban list. Duration units: `1h`, `2m` (months), `3y` (years), `infinity` (10 years); max 10 years | ❌ | ❌ | ✅ |
 | `/globalunban <user_id>` | Lift a network ban: remove it from the database and unban on every network server where it was applied | ❌ | ❌ | ✅ |
 | `/loc-reply <code> <text>` | Reply (via DM) to a user's localization suggestion | ❌ | ❌ | ✅ |
 | `/banlink <link>` | Add a URL or Discord invite to the global banned-link list | ❌ | ❌ | ✅ |
@@ -101,14 +102,14 @@ The verified-user database is **shared across all servers**. If a member was ver
 
 Servers grouped under the same `network` (set in `/setup`) share a ban list:
 
-- `/globanban` bans the user on the current server and records a network ban (with reason and expiry). It is also pushed to other network servers that have `/setgbans enable` if the user is present there.
-- `/setgbans enable` bans globally-banned members who are present or who later join; `/setgbans disable` reverts only the bans this enforcement applied (not `/ban` or `/globanban` bans).
-- `/globalunban` removes the network ban and unbans the user everywhere it was applied.
+- `/globalban` bans the user on the current server, deletes their messages from the last 24 hours there, and records a network ban (with reason and expiry). It is also pushed to other network servers that have `/setgbans enable` if the user is present there.
+- `/setgbans enable` bans globally-banned members who are present or who later join; `/setgbans disable` reverts only the bans this enforcement applied (not `/ban` or `/globalban` bans).
+- `/globalunban` removes the network ban and unbans the user everywhere it was applied, also clearing the ban-history records on those servers so the prior-ban alert stops firing for the lifted ban. A local `/unban` clears the same records for one server.
 - When a member who was **ever** banned on any server in the network joins another network server, the bot posts an alert in that server's log channel.
 
 ## Localization
 
-All bot-facing strings live in per-language JSON files under `src/i18n/` (`ru`, `uk`, `pl`, `en`, `es`, `pt`), each with a translation **status**: `verified` (🟩), `unverified` (🟧) or `untranslated` (🟥). `/locale`, `/loc-compare`, `/loc-suggest` and `/loc-reply` work as in bridge_bot; suggestion dialog codes are kept at most **1 year** and removed once answered. The bot's presence rotates through the languages, showing "Guarding N communities" with correct plural forms.
+All bot-facing strings live in per-language JSON files under `src/i18n/` (`ru`, `uk`, `pl`, `en`, `es`, `pt`), each with a translation **status**: `verified` (🟩), `unverified` (🟧) or `untranslated` (🟥). `/locale`, `/loc-compare`, `/loc-suggest` and `/loc-reply` work as in bridge_bot; suggestion dialog codes are kept at most **1 year** and removed once answered. The bot's presence rotates through the languages, showing "Guarding N communities" with correct plural forms; N is the number of servers registered via `/setup`.
 
 ---
 

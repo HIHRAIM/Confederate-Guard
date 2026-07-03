@@ -23,6 +23,10 @@
     "status": "unverified",
     "text": "Роль для всіх встановлено: <@&{role_id}>. Видаю роль учасникам без неї..."
   },
+  "backup_failed": {
+    "status": "unverified",
+    "text": "Не вдалося створити резервну копію: {error}"
+  },
   "ban_cmd_failed": {
     "status": "unverified",
     "text": "Не вдалося заблокувати користувача {user_id}: {error}"
@@ -113,7 +117,23 @@
   },
   "global_duration_invalid": {
     "status": "unverified",
-    "text": "Невірний формат терміну. Використовуйте: 1h (години), 1d (дні), 1w (тижні), 2m (місяці), 3y (роки) або infinity (10 років). Максимум — 10 років."
+    "text": "Невірний формат терміну. Використовуйте: 1h (години), 1d (дні), 2m (місяці), 3y (роки) або infinity (10 років). Максимум — 10 років."
+  },
+  "globalban_dm": {
+    "status": "unverified",
+    "text": "Вас заблоковано в нашій мережі серверів.\n\nПричина: {reason}\nЗалишилось до зняття блокування: {remaining}"
+  },
+  "globalban_log": {
+    "status": "unverified",
+    "text": "Користувача {user_id} заблоковано в усій мережі {network} адміністратором {admin}. Причина: {reason}. Зняття блокування: {unban}."
+  },
+  "globalban_no_network": {
+    "status": "unverified",
+    "text": "Цей сервер не входить до жодної мережі. Вкажіть мережу у /setup."
+  },
+  "globalban_success": {
+    "status": "unverified",
+    "text": "Користувача {user_id} заблоковано на цьому сервері та додано до мережі {network}. Причина: {reason}. Зняття блокування: {unban}."
   },
   "globalunban_not_banned": {
     "status": "unverified",
@@ -122,22 +142,6 @@
   "globalunban_success": {
     "status": "unverified",
     "text": "Глобальне блокування знято з користувача {user_id}. Розблоковано на серверах: {count}."
-  },
-  "globanban_dm": {
-    "status": "unverified",
-    "text": "Вас заблоковано в нашій мережі серверів.\n\nПричина: {reason}\nЗалишилось до зняття блокування: {remaining}"
-  },
-  "globanban_log": {
-    "status": "unverified",
-    "text": "Користувача {user_id} заблоковано в усій мережі {network} адміністратором {admin}. Причина: {reason}. Зняття блокування: {unban}."
-  },
-  "globanban_no_network": {
-    "status": "unverified",
-    "text": "Цей сервер не входить до жодної мережі. Вкажіть мережу у /setup."
-  },
-  "globanban_success": {
-    "status": "unverified",
-    "text": "Користувача {user_id} заблоковано на цьому сервері та додано до мережі {network}. Причина: {reason}. Зняття блокування: {unban}."
   },
   "guard_already": {
     "status": "unverified",
@@ -175,13 +179,13 @@
     "status": "unverified",
     "text": "/force_leave <server_id> — вивести бота з сервера"
   },
+  "help_cmd_globalban": {
+    "status": "unverified",
+    "text": "/globalban <user_id> <причина> <термін> — забанити на цьому сервері та в усій мережі (термін: 1h, 2m=місяці, 3y=роки, infinity=10 років)"
+  },
   "help_cmd_globalunban": {
     "status": "unverified",
     "text": "/globalunban <user_id> — зняти глобальне блокування та розблокувати в мережі"
-  },
-  "help_cmd_globanban": {
-    "status": "unverified",
-    "text": "/globanban <user_id> <причина> <термін> — забанити на цьому сервері та в усій мережі (термін: 1h, 2m=місяці, 3y=роки, infinity=10 років)"
   },
   "help_cmd_guard": {
     "status": "unverified",
@@ -219,10 +223,6 @@
     "status": "unverified",
     "text": "/remadmin <user_id> — позбавити користувача статусу адміна сервера"
   },
-  "help_cmd_report": {
-    "status": "unverified",
-    "text": "/report [message_id] — надіслати скаргу в лог-канали мережі (або ПКМ на повідомленні → Apps → report)"
-  },
   "help_cmd_setadmin": {
     "status": "unverified",
     "text": "/setadmin <user_id> — призначити адміністратора сервера"
@@ -243,6 +243,10 @@
     "status": "unverified",
     "text": "/setverify <role_id> [channel_id] — видавати роль учасникам, що писали в різні дні (спільна база між серверами)"
   },
+  "help_cmd_unban": {
+    "status": "unverified",
+    "text": "/unban <user_id> — розблокувати користувача за ID на цьому сервері"
+  },
   "help_cmd_unbanlink": {
     "status": "unverified",
     "text": "/unbanlink <номер> — видалити посилання із заборонених (номер — у /links)"
@@ -262,6 +266,10 @@
   "help_title": {
     "status": "unverified",
     "text": "Команди бота"
+  },
+  "internal_error": {
+    "status": "unverified",
+    "text": "Внутрішня помилка: {error}"
   },
   "links_empty": {
     "status": "unverified",
@@ -379,30 +387,6 @@
     "status": "unverified",
     "text": "Користувача {user_id} позбавлено статусу адміністратора цього сервера."
   },
-  "report_invalid_message_id": {
-    "status": "unverified",
-    "text": "Невірний ID повідомлення."
-  },
-  "report_message_not_found": {
-    "status": "unverified",
-    "text": "Повідомлення з таким ID не знайдено на цьому сервері."
-  },
-  "report_no_network": {
-    "status": "unverified",
-    "text": "Сервер не прив'язаний до жодної мережі. Вкажіть мережу у /setup."
-  },
-  "report_no_setup": {
-    "status": "unverified",
-    "text": "Спочатку виконайте /setup для реєстрації сервера."
-  },
-  "report_sent": {
-    "status": "unverified",
-    "text": "Скаргу надіслано в усі лог-канали мережі."
-  },
-  "report_text": {
-    "status": "unverified",
-    "text": "[Discord | {server}] {nick}:\n{content}\nID користувача: {user_id}"
-  },
   "setadmin_already": {
     "status": "unverified",
     "text": "Користувач {user_id} вже є адміністратором цього сервера."
@@ -462,6 +446,22 @@
   "status_template": {
     "status": "unverified",
     "text": "На сторожі {servers} {servers_word}"
+  },
+  "unban_cmd_failed": {
+    "status": "unverified",
+    "text": "Не вдалося розблокувати користувача {user_id}: {error}"
+  },
+  "unban_cmd_log": {
+    "status": "unverified",
+    "text": "Користувача {user_id} розблоковано адміністратором {admin}."
+  },
+  "unban_cmd_not_banned": {
+    "status": "unverified",
+    "text": "Користувача {user_id} не заблоковано на цьому сервері."
+  },
+  "unban_cmd_success": {
+    "status": "unverified",
+    "text": "Користувача {user_id} розблоковано на цьому сервері."
   },
   "unbanlink_not_found": {
     "status": "unverified",

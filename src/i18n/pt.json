@@ -23,6 +23,10 @@
     "status": "unverified",
     "text": "A cargo está definida para todos: <@&{role_id}>. Atribuindo a membros que não o têm..."
   },
+  "backup_failed": {
+    "status": "unverified",
+    "text": "Falha ao criar o backup: {error}"
+  },
   "ban_cmd_failed": {
     "status": "unverified",
     "text": "Falha ao banir o usuário {user_id}: {error}"
@@ -113,7 +117,23 @@
   },
   "global_duration_invalid": {
     "status": "unverified",
-    "text": "Formato de duração inválido. Use: 1h (horas), 1d (dias), 1w (semanas), 2m (meses), 3y (anos) ou infinity (10 anos). Máximo: 10 anos."
+    "text": "Formato de duração inválido. Use: 1h (horas), 1d (dias), 2m (meses), 3y (anos) ou infinity (10 anos). Máximo: 10 anos."
+  },
+  "globalban_dm": {
+    "status": "unverified",
+    "text": "Você foi banido em nossa rede de servidores.\n\nMotivo: {reason}\nTempo restante até o desbanimento: {remaining}"
+  },
+  "globalban_log": {
+    "status": "unverified",
+    "text": "O usuário {user_id} foi banido em toda a rede {network} pelo administrador {admin}. Motivo: {reason}. Desbanimento: {unban}."
+  },
+  "globalban_no_network": {
+    "status": "unverified",
+    "text": "Este servidor não faz parte de nenhuma rede. Defina uma rede em /setup."
+  },
+  "globalban_success": {
+    "status": "unverified",
+    "text": "O usuário {user_id} foi banido neste servidor e adicionado à rede {network}. Motivo: {reason}. Desbanimento: {unban}."
   },
   "globalunban_not_banned": {
     "status": "unverified",
@@ -122,22 +142,6 @@
   "globalunban_success": {
     "status": "unverified",
     "text": "O banimento global do usuário {user_id} foi removido. Desbanido em servidores: {count}."
-  },
-  "globanban_dm": {
-    "status": "unverified",
-    "text": "Você foi banido em nossa rede de servidores.\n\nMotivo: {reason}\nTempo restante até o desbanimento: {remaining}"
-  },
-  "globanban_log": {
-    "status": "unverified",
-    "text": "O usuário {user_id} foi banido em toda a rede {network} pelo administrador {admin}. Motivo: {reason}. Desbanimento: {unban}."
-  },
-  "globanban_no_network": {
-    "status": "unverified",
-    "text": "Este servidor não faz parte de nenhuma rede. Defina uma rede em /setup."
-  },
-  "globanban_success": {
-    "status": "unverified",
-    "text": "O usuário {user_id} foi banido neste servidor e adicionado à rede {network}. Motivo: {reason}. Desbanimento: {unban}."
   },
   "guard_already": {
     "status": "unverified",
@@ -175,13 +179,13 @@
     "status": "unverified",
     "text": "/force_leave <server_id> — fazer o bot sair de um servidor"
   },
+  "help_cmd_globalban": {
+    "status": "unverified",
+    "text": "/globalban <user_id> <motivo> <duração> — banir neste servidor e em toda a rede (duração: 1h, 2m=meses, 3y=anos, infinity=10 anos)"
+  },
   "help_cmd_globalunban": {
     "status": "unverified",
     "text": "/globalunban <user_id> — remover um banimento global e desbanir na rede"
-  },
-  "help_cmd_globanban": {
-    "status": "unverified",
-    "text": "/globanban <user_id> <motivo> <duração> — banir neste servidor e em toda a rede (duração: 1h, 2m=meses, 3y=anos, infinity=10 anos)"
   },
   "help_cmd_guard": {
     "status": "unverified",
@@ -219,10 +223,6 @@
     "status": "unverified",
     "text": "/remadmin <user_id> — remover o status de admin do servidor de um usuário"
   },
-  "help_cmd_report": {
-    "status": "unverified",
-    "text": "/report [message_id] — enviar uma denúncia aos canais de log da rede (ou clique direito em uma mensagem → Apps → report)"
-  },
   "help_cmd_setadmin": {
     "status": "unverified",
     "text": "/setadmin <user_id> — adicionar um administrador do servidor"
@@ -243,6 +243,10 @@
     "status": "unverified",
     "text": "/setverify <role_id> [channel_id] — dar um cargo a membros que escreveram em dias diferentes (base compartilhada entre servidores)"
   },
+  "help_cmd_unban": {
+    "status": "unverified",
+    "text": "/unban <user_id> — desbanir um usuário por ID neste servidor"
+  },
   "help_cmd_unbanlink": {
     "status": "unverified",
     "text": "/unbanlink <número> — remover um link dos proibidos (o número aparece em /links)"
@@ -262,6 +266,10 @@
   "help_title": {
     "status": "unverified",
     "text": "Comandos do bot"
+  },
+  "internal_error": {
+    "status": "unverified",
+    "text": "Erro interno: {error}"
   },
   "links_empty": {
     "status": "unverified",
@@ -379,30 +387,6 @@
     "status": "unverified",
     "text": "O usuário {user_id} não é mais administrador deste servidor."
   },
-  "report_invalid_message_id": {
-    "status": "unverified",
-    "text": "ID de mensagem inválido."
-  },
-  "report_message_not_found": {
-    "status": "unverified",
-    "text": "Mensagem com este ID não foi encontrada neste servidor."
-  },
-  "report_no_network": {
-    "status": "unverified",
-    "text": "O servidor não faz parte de nenhuma rede. Defina uma rede em /setup."
-  },
-  "report_no_setup": {
-    "status": "unverified",
-    "text": "Execute /setup primeiro para registrar este servidor."
-  },
-  "report_sent": {
-    "status": "unverified",
-    "text": "Denúncia enviada para todos os canais de log da rede."
-  },
-  "report_text": {
-    "status": "unverified",
-    "text": "[Discord | {server}] {nick}:\n{content}\nID do usuário: {user_id}"
-  },
   "setadmin_already": {
     "status": "unverified",
     "text": "O usuário {user_id} já é administrador deste servidor."
@@ -462,6 +446,22 @@
   "status_template": {
     "status": "unverified",
     "text": "Protegendo {servers} {servers_word}"
+  },
+  "unban_cmd_failed": {
+    "status": "unverified",
+    "text": "Falha ao desbanir o usuário {user_id}: {error}"
+  },
+  "unban_cmd_log": {
+    "status": "unverified",
+    "text": "O usuário {user_id} foi desbanido pelo administrador {admin}."
+  },
+  "unban_cmd_not_banned": {
+    "status": "unverified",
+    "text": "O usuário {user_id} não está banido neste servidor."
+  },
+  "unban_cmd_success": {
+    "status": "unverified",
+    "text": "O usuário {user_id} foi desbanido neste servidor."
   },
   "unbanlink_not_found": {
     "status": "unverified",

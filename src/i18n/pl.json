@@ -23,6 +23,10 @@
     "status": "unverified",
     "text": "A roleta está definida para todos: <@&{role_id}>. Nadaję rolę członkom, którzy jej nie mają..."
   },
+  "backup_failed": {
+    "status": "unverified",
+    "text": "Nie udało się utworzyć kopii zapasowej: {error}"
+  },
   "ban_cmd_failed": {
     "status": "unverified",
     "text": "Nie udało się zablokować użytkownika {user_id}: {error}"
@@ -113,7 +117,23 @@
   },
   "global_duration_invalid": {
     "status": "unverified",
-    "text": "Nieprawidłowy format czasu. Użyj: 1h (godziny), 1d (dni), 1w (tygodnie), 2m (miesiące), 3y (lata) lub infinity (10 lat). Maksimum — 10 lat."
+    "text": "Nieprawidłowy format czasu. Użyj: 1h (godziny), 1d (dni), 2m (miesiące), 3y (lata) lub infinity (10 lat). Maksimum — 10 lat."
+  },
+  "globalban_dm": {
+    "status": "unverified",
+    "text": "Zostałeś zablokowany w naszej sieci serwerów.\n\nPowód: {reason}\nPozostało do zdjęcia blokady: {remaining}"
+  },
+  "globalban_log": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} został zablokowany w całej sieci {network} przez administratora {admin}. Powód: {reason}. Odblokowanie: {unban}."
+  },
+  "globalban_no_network": {
+    "status": "unverified",
+    "text": "Ten serwer nie należy do żadnej sieci. Ustaw sieć w /setup."
+  },
+  "globalban_success": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} został zablokowany na tym serwerze i dodany do sieci {network}. Powód: {reason}. Odblokowanie: {unban}."
   },
   "globalunban_not_banned": {
     "status": "unverified",
@@ -122,22 +142,6 @@
   "globalunban_success": {
     "status": "unverified",
     "text": "Globalna blokada użytkownika {user_id} została zdjęta. Odblokowano na serwerach: {count}."
-  },
-  "globanban_dm": {
-    "status": "unverified",
-    "text": "Zostałeś zablokowany w naszej sieci serwerów.\n\nPowód: {reason}\nPozostało do zdjęcia blokady: {remaining}"
-  },
-  "globanban_log": {
-    "status": "unverified",
-    "text": "Użytkownik {user_id} został zablokowany w całej sieci {network} przez administratora {admin}. Powód: {reason}. Odblokowanie: {unban}."
-  },
-  "globanban_no_network": {
-    "status": "unverified",
-    "text": "Ten serwer nie należy do żadnej sieci. Ustaw sieć w /setup."
-  },
-  "globanban_success": {
-    "status": "unverified",
-    "text": "Użytkownik {user_id} został zablokowany na tym serwerze i dodany do sieci {network}. Powód: {reason}. Odblokowanie: {unban}."
   },
   "guard_already": {
     "status": "unverified",
@@ -175,13 +179,13 @@
     "status": "unverified",
     "text": "/force_leave <server_id> — usunąć bota z serwera"
   },
+  "help_cmd_globalban": {
+    "status": "unverified",
+    "text": "/globalban <user_id> <powód> <czas> — zbanować na tym serwerze i w całej sieci (czas: 1h, 2m=miesiące, 3y=lata, infinity=10 lat)"
+  },
   "help_cmd_globalunban": {
     "status": "unverified",
     "text": "/globalunban <user_id> — zdjąć globalną blokadę i odblokować w sieci"
-  },
-  "help_cmd_globanban": {
-    "status": "unverified",
-    "text": "/globanban <user_id> <powód> <czas> — zbanować na tym serwerze i w całej sieci (czas: 1h, 2m=miesiące, 3y=lata, infinity=10 lat)"
   },
   "help_cmd_guard": {
     "status": "unverified",
@@ -219,10 +223,6 @@
     "status": "unverified",
     "text": "/remadmin <user_id> — odebrać użytkownikowi status admina serwera"
   },
-  "help_cmd_report": {
-    "status": "unverified",
-    "text": "/report [message_id] — wysłać zgłoszenie do kanałów logów sieci (lub PPM na wiadomości → Apps → report)"
-  },
   "help_cmd_setadmin": {
     "status": "unverified",
     "text": "/setadmin <user_id> — mianować administratora serwera"
@@ -243,6 +243,10 @@
     "status": "unverified",
     "text": "/setverify <role_id> [channel_id] — nadawać rolę członkom piszącym w różne dni (wspólna baza między serwerami)"
   },
+  "help_cmd_unban": {
+    "status": "unverified",
+    "text": "/unban <user_id> — odblokować użytkownika po ID na tym serwerze"
+  },
   "help_cmd_unbanlink": {
     "status": "unverified",
     "text": "/unbanlink <numer> — usunąć link z zabronionych (numer — w /links)"
@@ -262,6 +266,10 @@
   "help_title": {
     "status": "unverified",
     "text": "Komendy bota"
+  },
+  "internal_error": {
+    "status": "unverified",
+    "text": "Błąd wewnętrzny: {error}"
   },
   "links_empty": {
     "status": "unverified",
@@ -379,30 +387,6 @@
     "status": "unverified",
     "text": "Użytkownik {user_id} został pozbawiony statusu administratora tego serwera."
   },
-  "report_invalid_message_id": {
-    "status": "unverified",
-    "text": "Nieprawidłowe ID wiadomości."
-  },
-  "report_message_not_found": {
-    "status": "unverified",
-    "text": "Wiadomość o podanym ID nie została znaleziona na tym serwerze."
-  },
-  "report_no_network": {
-    "status": "unverified",
-    "text": "Serwer nie jest przypisany do żadnej sieci. Ustaw sieć w /setup."
-  },
-  "report_no_setup": {
-    "status": "unverified",
-    "text": "Najpierw uruchom /setup, aby zarejestrować serwer."
-  },
-  "report_sent": {
-    "status": "unverified",
-    "text": "Zgłoszenie wysłano do wszystkich kanałów logów sieci."
-  },
-  "report_text": {
-    "status": "unverified",
-    "text": "[Discord | {server}] {nick}:\n{content}\nID użytkownika: {user_id}"
-  },
   "setadmin_already": {
     "status": "unverified",
     "text": "Użytkownik {user_id} jest już administratorem tego serwera."
@@ -462,6 +446,22 @@
   "status_template": {
     "status": "unverified",
     "text": "Na straży {servers} {servers_word}"
+  },
+  "unban_cmd_failed": {
+    "status": "unverified",
+    "text": "Nie udało się odblokować użytkownika {user_id}: {error}"
+  },
+  "unban_cmd_log": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} został odblokowany przez administratora {admin}."
+  },
+  "unban_cmd_not_banned": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} nie jest zablokowany na tym serwerze."
+  },
+  "unban_cmd_success": {
+    "status": "unverified",
+    "text": "Użytkownik {user_id} został odblokowany na tym serwerze."
   },
   "unbanlink_not_found": {
     "status": "unverified",

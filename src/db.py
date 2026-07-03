@@ -186,6 +186,10 @@ def get_guild(guild_id):
         (str(guild_id),)
     ).fetchone()
 
+def count_guilds():
+    """Number of servers registered via /setup (rows in guilds)."""
+    return cur.execute("SELECT COUNT(*) FROM guilds").fetchone()[0]
+
 def set_guard(channel_id, guild_id, duration_seconds, reason):
     cur.execute(
         "INSERT OR REPLACE INTO guarded_channels (channel_id, guild_id, duration_seconds, reason) VALUES (?,?,?,?)",
@@ -364,6 +368,19 @@ def record_ban(guild_id, user_id):
     cur.execute(
         "INSERT OR REPLACE INTO ban_history (guild_id, user_id, banned_at) VALUES (?,?,?)",
         (str(guild_id), str(user_id), int(time.time()))
+    )
+    conn.commit()
+
+def remove_ban_history(guild_id, user_id):
+    """Forget that a user was banned on a guild.
+
+    Called when a ban is lifted (local /unban or network /globalunban) so the
+    'previously banned in this network' admin notice stops firing for a user
+    whose ban has been deliberately reverted.
+    """
+    cur.execute(
+        "DELETE FROM ban_history WHERE guild_id=? AND user_id=?",
+        (str(guild_id), str(user_id))
     )
     conn.commit()
 

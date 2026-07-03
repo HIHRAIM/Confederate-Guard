@@ -27,7 +27,8 @@ async def send_db_backup():
     from backup_crypto import build_encrypted_backup, encrypted_filename
     try:
         data = build_encrypted_backup("guard.db")
-    except Exception:
+    except Exception as e:
+        print(f"Periodic backup failed to build: {e}", flush=True)
         return
     fname = encrypted_filename("guard.db")
 
@@ -38,11 +39,12 @@ async def send_db_backup():
                 try:
                     ch = await bot.fetch_channel(channel_id)
                 except Exception:
+                    print(f"Periodic backup: cannot fetch channel {channel_id}", flush=True)
                     continue
             if ch:
                 await ch.send(file=discord.File(io.BytesIO(data), filename=fname))
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Periodic backup: failed to send to channel {channel_id}: {e}", flush=True)
 
 async def backup_loop():
     await bot.wait_until_ready()

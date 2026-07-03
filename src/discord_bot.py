@@ -31,6 +31,7 @@ class GuardBot(discord.Client):
         await self.tree.sync()
         asyncio.create_task(unban_loop(self))
         asyncio.create_task(status_loop(self))
+        asyncio.create_task(backfill_verified_roles(self))
 
     async def on_ready(self):
         print(f"Logged in as {self.user} (ID: {self.user.id})")
@@ -41,7 +42,8 @@ bot = GuardBot()
 async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     tb = traceback.format_exc()
     print(f"[ERROR] Command '{interaction.command.name if interaction.command else '?'}': {error}\n{tb}")
-    msg = f"Internal error: {error}"
+    lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+    msg = localized("internal_error", lang, error=error)
     try:
         if not interaction.response.is_done():
             await interaction.response.send_message(msg, ephemeral=True)
@@ -218,8 +220,13 @@ async def _get_channel(channel_id):
             ch = None
     return ch
 
-async def _grant_verify(member: discord.Member, verify_row, guild_row, lang, cross_server: bool):
-    """Give the verify role on this server, mark the grant, and announce it."""
+async def _grant_verify(member: discord.Member, verify_row, guild_row, lang, cross_server: bool, announce: bool = True):
+    """Give the verify role on this server, mark the grant, and (optionally) announce it.
+
+    Marking the grant is what stops the same verification from being announced
+    twice, so it happens even for silent grants (announce=False), which the
+    startup backfill uses to hand out roles without flooding the channels.
+    """
     guild = member.guild
     role = guild.get_role(int(verify_row["role_id"]))
     if role is not None and role not in member.roles:
@@ -229,6 +236,9 @@ async def _grant_verify(member: discord.Member, verify_row, guild_row, lang, cro
             pass
 
     db.add_verify_grant(guild.id, member.id)
+
+    if not announce:
+        return
 
     channel_id = verify_row["channel_id"]
     if not channel_id and guild_row:
@@ -240,6 +250,37 @@ async def _grant_verify(member: discord.Member, verify_row, guild_row, lang, cro
             await channel.send(
                 localized(key, lang, mention=member.mention, username=str(member), id=member.id)
             )
+        except Exception:
+            pass
+
+async def propagate_verified_roles(uid, announce: bool):
+    """Grant the verify role to a verified user on every guild where they are a
+    present member and verification is enabled, skipping guilds where the grant
+    was already recorded.
+
+    This is the single place cross-server verification fans out. It fixes two
+    problems: verified users now get their role on *all* their servers (not only
+    where they joined/chatted), and announcements land on the servers where the
+    user actually is — never on whichever guild happens to host the bridge sync
+    channel. Recording the grant also prevents a later message from the user from
+    triggering a duplicate 'verified' announcement.
+    """
+    for guild in bot.guilds:
+        verify_row = db.get_verify(guild.id)
+        if not verify_row:
+            continue
+        try:
+            member = guild.get_member(int(uid))
+        except (TypeError, ValueError):
+            return
+        if member is None or member.bot:
+            continue
+        if db.has_verify_grant(guild.id, member.id):
+            continue
+        guild_row = db.get_guild(guild.id)
+        lang = guild_row["lang"] if guild_row and guild_row["lang"] in SUPPORTED_LANGS else DEFAULT_LANG
+        try:
+            await _grant_verify(member, verify_row, guild_row, lang, cross_server=True, announce=announce)
         except Exception:
             pass
 
@@ -291,48 +332,25 @@ async def handle_verification_sync(message: discord.Message):
     if db.is_verified(uid):
         return
     db.add_verified(uid, message.guild.id if message.guild else None)
-    await _announce_verified_sync(message.guild, uid)
+    await propagate_verified_roles(uid, announce=True)
 
-async def _announce_verified_sync(guild, uid):
-    """Announce a synced verification in the guild's announce/log channel."""
-    if guild is None:
-        return
-    guild_row = db.get_guild(guild.id)
-    if not guild_row:
-        return
-    lang = guild_row["lang"] if guild_row["lang"] in SUPPORTED_LANGS else DEFAULT_LANG
+async def _purge_recent_messages(guild, user_id, hours=24):
+    """Delete the user's messages posted on `guild` within the last `hours`.
 
-    channel_id = None
-    verify_row = db.get_verify(guild.id)
-    if verify_row and verify_row["channel_id"]:
-        channel_id = verify_row["channel_id"]
-    if not channel_id:
-        channel_id = guild_row["log_channel_id"]
-    channel = await _get_channel(channel_id)
-    if not channel:
-        return
-
-    member = guild.get_member(uid)
-    user_obj = None
-    if member is None:
+    The same sweep the spam guard runs after an automatic ban; used by /ban
+    and /globalban so a banned user's recent messages disappear too.
+    """
+    cutoff = discord.utils.utcnow() - timedelta(hours=hours)
+    for channel in guild.text_channels:
         try:
-            user_obj = await bot.fetch_user(uid)
+            to_delete = []
+            async for msg in channel.history(after=cutoff, limit=None):
+                if msg.author.id == user_id:
+                    to_delete.append(msg)
+            for i in range(0, len(to_delete), 100):
+                await channel.delete_messages(to_delete[i:i+100])
         except Exception:
-            user_obj = None
-    mention = member.mention if member else f"<@{uid}>"
-    if member:
-        username = str(member)
-    elif user_obj:
-        username = str(user_obj)
-    else:
-        username = str(uid)
-
-    try:
-        await channel.send(
-            localized("verify_announce", lang, mention=mention, username=username, id=uid)
-        )
-    except Exception:
-        pass
+            pass
 
 def _format_ban_reason_with_suffix(reason, lang, unban_at):
     """Append the localized '(ban issued by bot <name>; end date: <date>)' suffix.
@@ -497,7 +515,7 @@ async def setverify_cmd(interaction: discord.Interaction, role_id: str, channel_
 @bot.tree.command(name="ban", description="ban a user by ID")
 @app_commands.describe(
     user_id="ID of the user to ban",
-    duration="Ban duration (e.g. 30m, 2h, 1d, infinity)",
+    duration="Duration: 1h, 1d, 2m (months), 3y (years), or infinity (10 years); max 10 years",
     reason="Reason for the ban"
 )
 async def ban_cmd(interaction: discord.Interaction, user_id: str, duration: str, reason: str):
@@ -519,10 +537,10 @@ async def ban_cmd(interaction: discord.Interaction, user_id: str, duration: str,
         return
 
     try:
-        seconds = parse_duration(duration)
+        seconds = parse_global_duration(duration)
     except ValueError:
         await interaction.response.send_message(
-            localized("duration_invalid", lang), ephemeral=True
+            localized("global_duration_invalid", lang), ephemeral=True
         )
         return
 
@@ -544,6 +562,8 @@ async def ban_cmd(interaction: discord.Interaction, user_id: str, duration: str,
         localized("ban_cmd_success", lang, user_id=uid, duration=dur_str, reason=reason)
     )
 
+    await _purge_recent_messages(interaction.guild, uid)
+
     if guild_row:
         log_channel_id = int(guild_row["log_channel_id"])
         log_channel = bot.get_channel(log_channel_id)
@@ -564,13 +584,13 @@ async def ban_cmd(interaction: discord.Interaction, user_id: str, duration: str,
             except Exception:
                 pass
 
-@bot.tree.command(name="globanban", description="ban on this server and across the whole network (duration: 1h, 2m=months, 3y=years, infinity=10 y...")
+@bot.tree.command(name="globalban", description="ban on this server and across the whole network (duration: 1h, 2m=months, 3y=years, infinity=10 y...")
 @app_commands.describe(
     user_id="ID of the user to ban",
     reason="Reason for the ban",
-    duration="Duration: 1h, 1d, 1w, 2m (months), 3y (years), or infinity (10 years); max 10 years",
+    duration="Duration: 1h, 1d, 2m (months), 3y (years), or infinity (10 years); max 10 years",
 )
-async def globanban_cmd(interaction: discord.Interaction, user_id: str, reason: str, duration: str):
+async def globalban_cmd(interaction: discord.Interaction, user_id: str, reason: str, duration: str):
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
     lang = guild_row["lang"] if guild_row else DEFAULT_LANG
 
@@ -591,7 +611,7 @@ async def globanban_cmd(interaction: discord.Interaction, user_id: str, reason: 
         return
 
     if not guild_row or guild_row["network"] is None:
-        await interaction.response.send_message(localized("globanban_no_network", lang), ephemeral=True)
+        await interaction.response.send_message(localized("globalban_no_network", lang), ephemeral=True)
         return
 
     network = guild_row["network"]
@@ -602,7 +622,7 @@ async def globanban_cmd(interaction: discord.Interaction, user_id: str, reason: 
         target = interaction.guild.get_member(uid) or await bot.fetch_user(uid)
         if target:
             await target.send(
-                localized("globanban_dm", lang, server=interaction.guild.name,
+                localized("globalban_dm", lang, server=interaction.guild.name,
                           reason=reason, remaining=f"<t:{unban_at}:R>")
             )
     except Exception:
@@ -621,16 +641,18 @@ async def globanban_cmd(interaction: discord.Interaction, user_id: str, reason: 
     db.add_global_ban(network, uid, reason, interaction.guild.id, now, unban_at)
 
     await interaction.response.send_message(
-        localized("globanban_success", lang,
+        localized("globalban_success", lang,
                   user_id=uid, network=network, reason=reason, unban=f"<t:{unban_at}:F>")
     )
+
+    await _purge_recent_messages(interaction.guild, uid)
 
     if guild_row["log_channel_id"]:
         log_channel = await _get_channel(guild_row["log_channel_id"])
         if log_channel:
             try:
                 await log_channel.send(
-                    localized("globanban_log", lang,
+                    localized("globalban_log", lang,
                               user_id=uid, network=network, admin=str(interaction.user),
                               reason=reason, unban=f"<t:{unban_at}:F>")
                 )
@@ -671,7 +693,7 @@ async def globalunban_cmd(interaction: discord.Interaction, user_id: str):
         return
 
     if not guild_row or guild_row["network"] is None:
-        await interaction.response.send_message(localized("globanban_no_network", lang), ephemeral=True)
+        await interaction.response.send_message(localized("globalban_no_network", lang), ephemeral=True)
         return
 
     network = guild_row["network"]
@@ -700,11 +722,67 @@ async def globalunban_cmd(interaction: discord.Interaction, user_id: str):
                 pass
         db.remove_active_ban(gid, uid)
         db.remove_gban_enforcement(gid, uid)
+        db.remove_ban_history(gid, uid)
         count += 1
 
     await interaction.response.send_message(
         localized("globalunban_success", lang, user_id=uid, count=count)
     )
+
+@bot.tree.command(name="unban", description="unban a user by ID on this server")
+@app_commands.describe(user_id="ID of the user to unban")
+async def unban_cmd(interaction: discord.Interaction, user_id: str):
+    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id, interaction.guild_id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    try:
+        uid = int(user_id.strip())
+    except ValueError:
+        await interaction.response.send_message(
+            localized("ban_cmd_invalid_id", lang), ephemeral=True
+        )
+        return
+
+    banned_on_discord = True
+    try:
+        await interaction.guild.unban(discord.Object(id=uid))
+    except discord.NotFound:
+        banned_on_discord = False
+    except Exception as e:
+        await interaction.response.send_message(
+            localized("unban_cmd_failed", lang, user_id=uid, error=str(e)), ephemeral=True
+        )
+        return
+
+    db.remove_active_ban(interaction.guild.id, uid)
+    db.remove_gban_enforcement(interaction.guild.id, uid)
+    db.remove_ban_history(interaction.guild.id, uid)
+
+    if not banned_on_discord:
+        await interaction.response.send_message(
+            localized("unban_cmd_not_banned", lang, user_id=uid), ephemeral=True
+        )
+        return
+
+    await interaction.response.send_message(
+        localized("unban_cmd_success", lang, user_id=uid)
+    )
+
+    if guild_row and guild_row["log_channel_id"]:
+        log_channel = await _get_channel(guild_row["log_channel_id"])
+        if log_channel:
+            try:
+                await log_channel.send(
+                    localized("unban_cmd_log", lang, user_id=uid, admin=str(interaction.user))
+                )
+            except Exception:
+                pass
 
 @bot.tree.command(name="setgbans", description="enable/disable enforcement of network bans on this server")
 @app_commands.describe(mode="enable or disable")
@@ -879,18 +957,7 @@ async def on_message(message: discord.Message):
 
     db.record_ban(message.guild.id, member.id)
 
-    cutoff = discord.utils.utcnow() - timedelta(hours=24)
-    for channel in message.guild.text_channels:
-        try:
-            to_delete = []
-            async for msg in channel.history(after=cutoff, limit=None):
-                if msg.author.id == member.id:
-                    to_delete.append(msg)
-            if to_delete:
-                for i in range(0, len(to_delete), 100):
-                    await channel.delete_messages(to_delete[i:i+100])
-        except Exception:
-            pass
+    await _purge_recent_messages(message.guild, member.id)
 
     if duration_seconds is not None:
         db.add_active_ban(message.guild.id, member.id, int(time.time()) + duration_seconds)
@@ -1118,13 +1185,14 @@ async def help_cmd(interaction: discord.Interaction):
         localized("help_cmd_autorole", lang),
         localized("help_cmd_setverify", lang),
         localized("help_cmd_ban", lang),
+        localized("help_cmd_unban", lang),
         localized("help_cmd_setgbans", lang),
         localized("help_cmd_setappeal", lang),
         localized("help_cmd_links", lang),
     ])
 
     bot_admin_lines = "\n".join([
-        localized("help_cmd_globanban", lang),
+        localized("help_cmd_globalban", lang),
         localized("help_cmd_globalunban", lang),
         localized("help_cmd_banlink", lang),
         localized("help_cmd_unbanlink", lang),
@@ -1217,15 +1285,16 @@ async def force_leave_cmd(interaction: discord.Interaction, server_id: str):
 
 @bot.tree.command(name="backup", description="get a database backup")
 async def backup_cmd(interaction: discord.Interaction):
+    lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
     if not is_admin(interaction.user.id):
-        await interaction.response.send_message("No permission", ephemeral=True)
+        await interaction.response.send_message(localized("no_permission", lang), ephemeral=True)
         return
     import io
     from backup_crypto import build_encrypted_backup, encrypted_filename
     try:
         data = build_encrypted_backup("guard.db")
     except Exception as e:
-        await interaction.response.send_message(f"Failed to build backup: {e}", ephemeral=True)
+        await interaction.response.send_message(localized("backup_failed", lang, error=str(e)), ephemeral=True)
         return
     await interaction.response.send_message(
         file=discord.File(io.BytesIO(data), filename=encrypted_filename("guard.db"))
@@ -1402,13 +1471,46 @@ async def status_loop(client: discord.Client):
     await client.wait_until_ready()
     while not client.is_closed():
         try:
-            text = utils.get_next_status_text(len(client.guilds))
+            text = utils.get_next_status_text(db.count_guilds())
             await client.change_presence(
                 activity=discord.Activity(type=discord.ActivityType.watching, name=text)
             )
         except Exception:
             pass
         await asyncio.sleep(60)
+
+async def backfill_verified_roles(client: discord.Client):
+    """One-time sweep on startup: hand the verify role to every already-verified
+    member on every verification-enabled server they are present on.
+
+    Cross-server verification used to only take effect when a verified user
+    joined or spoke on another server, so members verified while already present
+    elsewhere never received the role there. This grants it silently (no
+    announcement) and records the grant, so it is idempotent across restarts.
+    """
+    await client.wait_until_ready()
+    try:
+        for guild in list(client.guilds):
+            verify_row = db.get_verify(guild.id)
+            if not verify_row:
+                continue
+            if guild.get_role(int(verify_row["role_id"])) is None:
+                continue
+            guild_row = db.get_guild(guild.id)
+            lang = guild_row["lang"] if guild_row and guild_row["lang"] in SUPPORTED_LANGS else DEFAULT_LANG
+            for member in list(guild.members):
+                if member.bot:
+                    continue
+                if db.has_verify_grant(guild.id, member.id):
+                    continue
+                if not db.is_verified(member.id):
+                    continue
+                try:
+                    await _grant_verify(member, verify_row, guild_row, lang, cross_server=True, announce=False)
+                except Exception:
+                    pass
+    except Exception:
+        pass
 
 async def unban_loop(client: discord.Client):
     await client.wait_until_ready()
