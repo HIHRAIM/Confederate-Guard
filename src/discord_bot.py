@@ -291,6 +291,9 @@ async def handle_verification(message: discord.Message):
     if not verify_row:
         return
 
+    if message.is_system():
+        return
+
     member = message.author
     if db.has_verify_grant(guild.id, member.id):
         return

@@ -32,6 +32,5 @@ def main():
     print(f"restored {sys.argv[1]} -> {sys.argv[2]}")
     return 0
 
-
 if __name__ == "__main__":
     raise SystemExit(main())
