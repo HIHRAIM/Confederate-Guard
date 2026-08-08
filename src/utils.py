@@ -291,3 +291,30 @@ def get_next_status_text(servers):
     else:
         word = plural_en(servers, forms)
     return template.format(servers=servers, servers_word=word)
+
+async def send_service_event(event_key, **kwargs):
+    """Report an operational event — start-up, shutdown, servers joined and
+    left — to every channel in config.SERVICE_CHATS, each in its own
+    language. Every send is guarded: the service chats are where failures are
+    reported, so a failure there must stay a log line.
+
+    Lives here rather than in main.py so that the command module can report
+    without importing the entry module, which under `python main.py` would
+    load a second copy of it and rerun everything at its top level."""
+    from config import SERVICE_CHATS
+    from discord_bot import bot
+
+    for channel_id in SERVICE_CHATS.get("discord", set()):
+        try:
+            ch = bot.get_channel(channel_id)
+            if not ch:
+                try:
+                    ch = await bot.fetch_channel(channel_id)
+                except Exception:
+                    ch = None
+            if ch:
+                guild_id = ch.guild.id if getattr(ch, "guild", None) else None
+                lang = get_guild_lang(guild_id) if guild_id else DEFAULT_LANG
+                await ch.send(localized(event_key, lang, **kwargs))
+        except Exception:
+            pass

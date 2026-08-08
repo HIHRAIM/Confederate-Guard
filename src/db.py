@@ -123,6 +123,68 @@ def init():
         ui_lang TEXT,
         created_at INTEGER
     );
+
+    CREATE TABLE IF NOT EXISTS localizers (
+        platform TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        username TEXT,
+        added_by TEXT,
+        added_at INTEGER,
+        PRIMARY KEY (platform, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS consuls (
+        user_id TEXT PRIMARY KEY,
+        added_by TEXT,
+        added_at INTEGER
+    );
+
+    -- One row per spam-guard ban put before the tribunal channel. The row is
+    -- what lets the buttons keep working across restarts and what the sweep
+    -- reads to retire them; `resolved` is NULL while the case is open.
+    CREATE TABLE IF NOT EXISTS tribunal_cases (
+        message_id TEXT PRIMARY KEY,
+        channel_id TEXT NOT NULL,
+        guild_id TEXT NOT NULL,
+        network INTEGER,
+        user_id TEXT NOT NULL,
+        reason TEXT,
+        lang TEXT,
+        created_at INTEGER,
+        resolved TEXT
+    );
+
+    -- Ban summaries posted into appeal threads, remembered only so their
+    -- per-network unban buttons can be re-registered after a restart.
+    CREATE TABLE IF NOT EXISTS baninfo_posts (
+        message_id TEXT PRIMARY KEY,
+        channel_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        created_at INTEGER
+    );
+
+    -- Free-form switches of the bot itself. Currently only
+    -- 'setup_rule_since', the moment the seven-day setup deadline came into
+    -- force (setup_deadline.py).
+    CREATE TABLE IF NOT EXISTS bot_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    );
+
+    -- The seven-day setup deadline (setup_deadline.py). One row per server
+    -- the bot was added to AFTER the rule came into force — every server it
+    -- was already in has no row and is never examined. joined_at is only a
+    -- record: Discord's own Guild.me.joined_at is what the sweep measures
+    -- from, and it survives a restart. settled_at is set the first time the
+    -- server is found registered with /setup, and is what makes the check
+    -- one-shot: a server registered once is never left afterwards.
+    CREATE TABLE IF NOT EXISTS setup_deadlines (
+        platform TEXT NOT NULL,
+        server_id TEXT NOT NULL,
+        joined_at INTEGER,
+        settled_at INTEGER,
+        PRIMARY KEY (platform, server_id)
+    );
     """)
     conn.commit()
     cols = [r[1] for r in cur.execute("PRAGMA table_info(guilds)").fetchall()]
@@ -164,6 +226,69 @@ def cleanup_expired_user_data():
     cur.execute(
         "DELETE FROM ban_history WHERE banned_at IS NOT NULL AND banned_at < ?",
         (cutoff_ts,)
+    )
+    conn.commit()
+
+def rule_since():
+    """The unix time the seven-day setup deadline came into force, planted on
+    first call and stable ever after.
+
+    Every server the bot was already in joined before that instant, and the
+    sweep leaves those alone — which is what keeps a deployment from walking
+    out of its own servers the day the rule ships."""
+    row = cur.execute(
+        "SELECT value FROM bot_settings WHERE key='setup_rule_since'"
+    ).fetchone()
+    if row and row["value"]:
+        try:
+            return int(row["value"])
+        except ValueError:
+            pass
+    now = int(time.time())
+    cur.execute(
+        "INSERT OR REPLACE INTO bot_settings (key, value) VALUES ('setup_rule_since', ?)",
+        (str(now),)
+    )
+    conn.commit()
+    return now
+
+def record_join(guild_id, joined_at=None):
+    """Remember that the bot has just been added to a server. Does nothing
+    when a row already exists: a replayed GUILD_CREATE must not restart a
+    deadline, least of all a settled one."""
+    cur.execute(
+        "INSERT OR IGNORE INTO setup_deadlines (platform, server_id, joined_at)"
+        " VALUES ('discord',?,?)",
+        (str(guild_id), int(joined_at if joined_at is not None else time.time()))
+    )
+    conn.commit()
+
+def get_deadline_row(guild_id):
+    """The server's deadline row, or None — which is what every server from
+    before the rule looks like."""
+    return cur.execute(
+        "SELECT * FROM setup_deadlines WHERE platform='discord' AND server_id=?",
+        (str(guild_id),)
+    ).fetchone()
+
+def mark_settled(guild_id):
+    """Note that the server has been registered with /setup, which takes it
+    out of the rule for good."""
+    now = int(time.time())
+    cur.execute(
+        "INSERT INTO setup_deadlines (platform, server_id, joined_at, settled_at)"
+        " VALUES ('discord',?,?,?)"
+        " ON CONFLICT(platform, server_id) DO UPDATE SET settled_at=excluded.settled_at",
+        (str(guild_id), now, now)
+    )
+    conn.commit()
+
+def forget_deadline(guild_id):
+    """Drop the row once the bot has left, so that a later re-invitation is a
+    fresh seven days rather than a settlement inherited from last time."""
+    cur.execute(
+        "DELETE FROM setup_deadlines WHERE platform='discord' AND server_id=?",
+        (str(guild_id),)
     )
     conn.commit()
 
@@ -274,6 +399,37 @@ def is_guild_admin(guild_id, user_id):
     ).fetchone()
     return row is not None
 
+def add_localizer(platform, user_id, username=None, added_by=None):
+    """Grant localizer status (set with /localizer-add): the user may edit
+    this bot's localization through the control panel.  The username, when
+    known, is kept for the panel's username login."""
+    cur.execute(
+        "INSERT INTO localizers (platform, user_id, username, added_by, added_at)"
+        " VALUES (?,?,?,?,strftime('%s','now'))"
+        " ON CONFLICT(platform, user_id) DO UPDATE SET"
+        " username=COALESCE(excluded.username, localizers.username)",
+        (platform, str(user_id), username,
+         str(added_by) if added_by is not None else None)
+    )
+    conn.commit()
+
+def remove_localizer(platform, user_id):
+    """Revoke a delegated localizer status.  Returns True when a row existed
+    (admins are localizers implicitly and have no row to remove)."""
+    removed = cur.execute(
+        "DELETE FROM localizers WHERE platform=? AND user_id=?",
+        (platform, str(user_id))
+    ).rowcount
+    conn.commit()
+    return removed > 0
+
+def is_localizer(platform, user_id):
+    row = cur.execute(
+        "SELECT 1 FROM localizers WHERE platform=? AND user_id=?",
+        (platform, str(user_id))
+    ).fetchone()
+    return row is not None
+
 def add_banned_link(kind, value):
     cur.execute(
         "INSERT OR IGNORE INTO banned_links (kind, value) VALUES (?,?)",
@@ -316,6 +472,14 @@ def is_verified(user_id):
         (str(user_id),)
     ).fetchone()
     return row is not None
+
+def get_verified_origin(user_id):
+    """Guild where the user's verification originated, or None if unknown."""
+    row = cur.execute(
+        "SELECT origin_guild_id FROM verified_users WHERE user_id=?",
+        (str(user_id),)
+    ).fetchone()
+    return int(row["origin_guild_id"]) if row and row["origin_guild_id"] else None
 
 def add_verified(user_id, origin_guild_id=None):
     cur.execute(
@@ -384,6 +548,19 @@ def remove_ban_history(guild_id, user_id):
     )
     conn.commit()
 
+def get_user_ban_history(user_id):
+    """Ban-history rows of this user across all guilds (guild_id, banned_at)."""
+    return cur.execute(
+        "SELECT guild_id, banned_at FROM ban_history WHERE user_id=?",
+        (str(user_id),)
+    ).fetchall()
+
+def remove_user_ban_history(user_id):
+    """Forget every ban-history row of this user (consul pardon reverts the bans
+    deliberately, so the 'previously banned in this network' notice must stop)."""
+    cur.execute("DELETE FROM ban_history WHERE user_id=?", (str(user_id),))
+    conn.commit()
+
 def get_network_ban_history(network, user_id):
     """Return ban-history rows for this user across all guilds in the given network,
     most recent first. Each row has guild_id and banned_at."""
@@ -442,6 +619,76 @@ def cleanup_expired_global_bans():
     now = int(time.time())
     cur.execute("DELETE FROM global_bans WHERE unban_at IS NOT NULL AND unban_at <= ?", (now,))
     conn.commit()
+
+def get_user_active_bans(user_id):
+    """Active local bans of this user on any guild, most recent unban first.
+
+    A NULL unban_at means a permanent ban and counts as active. Joined with
+    guilds so callers get the banning server's language without extra lookups.
+    """
+    now = int(time.time())
+    return cur.execute(
+        """
+        SELECT ab.guild_id AS guild_id, ab.unban_at AS unban_at, g.lang AS lang
+        FROM active_bans ab
+        LEFT JOIN guilds g ON g.guild_id = ab.guild_id
+        WHERE ab.user_id = ? AND (ab.unban_at IS NULL OR ab.unban_at > ?)
+        ORDER BY (ab.unban_at IS NULL) DESC, ab.unban_at DESC
+        """,
+        (str(user_id), now)
+    ).fetchall()
+
+def get_user_active_global_bans(user_id):
+    """Active global bans of this user across all networks, most recent first.
+
+    Joined with guilds on the origin guild so callers get the language of the
+    server that issued the global ban.
+    """
+    now = int(time.time())
+    return cur.execute(
+        """
+        SELECT gb.network AS network, gb.origin_guild_id AS origin_guild_id,
+               gb.banned_at AS banned_at, gb.unban_at AS unban_at, g.lang AS lang
+        FROM global_bans gb
+        LEFT JOIN guilds g ON g.guild_id = gb.origin_guild_id
+        WHERE gb.user_id = ? AND gb.unban_at > ?
+        ORDER BY gb.banned_at DESC
+        """,
+        (str(user_id), now)
+    ).fetchall()
+
+def get_user_global_bans(user_id):
+    """All still-active global bans of this user with full details (reason,
+    origin guild, dates), for the appeal ban-info summary."""
+    now = int(time.time())
+    return cur.execute(
+        """
+        SELECT network, user_id, reason, origin_guild_id, banned_at, unban_at
+        FROM global_bans
+        WHERE user_id = ? AND (unban_at IS NULL OR unban_at > ?)
+        """,
+        (str(user_id), now)
+    ).fetchall()
+
+def add_consul(user_id, added_by):
+    cur.execute(
+        "INSERT OR REPLACE INTO consuls (user_id, added_by, added_at) VALUES (?,?,?)",
+        (str(user_id), str(added_by), int(time.time()))
+    )
+    conn.commit()
+
+def remove_consul(user_id):
+    cur.execute("DELETE FROM consuls WHERE user_id=?", (str(user_id),))
+    removed = cur.rowcount > 0
+    conn.commit()
+    return removed
+
+def is_consul(user_id):
+    row = cur.execute(
+        "SELECT 1 FROM consuls WHERE user_id=?",
+        (str(user_id),)
+    ).fetchone()
+    return row is not None
 
 def set_gbans_enabled(guild_id, enabled):
     cur.execute(
@@ -545,6 +792,75 @@ def cleanup_old_loc_suggestions(max_age_seconds=365 * 24 * 3600):
     cutoff = int(time.time()) - max_age_seconds
     cur.execute(
         "DELETE FROM loc_suggestions WHERE created_at IS NOT NULL AND created_at < ?",
+        (cutoff,)
+    )
+    conn.commit()
+
+def add_tribunal_case(message_id, channel_id, guild_id, network, user_id, reason, lang):
+    cur.execute(
+        """
+        INSERT OR REPLACE INTO tribunal_cases
+        (message_id, channel_id, guild_id, network, user_id, reason, lang, created_at, resolved)
+        VALUES (?,?,?,?,?,?,?,?,NULL)
+        """,
+        (str(message_id), str(channel_id), str(guild_id), network, str(user_id),
+         reason, lang, int(time.time()))
+    )
+    conn.commit()
+
+def get_tribunal_case(message_id):
+    return cur.execute(
+        "SELECT * FROM tribunal_cases WHERE message_id=?", (str(message_id),)
+    ).fetchone()
+
+def resolve_tribunal_case(message_id, outcome) -> bool:
+    """Close an open case. Returns False when it was already closed, which is
+    how two consuls pressing at once end up applying one verdict."""
+    cur.execute(
+        "UPDATE tribunal_cases SET resolved=? WHERE message_id=? AND resolved IS NULL",
+        (outcome, str(message_id))
+    )
+    conn.commit()
+    return cur.rowcount > 0
+
+def get_open_tribunal_cases():
+    return cur.execute(
+        "SELECT * FROM tribunal_cases WHERE resolved IS NULL"
+    ).fetchall()
+
+def get_stale_tribunal_cases(max_age_seconds):
+    cutoff = int(time.time()) - max_age_seconds
+    return cur.execute(
+        "SELECT * FROM tribunal_cases WHERE resolved IS NULL"
+        " AND created_at IS NOT NULL AND created_at < ?",
+        (cutoff,)
+    ).fetchall()
+
+def add_baninfo_post(message_id, channel_id, user_id):
+    cur.execute(
+        """
+        INSERT OR REPLACE INTO baninfo_posts
+        (message_id, channel_id, user_id, created_at) VALUES (?,?,?,?)
+        """,
+        (str(message_id), str(channel_id), str(user_id), int(time.time()))
+    )
+    conn.commit()
+
+def get_baninfo_posts(max_age_seconds=None):
+    if max_age_seconds is None:
+        return cur.execute("SELECT * FROM baninfo_posts").fetchall()
+    cutoff = int(time.time()) - max_age_seconds
+    return cur.execute(
+        "SELECT * FROM baninfo_posts WHERE created_at IS NULL OR created_at >= ?",
+        (cutoff,)
+    ).fetchall()
+
+def cleanup_old_baninfo_posts(max_age_seconds=90 * 24 * 3600):
+    """The summaries themselves stay in the thread; only the bookkeeping that
+    keeps their buttons alive is dropped once an appeal is long over."""
+    cutoff = int(time.time()) - max_age_seconds
+    cur.execute(
+        "DELETE FROM baninfo_posts WHERE created_at IS NOT NULL AND created_at < ?",
         (cutoff,)
     )
     conn.commit()

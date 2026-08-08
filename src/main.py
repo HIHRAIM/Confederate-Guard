@@ -1,26 +1,9 @@
 import asyncio
 import discord
 import db
-from config import BOT_TOKEN, SERVICE_CHATS, BACKUP_CHATS
+from config import BOT_TOKEN, BACKUP_CHATS
 from discord_bot import bot
-from utils import get_guild_lang, localized
-
-async def send_service_event(event_key):
-    for channel_id in SERVICE_CHATS.get("discord", set()):
-        try:
-            ch = bot.get_channel(channel_id)
-            if not ch:
-                try:
-                    ch = await bot.fetch_channel(channel_id)
-                except Exception:
-                    ch = None
-            if ch:
-                guild_id = ch.guild.id if getattr(ch, "guild", None) else None
-                lang = get_guild_lang(guild_id) if guild_id else "en"
-                text = localized(event_key, lang)
-                await ch.send(text)
-        except Exception:
-            pass
+from utils import send_service_event
 
 async def send_db_backup():
     import io
@@ -62,14 +45,34 @@ async def retention_loop():
             pass
         await asyncio.sleep(24 * 3600)
 
+async def setup_deadline_loop():
+    """Daily wrapper around setup_deadline.setup_deadline_pass: leaves the
+    servers whose seven days ran out without a `/setup`, and reports each
+    departure to the service chats.
+
+    Waits for the client first — the sweep reads `Guild.me.joined_at` off the
+    guild list, and an empty one would simply find nothing to do."""
+    from setup_deadline import setup_deadline_pass
+
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        try:
+            for event_key, fields in await setup_deadline_pass(bot):
+                await send_service_event(event_key, **fields)
+        except Exception as e:
+            print(f"setup_deadline_loop error: {e}", flush=True)
+        await asyncio.sleep(24 * 3600)
+
 async def main():
     db.init()
     db.cleanup_expired_user_data()
+    db.rule_since()
 
     await asyncio.sleep(0)
     task = asyncio.create_task(bot.start(BOT_TOKEN))
     asyncio.get_event_loop().create_task(backup_loop())
     asyncio.get_event_loop().create_task(retention_loop())
+    asyncio.get_event_loop().create_task(setup_deadline_loop())
 
     await asyncio.sleep(5)
     await send_service_event("bot_started")

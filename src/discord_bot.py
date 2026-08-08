@@ -9,13 +9,17 @@ import traceback
 from datetime import timedelta, datetime, timezone
 import db
 import utils
-from config import VERIFIED, UNVERIFIED, SUPPORT_CHATS
+from config import (
+    VERIFIED, UNVERIFIED, SUPPORT_CHATS,
+    PURGATORIUM_GUILD_ID, PURGATORIUM_INVITE_URL, BRIDGE_BOT_ID, APPEAL_PARDON_CHANNELS,
+    APPEAL_BANINFO_CHANNELS, CONSULS, TRIBUNAL_CHANNELS,
+)
 from utils import (
     is_admin, get_guild_lang, localized,
     parse_duration, parse_global_duration, format_duration, message_has_spam,
     classify_banned_link, message_has_banned_link,
     language_name, available_locales, locale_stats, locale_bar, compare_reply,
-    LANG_ORDER, LOCALE_STATUS_EMOJI,
+    LANG_ORDER, LOCALE_STATUS_EMOJI, GLOBAL_BAN_MAX_SECONDS,
     SUPPORTED_LANGS, DEFAULT_LANG
 )
 
@@ -32,6 +36,32 @@ class GuardBot(discord.Client):
         asyncio.create_task(unban_loop(self))
         asyncio.create_task(status_loop(self))
         asyncio.create_task(backfill_verified_roles(self))
+        self._restore_persistent_views()
+
+    def _restore_persistent_views(self):
+        """Re-arm the buttons the bot left on messages before it was restarted.
+
+        Both sets are bound to their message, since their custom_ids carry the
+        user (and network) they act on rather than being one fixed shape. The
+        pardon buttons are rebuilt from what is banned *now*, so a ban lifted
+        while the bot was down does not come back as a live button."""
+        try:
+            for case in db.get_open_tribunal_cases():
+                lang = case["lang"] if case["lang"] in SUPPORTED_LANGS else DEFAULT_LANG
+                self.add_view(TribunalView(int(case["user_id"]), lang),
+                              message_id=int(case["message_id"]))
+        except Exception as e:
+            print(f"[ERROR] restoring tribunal views: {e}", flush=True)
+        try:
+            lang = get_guild_lang(PURGATORIUM_GUILD_ID)
+            for row in db.get_baninfo_posts(max_age_seconds=90 * 86400):
+                uid = int(row["user_id"])
+                networks = _user_ban_networks(uid)
+                if networks:
+                    self.add_view(NetworkPardonView(uid, networks, lang),
+                                  message_id=int(row["message_id"]))
+        except Exception as e:
+            print(f"[ERROR] restoring pardon views: {e}", flush=True)
 
     async def on_ready(self):
         print(f"Logged in as {self.user} (ID: {self.user.id})")
@@ -253,7 +283,7 @@ async def _grant_verify(member: discord.Member, verify_row, guild_row, lang, cro
         except Exception:
             pass
 
-async def propagate_verified_roles(uid, announce: bool):
+async def propagate_verified_roles(uid, announce: bool, origin_guild_id=None):
     """Grant the verify role to a verified user on every guild where they are a
     present member and verification is enabled, skipping guilds where the grant
     was already recorded.
@@ -264,7 +294,20 @@ async def propagate_verified_roles(uid, announce: bool):
     user actually is — never on whichever guild happens to host the bridge sync
     channel. Recording the grant also prevents a later message from the user from
     triggering a duplicate 'verified' announcement.
+
+    origin_guild_id is the server where the user actually verified: there the
+    announcement uses the plain 'verified' text, everywhere else the
+    cross-server one. An unknown origin (a sync message without a server id, or
+    a verification that happened on Telegram) means plain text everywhere: on
+    the server where the user really verified 'due to verification on another
+    server' is simply false, and nowhere else does the parenthesis matter enough
+    to guess.
     """
+    try:
+        origin = int(origin_guild_id) if origin_guild_id is not None else None
+    except (TypeError, ValueError):
+        origin = None
+
     for guild in bot.guilds:
         verify_row = db.get_verify(guild.id)
         if not verify_row:
@@ -279,8 +322,9 @@ async def propagate_verified_roles(uid, announce: bool):
             continue
         guild_row = db.get_guild(guild.id)
         lang = guild_row["lang"] if guild_row and guild_row["lang"] in SUPPORTED_LANGS else DEFAULT_LANG
+        cross = origin is not None and guild.id != origin
         try:
-            await _grant_verify(member, verify_row, guild_row, lang, cross_server=True, announce=announce)
+            await _grant_verify(member, verify_row, guild_row, lang, cross_server=cross, announce=announce)
         except Exception:
             pass
 
@@ -302,7 +346,11 @@ async def handle_verification(message: discord.Message):
     lang = guild_row["lang"] if guild_row else DEFAULT_LANG
 
     if db.is_verified(member.id):
-        await _grant_verify(member, verify_row, guild_row, lang, cross_server=True)
+        origin = db.get_verified_origin(member.id)
+        await _grant_verify(
+            member, verify_row, guild_row, lang,
+            cross_server=(origin is not None and origin != guild.id)
+        )
         return
 
     today = message.created_at.date().isoformat()
@@ -318,24 +366,458 @@ async def handle_verification(message: discord.Message):
 async def handle_verification_sync(message: discord.Message):
     """Mirror bridge_bot's verification state changes into our database.
 
-    bridge_bot posts a bare user ID to the VERIFIED channel when a user consents
-    to message forwarding, and to the UNVERIFIED channel when a user unverifies
-    themselves. We add or remove the user from our cross-server verified database
-    accordingly.
+    A user ID posted to the VERIFIED channel means the user consented to
+    message forwarding; one posted to the UNVERIFIED channel means the user
+    unverified themselves. We add or remove the user from our cross-server
+    verified database accordingly and acknowledge the processed message with a
+    ✅ reaction (anyone may post there, not only bridge_bot).
+
+    A second number on the VERIFIED line is the id of the server where the
+    consent was actually given; bridge_bot sends it for Discord-side
+    verifications. It is what keeps that server's announcement from claiming
+    the verification happened somewhere else. Older senders post the id alone,
+    which stays valid — the origin is then simply unknown.
     """
+    parts = (message.content or "").split()
+    if not parts or not parts[0].isdigit():
+        return
+    uid = int(parts[0])
+
+    if message.channel.id in UNVERIFIED:
+        db.remove_verified(uid)
+        await _acknowledge_message(message)
+        return
+
+    origin = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else None
+
+    if not db.is_verified(uid):
+        db.add_verified(uid, origin)
+        await propagate_verified_roles(uid, announce=True, origin_guild_id=origin)
+    await _acknowledge_message(message)
+
+async def _acknowledge_message(message: discord.Message):
+    """React with ✅ to mark a sync-channel message as processed."""
+    try:
+        await message.add_reaction("✅")
+    except Exception:
+        pass
+
+def _purgatorium_invite_line(guild_id, lang):
+    """Localized Purgatorium invitation appended to ban DMs.
+
+    Returns None when the server runs its own appeal system (a /setappeal text
+    is configured) or when the ban happened on Purgatorium itself — bans there
+    are not appealable through the bots.
+    """
+    if int(guild_id) == PURGATORIUM_GUILD_ID:
+        return None
+    if db.get_appeal(guild_id):
+        return None
+    return localized("purgatorium_invite_line", lang, invite=PURGATORIUM_INVITE_URL)
+
+GATE_BAN_MARKER = "[gate-unban:"
+
+async def _find_registered_guild_ban(uid):
+    """Language of the first server registered via /setup where the user is
+    really banned, or None.
+
+    The database only knows the bans the bot issued itself: a moderator who
+    bans by hand (or another bot that does) leaves no row in active_bans. The
+    Purgatorium gate therefore falls back to the servers' live ban lists, so a
+    genuinely banned user is invited to appeal instead of being locked out for
+    a day. Nothing is written back — the gate keeps no trace of the visitor.
+    """
+    for guild in list(bot.guilds):
+        if guild.id == PURGATORIUM_GUILD_ID:
+            continue
+        guild_row = db.get_guild(guild.id)
+        if guild_row is None:
+            continue
+        try:
+            await guild.fetch_ban(discord.Object(id=uid))
+        except Exception:
+            continue
+        return guild_row["lang"] if guild_row["lang"] in SUPPORTED_LANGS else DEFAULT_LANG
+    return None
+
+async def handle_purgatorium_join(member: discord.Member):
+    """Gatekeeper for the shared appeal server.
+
+    Consuls (appointed via /setconsul) are let in and handed the CONSULS
+    role(s). Users with an active ban anywhere in guard_bot's database — or, if
+    the database knows nothing, on the live ban list of any server registered
+    via /setup — get a DM (in the language of the server that banned them)
+    telling them to send /appeal to bridge_bot, with whom they now share a
+    server. Everyone else — including users whose bans were already lifted — is
+    silently banned for one day. That ban is deliberately kept out of the
+    database: the unban moment is encoded in the audit-log reason and lifted by
+    the unban_loop scan, so the gate leaves no stored trace of the visitor.
+    """
+    if is_admin(member.id, PURGATORIUM_GUILD_ID):
+        return
+
+    if db.is_consul(member.id):
+        roles = [member.guild.get_role(int(rid)) for rid in CONSULS]
+        roles = [r for r in roles if r is not None]
+        if roles:
+            try:
+                await member.add_roles(*roles, reason="Purgatorium consul")
+            except Exception:
+                pass
+        return
+
+    global_bans = db.get_user_active_global_bans(member.id)
+    local_bans = [
+        b for b in db.get_user_active_bans(member.id)
+        if int(b["guild_id"]) != PURGATORIUM_GUILD_ID
+    ]
+
+    if global_bans or local_bans:
+        row = global_bans[0] if global_bans else local_bans[0]
+        lang = row["lang"] if row["lang"] in SUPPORTED_LANGS else DEFAULT_LANG
+    else:
+        lang = await _find_registered_guild_ban(member.id)
+
+    if lang is not None:
+        try:
+            await member.send(
+                localized("purgatorium_appeal_hint", lang, bridge_bot=f"<@{BRIDGE_BOT_ID}>")
+            )
+        except Exception:
+            pass
+        return
+
+    try:
+        await member.guild.ban(
+            discord.Object(id=member.id),
+            reason=(
+                "Purgatorium gate: no active ban to appeal "
+                f"{GATE_BAN_MARKER}{int(time.time()) + 86400}]"
+            ),
+            delete_message_days=0,
+        )
+    except Exception:
+        return
+
+async def _execute_global_unban(network, uid):
+    """Lift a network's global ban: delete the DB record and unban the user on
+    the origin guild plus every guild that enforced the ban. Returns how many
+    guilds were processed."""
+    gban = db.get_global_ban(network, uid)
+    if not gban:
+        return 0
+
+    db.remove_global_ban(network, uid)
+    origin_guild_id = str(gban["origin_guild_id"]) if gban["origin_guild_id"] else None
+
+    count = 0
+    for g in db.get_network_guilds(network):
+        gid = int(g["guild_id"])
+        enforced = str(uid) in db.get_gban_enforcements(gid)
+        is_origin = origin_guild_id is not None and str(gid) == origin_guild_id
+        if not (enforced or is_origin):
+            continue
+        guild_obj = bot.get_guild(gid)
+        if guild_obj:
+            try:
+                await guild_obj.unban(discord.Object(id=uid))
+            except Exception:
+                pass
+        db.remove_active_ban(gid, uid)
+        db.remove_gban_enforcement(gid, uid)
+        db.remove_ban_history(gid, uid)
+        count += 1
+    return count
+
+async def handle_appeal_pardon(message: discord.Message):
+    """Consume a consul verdict from the appeal-pardon sync channel.
+
+    bridge_bot posts a bare user ID there when the consuls decide to lift the
+    user's bans. The pardon clears everything: global (network) bans plus every
+    local ban on every server, so the pardoned user never re-enters Purgatorium
+    looking 'still banned' and gets invited to appeal again. Only bridge_bot
+    and bot admins are trusted; the ✅ reaction acknowledges that the verdict
+    was processed.
+    """
+    if message.author.id != BRIDGE_BOT_ID and not is_admin(message.author.id):
+        return
     content = (message.content or "").strip()
     if not content.isdigit():
         return
     uid = int(content)
 
-    if message.channel.id in UNVERIFIED:
-        db.remove_verified(uid)
+    for gban in db.get_user_active_global_bans(uid):
+        try:
+            await _execute_global_unban(gban["network"], uid)
+        except Exception:
+            pass
+
+    for row in db.get_user_active_bans(uid):
+        gid = int(row["guild_id"])
+        guild_obj = bot.get_guild(gid)
+        if guild_obj:
+            try:
+                await guild_obj.unban(discord.Object(id=uid), reason="Appeal granted by consuls")
+            except Exception:
+                pass
+        db.remove_active_ban(gid, uid)
+        db.remove_gban_enforcement(gid, uid)
+    db.remove_user_ban_history(uid)
+
+    await _acknowledge_message(message)
+
+def _format_ts_date(ts):
+    try:
+        return datetime.fromtimestamp(int(ts), tz=timezone.utc).strftime("%Y-%m-%d")
+    except Exception:
+        return None
+
+async def _collect_user_ban_info(uid):
+    """Everything guard_bot knows about the user's bans, per guild.
+
+    Merges the live ban lists of every server the bot is on (reason from the
+    ban entry, moderator and date from the audit log when readable) with the
+    database: active local bans (end date), ban history (start date) and
+    global bans (network, reason, origin). Purgatorium's own bans are not
+    appealable and are left out. Returns {guild_id: info-dict}.
+    """
+    entries = {}
+
+    def entry(gid, name=None):
+        gid = int(gid)
+        e = entries.setdefault(gid, {"name": None})
+        if name:
+            e["name"] = name
+        return e
+
+    for guild in list(bot.guilds):
+        if guild.id == PURGATORIUM_GUILD_ID:
+            continue
+        try:
+            ban_entry = await guild.fetch_ban(discord.Object(id=uid))
+        except Exception:
+            continue
+        e = entry(guild.id, guild.name)
+        if ban_entry.reason:
+            e.setdefault("reason", ban_entry.reason)
+        try:
+            async for log in guild.audit_logs(action=discord.AuditLogAction.ban, limit=50):
+                if getattr(log.target, "id", None) == uid:
+                    if log.user:
+                        e.setdefault("moderator", str(log.user))
+                    if log.created_at:
+                        e.setdefault("banned_at", int(log.created_at.timestamp()))
+                    break
+        except Exception:
+            pass
+
+    for row in db.get_user_active_bans(uid):
+        gid = int(row["guild_id"])
+        if gid == PURGATORIUM_GUILD_ID:
+            continue
+        e = entry(gid)
+        if row["unban_at"] is None:
+            e["permanent"] = True
+        else:
+            e.setdefault("unban_at", int(row["unban_at"]))
+
+    for row in db.get_user_ban_history(uid):
+        gid = int(row["guild_id"])
+        if gid == PURGATORIUM_GUILD_ID:
+            continue
+        if row["banned_at"]:
+            entry(gid).setdefault("banned_at", int(row["banned_at"]))
+
+    for row in db.get_user_global_bans(uid):
+        e = entry(row["origin_guild_id"]) if row["origin_guild_id"] else None
+        if e is None:
+            continue
+        e["network"] = row["network"]
+        if row["reason"]:
+            e.setdefault("reason", row["reason"])
+        if row["banned_at"]:
+            e.setdefault("banned_at", int(row["banned_at"]))
+        if row["unban_at"]:
+            e.setdefault("unban_at", int(row["unban_at"]))
+
+    for gid, e in entries.items():
+        if not e["name"]:
+            guild = bot.get_guild(gid)
+            e["name"] = guild.name if guild else str(gid)
+    return entries
+
+def _format_ban_info_entry(e, lang):
+    details = []
+    if "network" in e:
+        details.append(localized("baninfo_network", lang, network=e["network"]))
+    date = _format_ts_date(e.get("banned_at")) if e.get("banned_at") else None
+    if date:
+        details.append(localized("baninfo_when", lang, date=date))
+    if e.get("reason"):
+        details.append(localized("baninfo_reason", lang, reason=e["reason"]))
+    if e.get("moderator"):
+        details.append(localized("baninfo_by", lang, moderator=e["moderator"]))
+    if e.get("permanent"):
+        details.append(localized("baninfo_permanent", lang))
+    else:
+        until = _format_ts_date(e.get("unban_at")) if e.get("unban_at") else None
+        if until:
+            details.append(localized("baninfo_until", lang, date=until))
+    if not details:
+        details.append(localized("baninfo_no_details", lang))
+    return f"**{e['name']}** ({'; '.join(details)})"
+
+def _is_consul_or_admin(user) -> bool:
+    """Who may act on the buttons the bot puts in appeal threads and in the
+    tribunal channel: bot admins, consuls appointed with /setconsul, and anyone
+    holding one of the CONSULS roles where the interaction happened."""
+    uid = getattr(user, "id", None)
+    if uid is None:
+        return False
+    if is_admin(uid) or db.is_consul(uid):
+        return True
+    return any(role.id in CONSULS for role in getattr(user, "roles", None) or [])
+
+def _user_ban_networks(uid):
+    """Networks where this user currently holds a global ban, ascending."""
+    return sorted({row["network"] for row in db.get_user_active_global_bans(uid)})
+
+class NetworkPardonButton(discord.ui.Button):
+    def __init__(self, uid, network, label):
+        super().__init__(
+            label=label,
+            style=discord.ButtonStyle.success,
+            custom_id=f"gpardon:{uid}:{'all' if network is None else network}",
+        )
+        self.uid = int(uid)
+        self.network = network
+
+    async def callback(self, interaction: discord.Interaction):
+        await handle_network_pardon_click(interaction, self.uid, self.network)
+
+class NetworkPardonView(discord.ui.View):
+    """Per-network unban controls under a ban summary in an appeal thread.
+
+    The consuls' verdict buttons (bridge_bot's, on the pinned message) decide the
+    appeal as a whole; these decide one network at a time, which is the finer
+    tool the same conversation often needs — a user may be banned in several
+    networks and deserve to come back to only one of them. Pressing one changes
+    nothing about the appeal itself: the thread stays open until the consuls
+    close it.
+
+    The set of buttons is built from the user's *current* global bans every time
+    the view is constructed, so neither a restart nor a second press can leave
+    behind a button for a network whose ban is already gone.
+    """
+    def __init__(self, uid, networks, lang):
+        super().__init__(timeout=None)
+        for network in list(networks)[:20]:
+            self.add_item(NetworkPardonButton(
+                uid, network, localized("pardon_btn_network", lang, network=network)))
+        if len(networks) > 1:
+            self.add_item(NetworkPardonButton(uid, None, localized("pardon_btn_all", lang)))
+
+async def _refresh_pardon_view(message, uid, lang):
+    """Rebuild a summary's buttons from what is still banned, or drop them."""
+    if message is None:
+        return
+    networks = _user_ban_networks(uid)
+    try:
+        await message.edit(view=NetworkPardonView(uid, networks, lang) if networks else None)
+    except Exception:
+        pass
+
+async def handle_network_pardon_click(interaction: discord.Interaction, uid, network):
+    """Lift the user's global ban in one network, or in every network at once."""
+    lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
+
+    if not _is_consul_or_admin(interaction.user):
+        await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
         return
 
-    if db.is_verified(uid):
+    await interaction.response.defer(ephemeral=True)
+
+    if network is None:
+        networks = _user_ban_networks(uid)
+    else:
+        networks = [network] if db.get_active_global_ban(network, uid) else []
+
+    if not networks:
+        await _refresh_pardon_view(interaction.message, uid, lang)
+        await interaction.followup.send(localized("pardon_none", lang), ephemeral=True)
         return
-    db.add_verified(uid, message.guild.id if message.guild else None)
-    await propagate_verified_roles(uid, announce=True)
+
+    for net in networks:
+        try:
+            await _execute_global_unban(net, uid)
+        except Exception:
+            pass
+
+    await _refresh_pardon_view(interaction.message, uid, lang)
+
+    key = "pardon_done_all" if network is None else "pardon_done_network"
+    try:
+        await interaction.channel.send(
+            localized(key, lang, id=uid, network=network, moderator=interaction.user.mention)
+        )
+    except Exception:
+        pass
+    await interaction.followup.send(localized("pardon_applied", lang), ephemeral=True)
+
+async def handle_appeal_baninfo(message: discord.Message):
+    """Answer bridge_bot's '<user_id> <thread_id>' post from the ban-info sync
+    channel: publish the user's known bans across every server of the bot into
+    the appeal thread (entries separated by an interpunct) and acknowledge the
+    processed message with a ✅ reaction so bridge_bot can pin the summary.
+
+    The last message of the summary carries the per-network unban buttons, so the
+    consuls decide next to the evidence they are deciding on."""
+    if message.author.id != BRIDGE_BOT_ID and not is_admin(message.author.id):
+        return
+    parts = (message.content or "").split()
+    if len(parts) < 2 or not parts[0].isdigit() or not parts[1].isdigit():
+        return
+    uid, thread_id = int(parts[0]), int(parts[1])
+
+    thread = bot.get_channel(thread_id)
+    if thread is None:
+        try:
+            thread = await bot.fetch_channel(thread_id)
+        except Exception:
+            return
+
+    lang = get_guild_lang(PURGATORIUM_GUILD_ID)
+    entries = await _collect_user_ban_info(uid)
+
+    if not entries:
+        texts = [localized("baninfo_none", lang, id=uid)]
+    else:
+        texts = [localized("baninfo_header", lang, id=uid)]
+        line = ""
+        for e in entries.values():
+            part = _format_ban_info_entry(e, lang)
+            if line and len(line) + len(part) + 3 > 1900:
+                texts.append(line)
+                line = part
+            else:
+                line = f"{line} · {part}" if line else part
+        if line:
+            texts.append(line)
+
+    networks = _user_ban_networks(uid)
+    view = NetworkPardonView(uid, networks, lang) if networks else None
+    sent = None
+    try:
+        for index, text in enumerate(texts):
+            with_view = view is not None and index == len(texts) - 1
+            sent = await thread.send(text[:2000], **({"view": view} if with_view else {}))
+    except Exception:
+        return
+
+    if sent is not None and view is not None:
+        db.add_baninfo_post(sent.id, thread.id, uid)
+
+    await _acknowledge_message(message)
 
 async def _purge_recent_messages(guild, user_id, hours=24):
     """Delete the user's messages posted on `guild` within the last `hours`.
@@ -387,12 +869,14 @@ async def enforce_global_ban(guild, member_or_id, gban, guild_row, lang):
 
     if member_obj is not None:
         try:
-            await member_obj.send(
-                localized(
-                    "gban_enforce_dm", lang,
-                    server=guild.name, reason=reason, remaining=f"<t:{unban_at}:R>",
-                )
+            dm_text = localized(
+                "gban_enforce_dm", lang,
+                server=guild.name, reason=reason, remaining=f"<t:{unban_at}:R>",
             )
+            invite_line = _purgatorium_invite_line(guild.id, lang)
+            if invite_line:
+                dm_text = f"{dm_text}\n{invite_line}"
+            await member_obj.send(dm_text)
         except Exception:
             pass
 
@@ -431,6 +915,216 @@ async def enforce_global_ban(guild, member_or_id, gban, guild_row, lang):
             except Exception:
                 pass
     return True
+
+TRIBUNAL_BUTTON_TTL = 7 * 86400
+
+def _tribunal_lang(channel):
+    """The tribunal channel speaks the language of the server it sits on.
+
+    Purgatorium is deliberately not registered with /setup, so a tribunal channel
+    there falls back to English — which is what the consuls reading it share."""
+    guild = getattr(channel, "guild", None)
+    return get_guild_lang(guild.id) if guild is not None else DEFAULT_LANG
+
+def _md(value):
+    """Escape a name so its own punctuation cannot format the case text."""
+    return discord.utils.escape_markdown(str(value or ""))
+
+def _tribunal_text(guild, member, network, reason, banned_at, unban_at, lang):
+    """The case as the consuls read it: one fact per line, timestamps rendered by
+    Discord so everyone sees them in their own timezone."""
+    created = int(member.created_at.timestamp()) if member.created_at else None
+    until = (f"<t:{int(unban_at)}:F>" if unban_at
+             else localized("tribunal_permanent", lang))
+    return "\n".join([
+        localized("tribunal_title", lang),
+        localized("tribunal_user", lang, name=_md(member.display_name),
+                  id=member.id, username=_md(str(member))),
+        localized("tribunal_registered", lang,
+                  date=(f"<t:{created}:F>" if created else "—")),
+        localized("tribunal_banned_at", lang, date=f"<t:{int(banned_at)}:F>"),
+        localized("tribunal_until", lang, date=until),
+        localized("tribunal_server", lang, server=_md(guild.name),
+                  id=guild.id, network=network),
+        localized("tribunal_reason", lang, reason=_md(reason) or "—"),
+    ])
+
+class TribunalButton(discord.ui.Button):
+    def __init__(self, action, uid, lang):
+        super().__init__(
+            label=localized(f"tribunal_btn_{action}", lang),
+            style=(discord.ButtonStyle.danger if action == "globalban"
+                   else discord.ButtonStyle.secondary),
+            custom_id=f"tribunal:{action}:{uid}",
+        )
+        self.action = action
+
+    async def callback(self, interaction: discord.Interaction):
+        await handle_tribunal_click(interaction, self.action)
+
+class TribunalView(discord.ui.View):
+    """'Global ban' / 'Ignore' under one automatic ban put up for review."""
+    def __init__(self, uid, lang):
+        super().__init__(timeout=None)
+        self.add_item(TribunalButton("globalban", uid, lang))
+        self.add_item(TribunalButton("ignore", uid, lang))
+
+async def post_tribunal_case(guild, member, guild_row, reason, unban_at):
+    """Put an automatic spam-guard ban before the tribunal channels.
+
+    Only bans issued on a server that belongs to a network are posted: the
+    'Global ban' button acts on that network, and without one there is nothing
+    for it to do.
+    """
+    network = guild_row["network"] if guild_row else None
+    if network is None:
+        return
+    banned_at = int(time.time())
+    for channel_id in TRIBUNAL_CHANNELS.get("discord", set()):
+        channel = await _get_channel(channel_id)
+        if channel is None:
+            continue
+        lang = _tribunal_lang(channel)
+        try:
+            sent = await channel.send(
+                _tribunal_text(guild, member, network, reason, banned_at, unban_at, lang),
+                view=TribunalView(member.id, lang),
+            )
+        except Exception:
+            continue
+        db.add_tribunal_case(sent.id, channel.id, guild.id, network, member.id, reason, lang)
+
+async def _tribunal_broadcast(uid, network, reason, unban_at, origin_guild_id, applied_guild_ids):
+    """Announce the network ban in the log channels that need to know.
+
+    Three groups: the server that issued the local ban, every server where the
+    user is banned locally — including ones outside this network, because a local
+    unban there while network bans are off would otherwise let the user walk back
+    in unnoticed — and every server the ban has just reached.
+    """
+    targets = {int(origin_guild_id)}
+    targets |= {int(row["guild_id"]) for row in db.get_user_active_bans(uid)}
+    targets |= {int(gid) for gid in applied_guild_ids}
+
+    for gid in sorted(targets):
+        guild_row = db.get_guild(gid)
+        if not guild_row or not guild_row["log_channel_id"]:
+            continue
+        channel = await _get_channel(guild_row["log_channel_id"])
+        if channel is None:
+            continue
+        lang = guild_row["lang"] if guild_row["lang"] in SUPPORTED_LANGS else DEFAULT_LANG
+        try:
+            await channel.send(localized(
+                "tribunal_network_log", lang,
+                mention=f"<@{uid}>", id=uid, network=network,
+                reason=reason or "—", until=f"<t:{int(unban_at)}:F>",
+            ))
+        except Exception:
+            pass
+
+async def _tribunal_apply_global_ban(case):
+    """Turn a reviewed local ban into a network ban.
+
+    The reason is the one the guarded channel banned for; the term is the 10
+    years `/ban infinity` means, since a consul pressing this is deciding the
+    user has no place in the network rather than setting a sentence. The origin
+    server's own ban is stretched to match, so its local timer cannot quietly
+    unban someone the network still bans.
+    """
+    uid = int(case["user_id"])
+    network = case["network"]
+    origin_guild_id = int(case["guild_id"])
+    reason = case["reason"] or ""
+    now = int(time.time())
+    unban_at = now + GLOBAL_BAN_MAX_SECONDS
+
+    db.add_global_ban(network, uid, reason, origin_guild_id, now, unban_at)
+    db.add_active_ban(origin_guild_id, uid, unban_at)
+    gban = db.get_global_ban(network, uid)
+
+    applied = []
+    for row in db.get_network_guilds(network):
+        gid = int(row["guild_id"])
+        if gid == origin_guild_id or not db.is_gbans_enabled(gid):
+            continue
+        other = bot.get_guild(gid)
+        if other is None:
+            continue
+        member = other.get_member(uid)
+        if member is None:
+            continue
+        other_lang = row["lang"] if row["lang"] in SUPPORTED_LANGS else DEFAULT_LANG
+        try:
+            if await enforce_global_ban(other, member, gban, row, other_lang):
+                applied.append(gid)
+        except Exception:
+            pass
+
+    await _tribunal_broadcast(uid, network, reason, unban_at, origin_guild_id, applied)
+
+async def _close_tribunal_message(message, note):
+    """Take the buttons off a decided case and record the outcome under it."""
+    if message is None:
+        return
+    content = f"{message.content}\n\n{note}" if message.content else note
+    try:
+        await message.edit(content=content[:2000], view=None)
+    except Exception:
+        pass
+
+async def handle_tribunal_click(interaction: discord.Interaction, action):
+    lang = _tribunal_lang(interaction.channel)
+    case = db.get_tribunal_case(interaction.message.id)
+
+    if case is None:
+        await interaction.response.send_message(
+            localized("tribunal_unknown_case", lang), ephemeral=True)
+        return
+    if not _is_consul_or_admin(interaction.user):
+        await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
+        return
+    if case["lang"] in SUPPORTED_LANGS:
+        lang = case["lang"]
+    if not db.resolve_tribunal_case(interaction.message.id, action):
+        await interaction.response.send_message(
+            localized("tribunal_already_resolved", lang), ephemeral=True)
+        return
+
+    await interaction.response.defer(ephemeral=True)
+
+    note_key = "tribunal_done_globalban" if action == "globalban" else "tribunal_done_ignore"
+    await _close_tribunal_message(
+        interaction.message, localized(note_key, lang, moderator=interaction.user.mention))
+
+    if action == "globalban":
+        try:
+            await _tribunal_apply_global_ban(case)
+        except Exception as e:
+            print(f"[ERROR] tribunal global ban failed for {case['user_id']}: {e}", flush=True)
+
+    try:
+        await interaction.followup.send(localized("tribunal_ack", lang), ephemeral=True)
+    except Exception:
+        pass
+
+async def _retire_stale_tribunal_cases(client: discord.Client):
+    """Take the buttons off cases nobody acted on within the window.
+
+    A case left open forever is a button that bans someone months after anyone
+    remembers why, so the offer expires even though Discord itself would keep the
+    components clickable indefinitely."""
+    for case in db.get_stale_tribunal_cases(TRIBUNAL_BUTTON_TTL):
+        db.resolve_tribunal_case(case["message_id"], "expired")
+        channel = await _get_channel(case["channel_id"])
+        if channel is None:
+            continue
+        try:
+            message = await channel.fetch_message(int(case["message_id"]))
+        except Exception:
+            continue
+        lang = case["lang"] if case["lang"] in SUPPORTED_LANGS else _tribunal_lang(channel)
+        await _close_tribunal_message(message, localized("tribunal_expired", lang))
 
 async def notify_prior_network_ban(member: discord.Member, guild_row, lang):
     """Alert admins if `member` was ever banned on any server in this network."""
@@ -547,6 +1241,21 @@ async def ban_cmd(interaction: discord.Interaction, user_id: str, duration: str,
         )
         return
 
+    dur_str = format_duration(seconds, lang)
+
+    invite_line = _purgatorium_invite_line(interaction.guild.id, lang)
+    if invite_line:
+        try:
+            target = interaction.guild.get_member(uid) or await bot.fetch_user(uid)
+            if target:
+                await target.send(
+                    localized("ban_invite_dm", lang,
+                              server=interaction.guild.name, duration=dur_str, reason=reason)
+                    + f"\n{invite_line}"
+                )
+        except Exception:
+            pass
+
     try:
         await interaction.guild.ban(discord.Object(id=uid), reason=reason, delete_message_days=0)
     except Exception as e:
@@ -559,8 +1268,6 @@ async def ban_cmd(interaction: discord.Interaction, user_id: str, duration: str,
 
     if seconds is not None:
         db.add_active_ban(interaction.guild.id, uid, int(time.time()) + seconds)
-
-    dur_str = format_duration(seconds, lang)
     await interaction.response.send_message(
         localized("ban_cmd_success", lang, user_id=uid, duration=dur_str, reason=reason)
     )
@@ -624,10 +1331,12 @@ async def globalban_cmd(interaction: discord.Interaction, user_id: str, reason: 
     try:
         target = interaction.guild.get_member(uid) or await bot.fetch_user(uid)
         if target:
-            await target.send(
-                localized("globalban_dm", lang, server=interaction.guild.name,
-                          reason=reason, remaining=f"<t:{unban_at}:R>")
-            )
+            dm_text = localized("globalban_dm", lang, server=interaction.guild.name,
+                                reason=reason, remaining=f"<t:{unban_at}:R>")
+            invite_line = _purgatorium_invite_line(interaction.guild.id, lang)
+            if invite_line:
+                dm_text = f"{dm_text}\n{invite_line}"
+            await target.send(dm_text)
     except Exception:
         pass
 
@@ -700,33 +1409,13 @@ async def globalunban_cmd(interaction: discord.Interaction, user_id: str):
         return
 
     network = guild_row["network"]
-    gban = db.get_global_ban(network, uid)
-    if not gban:
+    if not db.get_global_ban(network, uid):
         await interaction.response.send_message(
             localized("globalunban_not_banned", lang, user_id=uid), ephemeral=True
         )
         return
 
-    db.remove_global_ban(network, uid)
-    origin_guild_id = str(gban["origin_guild_id"]) if gban["origin_guild_id"] else None
-
-    count = 0
-    for g in db.get_network_guilds(network):
-        gid = int(g["guild_id"])
-        enforced = str(uid) in db.get_gban_enforcements(gid)
-        is_origin = origin_guild_id is not None and str(gid) == origin_guild_id
-        if not (enforced or is_origin):
-            continue
-        guild_obj = bot.get_guild(gid)
-        if guild_obj:
-            try:
-                await guild_obj.unban(discord.Object(id=uid))
-            except Exception:
-                pass
-        db.remove_active_ban(gid, uid)
-        db.remove_gban_enforcement(gid, uid)
-        db.remove_ban_history(gid, uid)
-        count += 1
+    count = await _execute_global_unban(network, uid)
 
     await interaction.response.send_message(
         localized("globalunban_success", lang, user_id=uid, count=count)
@@ -856,8 +1545,39 @@ async def setappeal_cmd(interaction: discord.Interaction, text: str):
     await interaction.response.send_message(localized("appeal_set", lang))
 
 @bot.event
+async def on_guild_join(guild: discord.Guild):
+    """The bot was added to a server: record the join and tell the service
+    chats, since a Bot Admin now has seven days to run `/setup` there
+    (setup_deadline.py).
+
+    The row is a record, not the clock — the sweep reads Discord's own
+    `Guild.me.joined_at`, so a missed event costs nothing but this notice."""
+    db.record_join(guild.id)
+    await utils.send_service_event(
+        "guild_joined",
+        guild=guild.name or str(guild.id),
+        guild_id=guild.id,
+    )
+
+@bot.event
+async def on_guild_remove(guild: discord.Guild):
+    """The bot was kicked from (or left) a server: drop its setup-deadline
+    row, so that a later re-invitation is a fresh seven days rather than a
+    settlement inherited from the last time. The server's moderation data is
+    deliberately left alone — a kick-and-reinvite must not cost a server its
+    log channel, its bans or its network membership."""
+    db.forget_deadline(guild.id)
+
+@bot.event
 async def on_member_join(member: discord.Member):
     if member.bot:
+        return
+
+    if member.guild.id == PURGATORIUM_GUILD_ID:
+        try:
+            await handle_purgatorium_join(member)
+        except Exception:
+            pass
         return
 
     guild_row = db.get_guild(member.guild.id)
@@ -882,8 +1602,12 @@ async def on_member_join(member: discord.Member):
     if verify_row and db.is_verified(member.id) and not db.has_verify_grant(member.guild.id, member.id):
         guild_row = db.get_guild(member.guild.id)
         lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+        origin = db.get_verified_origin(member.id)
         try:
-            await _grant_verify(member, verify_row, guild_row, lang, cross_server=True)
+            await _grant_verify(
+                member, verify_row, guild_row, lang,
+                cross_server=(origin is not None and origin != member.guild.id)
+            )
         except Exception:
             pass
 
@@ -902,6 +1626,19 @@ async def on_message(message: discord.Message):
     if message.channel.id in VERIFIED or message.channel.id in UNVERIFIED:
         if message.author.id != bot.user.id:
             await handle_verification_sync(message)
+        return
+
+    if message.channel.id in APPEAL_PARDON_CHANNELS.get("discord", set()):
+        if message.author.id != bot.user.id:
+            await handle_appeal_pardon(message)
+        return
+
+    if message.channel.id in APPEAL_BANINFO_CHANNELS.get("discord", set()):
+        if message.author.id != bot.user.id:
+            try:
+                await handle_appeal_baninfo(message)
+            except Exception:
+                pass
         return
 
     if message.author.bot or message.webhook_id:
@@ -948,6 +1685,10 @@ async def on_message(message: discord.Message):
     appeal = db.get_appeal(message.guild.id) if guild_row else None
     if appeal:
         dm_text = f"{dm_text}\n{appeal}"
+    else:
+        invite_line = _purgatorium_invite_line(message.guild.id, lang)
+        if invite_line:
+            dm_text = f"{dm_text}\n{invite_line}"
     try:
         await member.send(dm_text)
     except Exception:
@@ -962,8 +1703,13 @@ async def on_message(message: discord.Message):
 
     await _purge_recent_messages(message.guild, member.id)
 
-    if duration_seconds is not None:
-        db.add_active_ban(message.guild.id, member.id, int(time.time()) + duration_seconds)
+    unban_at = None if duration_seconds is None else int(time.time()) + duration_seconds
+    db.add_active_ban(message.guild.id, member.id, unban_at)
+
+    try:
+        await post_tribunal_case(message.guild, member, guild_row, reason, unban_at)
+    except Exception as e:
+        print(f"[ERROR] tribunal post failed for {member.id}: {e}", flush=True)
 
     if guild_row:
         log_channel_id = int(guild_row["log_channel_id"])
@@ -1052,6 +1798,183 @@ async def remadmin_cmd(interaction: discord.Interaction, user_id: str):
     db.remove_guild_admin(interaction.guild.id, uid)
     await interaction.response.send_message(
         localized("remadmin_success", lang, user_id=uid)
+    )
+
+async def _set_consul_roles(uid, grant: bool):
+    """Grant or take away the CONSULS role(s) on Purgatorium if the user is
+    there. Returns silently when the guild, member or roles are unavailable."""
+    purg = bot.get_guild(PURGATORIUM_GUILD_ID)
+    if purg is None:
+        return
+    member = purg.get_member(uid)
+    if member is None:
+        return
+    roles = [purg.get_role(int(rid)) for rid in CONSULS]
+    roles = [r for r in roles if r is not None]
+    if not roles:
+        return
+    try:
+        if grant:
+            await member.add_roles(*roles, reason="Purgatorium consul")
+        else:
+            await member.remove_roles(*roles, reason="Purgatorium consul dismissed")
+    except Exception:
+        pass
+
+@bot.tree.command(name="setconsul", description="appoint an appeal-server consul (bot admins)")
+@app_commands.describe(user_id="ID of the user to appoint as consul")
+async def setconsul_cmd(interaction: discord.Interaction, user_id: str):
+    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    try:
+        uid = int(user_id.strip())
+    except ValueError:
+        await interaction.response.send_message(
+            localized("setadmin_invalid_id", lang), ephemeral=True
+        )
+        return
+
+    if db.is_consul(uid):
+        await interaction.response.send_message(
+            localized("setconsul_already", lang, user_id=uid), ephemeral=True
+        )
+        return
+
+    db.add_consul(uid, interaction.user.id)
+    await _set_consul_roles(uid, grant=True)
+    await interaction.response.send_message(
+        localized("setconsul_success", lang, user_id=uid)
+    )
+
+@bot.tree.command(name="remconsul", description="dismiss an appeal-server consul (bot admins)")
+@app_commands.describe(user_id="ID of the consul to dismiss")
+async def remconsul_cmd(interaction: discord.Interaction, user_id: str):
+    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    try:
+        uid = int(user_id.strip())
+    except ValueError:
+        await interaction.response.send_message(
+            localized("setadmin_invalid_id", lang), ephemeral=True
+        )
+        return
+
+    if not db.remove_consul(uid):
+        await interaction.response.send_message(
+            localized("remconsul_not_consul", lang, user_id=uid), ephemeral=True
+        )
+        return
+
+    await _set_consul_roles(uid, grant=False)
+    await interaction.response.send_message(
+        localized("remconsul_success", lang, user_id=uid)
+    )
+
+async def _resolve_user_ref(guild, identifier):
+    """Resolve a ping, raw ID or username to a user id (None when unknown)."""
+    identifier = identifier.strip()
+    if identifier.startswith("<@") and identifier.endswith(">"):
+        nums = "".join(ch for ch in identifier if ch.isdigit())
+        return int(nums) if nums else None
+    if identifier.isdigit():
+        return int(identifier)
+    if guild is not None:
+        name = identifier.lstrip("@").casefold()
+        for m in guild.members:
+            if m.name.casefold() == name or (m.display_name or "").casefold() == name:
+                return m.id
+        try:
+            async for m in guild.fetch_members(limit=1000):
+                if m.name.casefold() == name or (m.display_name or "").casefold() == name:
+                    return m.id
+        except Exception:
+            pass
+    return None
+
+@bot.tree.command(name="localizer-add", description="grant Localizer status: lets the user edit this bot's localization in the control panel")
+@app_commands.describe(user="User to make a localizer: ping, ID or username")
+async def localizer_add_cmd(interaction: discord.Interaction, user: str):
+    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    uid = await _resolve_user_ref(interaction.guild, user)
+    if uid is None:
+        await interaction.response.send_message(
+            localized("could_not_resolve_user", lang), ephemeral=True
+        )
+        return
+
+    if db.is_localizer("discord", uid):
+        await interaction.response.send_message(
+            localized("localizer_add_already", lang, user_id=uid), ephemeral=True
+        )
+        return
+
+    username = None
+    member = None
+    try:
+        member = (interaction.guild.get_member(uid) if interaction.guild else None) \
+            or await bot.fetch_user(uid)
+        username = getattr(member, "name", None)
+    except Exception:
+        pass
+    db.add_localizer("discord", uid, username=username, added_by=interaction.user.id)
+    await interaction.response.send_message(
+        localized("localizer_add_done", lang, user_id=uid)
+    )
+    try:
+        if member:
+            await member.send(localized("localizer_add_dm", lang))
+    except Exception:
+        pass
+
+@bot.tree.command(name="localizer-rem", description="revoke a delegated Localizer status")
+@app_commands.describe(user="User to demote: ping, ID or username")
+async def localizer_rem_cmd(interaction: discord.Interaction, user: str):
+    guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
+    lang = guild_row["lang"] if guild_row else DEFAULT_LANG
+
+    if not is_admin(interaction.user.id):
+        await interaction.response.send_message(
+            localized("setup_no_perm", lang), ephemeral=True
+        )
+        return
+
+    uid = await _resolve_user_ref(interaction.guild, user)
+    if uid is None:
+        await interaction.response.send_message(
+            localized("could_not_resolve_user", lang), ephemeral=True
+        )
+        return
+
+    if not db.remove_localizer("discord", uid):
+        await interaction.response.send_message(
+            localized("localizer_rem_not", lang, user_id=uid), ephemeral=True
+        )
+        return
+
+    await interaction.response.send_message(
+        localized("localizer_rem_done", lang, user_id=uid)
     )
 
 @bot.tree.command(name="banlink", description="add a link or invite code to the banned list")
@@ -1201,6 +2124,10 @@ async def help_cmd(interaction: discord.Interaction):
         localized("help_cmd_unbanlink", lang),
         localized("help_cmd_setadmin", lang),
         localized("help_cmd_remadmin", lang),
+        localized("help_cmd_setconsul", lang),
+        localized("help_cmd_remconsul", lang),
+        localized("help_cmd_localizer_add", lang),
+        localized("help_cmd_localizer_rem", lang),
         localized("help_cmd_backup", lang),
         localized("help_cmd_list_chats", lang),
         localized("help_cmd_force_leave", lang),
@@ -1515,8 +2442,42 @@ async def backfill_verified_roles(client: discord.Client):
     except Exception:
         pass
 
+GATE_SCAN_INTERVAL = 900
+
+async def _lift_expired_gate_bans(client: discord.Client):
+    """Unban Purgatorium gate bans whose time is up.
+
+    Gate bans are not stored in the database: the unban moment lives in the
+    audit-log reason as '[gate-unban:<unix ts>]'. Scanning the guild's ban list
+    for expired markers survives restarts without keeping any record of who
+    visited the server.
+    """
+    purg = client.get_guild(PURGATORIUM_GUILD_ID)
+    if purg is None:
+        return
+    now = int(time.time())
+    async for entry in purg.bans(limit=None):
+        reason = entry.reason or ""
+        start = reason.find(GATE_BAN_MARKER)
+        if start == -1:
+            continue
+        start += len(GATE_BAN_MARKER)
+        end = reason.find("]", start)
+        if end == -1:
+            continue
+        try:
+            unban_at = int(reason[start:end])
+        except ValueError:
+            continue
+        if unban_at <= now:
+            try:
+                await purg.unban(entry.user, reason="Purgatorium gate: 1-day ban expired")
+            except Exception:
+                pass
+
 async def unban_loop(client: discord.Client):
     await client.wait_until_ready()
+    next_gate_scan = 0
     while not client.is_closed():
         try:
             rows = db.get_expired_bans()
@@ -1530,6 +2491,11 @@ async def unban_loop(client: discord.Client):
                 db.remove_active_ban(row["guild_id"], row["user_id"])
                 db.remove_gban_enforcement(row["guild_id"], row["user_id"])
             db.cleanup_expired_global_bans()
+            if time.time() >= next_gate_scan:
+                next_gate_scan = time.time() + GATE_SCAN_INTERVAL
+                await _lift_expired_gate_bans(client)
+                await _retire_stale_tribunal_cases(client)
+                db.cleanup_old_baninfo_posts()
         except Exception:
             pass
         await asyncio.sleep(60)

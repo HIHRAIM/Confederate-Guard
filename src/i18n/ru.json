@@ -5,7 +5,7 @@
   },
   "appeal_set": {
     "status": "verified",
-    "text": "Текст апелляции для сообщения о бане обновлён."
+    "text": "Текст апелляции, добавляемый в сообщение о блокировке, обновлён."
   },
   "autorole_done": {
     "status": "verified",
@@ -24,12 +24,12 @@
     "text": "Роль для всех установлена: <@&{role_id}>. Выдаю роль участникам без неё..."
   },
   "backup_failed": {
-    "status": "unverified",
+    "status": "verified",
     "text": "Не удалось создать резервную копию: {error}"
   },
   "ban_cmd_failed": {
     "status": "verified",
-    "text": "Не удалось заблокировать пользователя {user_id}: {error}"
+    "text": "Не удалось забанить пользователя {user_id}: {error}"
   },
   "ban_cmd_invalid_id": {
     "status": "verified",
@@ -37,27 +37,67 @@
   },
   "ban_cmd_log": {
     "status": "verified",
-    "text": "Пользователь {user_id} заблокирован администратором {admin}. Длительность: {duration}, причина: {reason}."
+    "text": "Пользователь {user_id} забанен администратором {admin}. Длительность: {duration}, причина: {reason}."
   },
   "ban_cmd_success": {
     "status": "verified",
-    "text": "Пользователь {user_id} заблокирован. Длительность: {duration}, причина: {reason}."
+    "text": "Пользователь {user_id} забанен. Длительность: {duration}, причина: {reason}."
   },
   "ban_dm": {
     "status": "verified",
-    "text": "Вы были бессрочно заблокированы на сервере {server} по причине: `{reason}`. Возможно, вы будете внесены в межсерверный список спамеров и заблокированы по всей сети, использующей этого бота."
+    "text": "Вы были бессрочно забанены на сервере {server} по причине: `{reason}`. Возможно, вы будете внесены в межсерверный список спамеров и забанены в сети серверов, использующих этого бота."
+  },
+  "ban_invite_dm": {
+    "status": "verified",
+    "text": "Вы были забанены на сервере {server}. Длительность: {duration}, причина: `{reason}`."
   },
   "ban_log": {
     "status": "verified",
-    "text": "Пользователь {mention} ({username} {id}) заблокирован за спам."
+    "text": "Пользователь {mention} ({username} {id}) забанен за спам."
+  },
+  "baninfo_by": {
+    "status": "verified",
+    "text": "выдал: {moderator}"
+  },
+  "baninfo_header": {
+    "status": "verified",
+    "text": "Известные баны пользователя <@{id}> (`{id}`) на серверах бота:"
+  },
+  "baninfo_network": {
+    "status": "verified",
+    "text": "сетевой бан (сеть {network})"
+  },
+  "baninfo_no_details": {
+    "status": "verified",
+    "text": "подробности неизвестны"
+  },
+  "baninfo_none": {
+    "status": "verified",
+    "text": "Баны пользователя <@{id}> (`{id}`) на серверах бота не найдены."
+  },
+  "baninfo_permanent": {
+    "status": "verified",
+    "text": "бессрочно"
+  },
+  "baninfo_reason": {
+    "status": "verified",
+    "text": "причина: {reason}"
+  },
+  "baninfo_until": {
+    "status": "verified",
+    "text": "до: {date}"
+  },
+  "baninfo_when": {
+    "status": "verified",
+    "text": "забанен: {date}"
   },
   "banlink_added_invite": {
     "status": "verified",
-    "text": "Код приглашения `{code}` добавлен в запрещённые."
+    "text": "Код приглашения `{code}` добавлен в список запрещённых ссылок."
   },
   "banlink_added_url": {
     "status": "verified",
-    "text": "Ссылка `{url}` добавлена в запрещённые."
+    "text": "Ссылка `{url}` добавлена в список запрещённых ссылок."
   },
   "banlink_exists": {
     "status": "verified",
@@ -70,6 +110,10 @@
   "bot_stopped": {
     "status": "verified",
     "text": "🛑 Бот остановлен."
+  },
+  "could_not_resolve_user": {
+    "status": "verified",
+    "text": "Не удалось определить пользователя."
   },
   "dm_no_setup": {
     "status": "verified",
@@ -101,31 +145,31 @@
   },
   "force_leave_success": {
     "status": "verified",
-    "text": "Бот покинул сервер {guild_id}, данные сервера удалены из базы."
+    "text": "Бот покинул сервер {guild_id}, данные сервера удалены из базы данных."
   },
   "gban_enforce_dm": {
     "status": "verified",
-    "text": "Вы не можете присоединиться к серверу {server}, поскольку вы заблокированы в нашей сети серверов.\n\nПричина: {reason}\nОсталось до снятия блокировки: {remaining}"
+    "text": "Вы не можете присоединиться к серверу {server}, поскольку вы забанены в нашей сети серверов.\n\nПричина: {reason}\nОсталось до снятия блокировки: {remaining}"
   },
   "gban_enforce_log": {
     "status": "verified",
-    "text": "Пользователь {mention} ({username} {id}) заблокирован: блокировка по сети выдана на сервере {origin_server}, {issued}. Осталось до снятия: {remaining}."
+    "text": "Пользователь {mention} ({username} {id}) забанен: глобальная блокировка выдана на сервере {origin_server}, {issued}. Осталось до снятия: {remaining}."
   },
   "gban_enforce_reason_suffix": {
     "status": "verified",
-    "text": "(бан выдан ботом {bot}; дата окончания бана: {date})"
+    "text": "(блокировка выдана ботом {bot}; дата окончания блокировки: {date})"
   },
   "global_duration_invalid": {
     "status": "verified",
-    "text": "Неверный формат срока. Используйте: 1h (часы), 1d (дни), 2m (месяцы), 3y (годы) или infinity (10 лет). Максимум — 10 лет."
+    "text": "Неверный формат срока. Используйте: 1h (час), 1d (дни), 2m (месяцы), 3y (годы) или infinity (10 лет). Максимум — 10 лет."
   },
   "globalban_dm": {
     "status": "verified",
-    "text": "Вы заблокированы в нашей сети серверов.\n\nПричина: {reason}\nОсталось до снятия блокировки: {remaining}"
+    "text": "Вы забанены в нашей сети серверов.\n\nПричина: {reason}\nОсталось до снятия блокировки: {remaining}"
   },
   "globalban_log": {
     "status": "verified",
-    "text": "Пользователь {user_id} заблокирован по всей сети {network} администратором {admin}. Причина: {reason}. Снятие блокировки: {unban}."
+    "text": "Пользователь {user_id} забанен по всей сети {network} администратором {admin}. Причина: {reason}. Снятие блокировки: {unban}."
   },
   "globalban_no_network": {
     "status": "verified",
@@ -133,7 +177,7 @@
   },
   "globalban_success": {
     "status": "verified",
-    "text": "Пользователь {user_id} заблокирован на этом сервере и добавлен в сеть {network}. Причина: {reason}. Снятие блокировки: {unban}."
+    "text": "Пользователь {user_id} забанен на этом сервере и добавлен в список блокировок сети {network}. Причина: {reason}. Снятие блокировки: {unban}."
   },
   "globalunban_not_banned": {
     "status": "verified",
@@ -155,6 +199,14 @@
     "status": "verified",
     "text": "Сначала выполните /setup для регистрации сервера."
   },
+  "guild_joined": {
+    "status": "unverified",
+    "text": "➕ Бота добавили на сервер «{guild}» ({guild_id})."
+  },
+  "guild_left_unconfigured": {
+    "status": "unverified",
+    "text": "👋 Бот покинул сервер «{guild}» ({guild_id}) — со дня добавления прошло {days} дн., а сервер так и не был зарегистрирован командой /setup."
+  },
   "help_cmd_autorole": {
     "status": "verified",
     "text": "/autorole <role_id> — автоматически выдавать роль всем участникам"
@@ -169,7 +221,7 @@
   },
   "help_cmd_banlink": {
     "status": "verified",
-    "text": "/banlink <ссылка или код> — добавить ссылку или код приглашения в запрещённые"
+    "text": "/banlink <ссылка или код> — добавить ссылку или код приглашения в список запрещённых"
   },
   "help_cmd_dm": {
     "status": "verified",
@@ -180,7 +232,7 @@
     "text": "/force_leave <server_id> — вывести бота с сервера"
   },
   "help_cmd_globalban": {
-    "status": "unverified",
+    "status": "verified",
     "text": "/globalban <user_id> <причина> <срок> — забанить на этом сервере и по всей сети (срок: 1h, 2m=месяцы, 3y=годы, infinity=10 лет)"
   },
   "help_cmd_globalunban": {
@@ -205,7 +257,7 @@
   },
   "help_cmd_loc_compare": {
     "status": "verified",
-    "text": "/loc-compare <код> — сравнение реплики по языкам"
+    "text": "/loc-compare <код> — сравнение переводов реплики на разные языки"
   },
   "help_cmd_loc_reply": {
     "status": "verified",
@@ -219,9 +271,21 @@
     "status": "verified",
     "text": "/locale [код] — статус локализации или файл выбранного языка"
   },
+  "help_cmd_localizer_add": {
+    "status": "verified",
+    "text": "/localizer-add <пользователь> — выдать статус локализатора: правка локализации через панель управления (админы бота)"
+  },
+  "help_cmd_localizer_rem": {
+    "status": "verified",
+    "text": "/localizer-rem <пользователь> — отозвать делегированный статус локализатора (админы бота)"
+  },
   "help_cmd_remadmin": {
     "status": "verified",
     "text": "/remadmin <user_id> — лишить пользователя статуса админа сервера"
+  },
+  "help_cmd_remconsul": {
+    "status": "verified",
+    "text": "/remconsul <user_id> — лишить пользователя статуса консула на сервере апелляций (админы бота)"
   },
   "help_cmd_setadmin": {
     "status": "verified",
@@ -230,6 +294,10 @@
   "help_cmd_setappeal": {
     "status": "verified",
     "text": "/setappeal <текст> — текст, добавляемый новой строкой в сообщение о бане"
+  },
+  "help_cmd_setconsul": {
+    "status": "verified",
+    "text": "/setconsul <user_id> — назначить пользователя консулом на сервере апелляций (админы бота)"
   },
   "help_cmd_setgbans": {
     "status": "verified",
@@ -241,7 +309,7 @@
   },
   "help_cmd_setverify": {
     "status": "verified",
-    "text": "/setverify <role_id> [channel_id] — выдавать роль участникам, писавшим в разные дни (общая база между серверами)"
+    "text": "/setverify <role_id> [channel_id] — выдавать роль участникам, которые были активны более одного дня (общая база между серверами)"
   },
   "help_cmd_unban": {
     "status": "verified",
@@ -253,7 +321,7 @@
   },
   "help_section_bot_admins": {
     "status": "verified",
-    "text": "Для админов бота"
+    "text": "Для администраторов бота"
   },
   "help_section_everyone": {
     "status": "verified",
@@ -261,14 +329,14 @@
   },
   "help_section_server_admins": {
     "status": "verified",
-    "text": "Для админов серверов"
+    "text": "Для администраторов серверов"
   },
   "help_title": {
     "status": "verified",
     "text": "Команды бота"
   },
   "internal_error": {
-    "status": "unverified",
+    "status": "verified",
     "text": "Внутренняя ошибка: {error}"
   },
   "links_empty": {
@@ -313,7 +381,7 @@
   },
   "loc_cooldown": {
     "status": "verified",
-    "text": "Этот файл уже запрашивали недавно. Попробуйте позже (не чаще одного раза в 10 минут на сервер/группу)."
+    "text": "Этот файл уже запрашивали недавно. Попробуйте позже (не чаще одного раза в 10 минут для сервера или группы)."
   },
   "loc_file_caption": {
     "status": "verified",
@@ -371,13 +439,65 @@
     "status": "verified",
     "text": "Неизвестный язык: {lang}. Доступны: {supported}."
   },
+  "localizer_add_already": {
+    "status": "verified",
+    "text": "Пользователь {user_id} уже является локализатором этого бота."
+  },
+  "localizer_add_dm": {
+    "status": "verified",
+    "text": "Вам выдан статус локализатора: теперь вы можете редактировать локализацию этого бота через его панель управления."
+  },
+  "localizer_add_done": {
+    "status": "verified",
+    "text": "Пользователь {user_id} теперь является локализатором этого бота и может редактировать его локализацию через панель управления."
+  },
+  "localizer_rem_done": {
+    "status": "verified",
+    "text": "Пользователь {user_id} больше не является локализатором этого бота."
+  },
+  "localizer_rem_not": {
+    "status": "verified",
+    "text": "У пользователя {user_id} нет делегированного статуса локализатора. (Администраторы становятся локализаторами автоматически, эта команда не лишает их данного статуса.)"
+  },
   "network_ban_notice": {
     "status": "verified",
-    "text": "Администраторы, обратите внимание, что пользователь {mention} ({username} {id}) заблокирован на сервере {server}."
+    "text": "Администраторы, обратите внимание, что пользователь {mention} ({username} {id}) был забанен на сервере {server}."
   },
   "no_permission": {
     "status": "verified",
     "text": "У вас нет прав для использования этой команды."
+  },
+  "pardon_applied": {
+    "status": "verified",
+    "text": "Готово."
+  },
+  "pardon_btn_all": {
+    "status": "verified",
+    "text": "Разбан во всех сетях"
+  },
+  "pardon_btn_network": {
+    "status": "verified",
+    "text": "Разбан в сети {network}"
+  },
+  "pardon_done_all": {
+    "status": "verified",
+    "text": "Сетевые блокировки пользователя <@{id}> сняты во всех сетях — {moderator}."
+  },
+  "pardon_done_network": {
+    "status": "verified",
+    "text": "Сетевая блокировка пользователя <@{id}> снята в сети {network} — {moderator}."
+  },
+  "pardon_none": {
+    "status": "verified",
+    "text": "У пользователя нет активных сетевых блокировок."
+  },
+  "purgatorium_appeal_hint": {
+    "status": "verified",
+    "text": "Вы забанены на сервере, который защищает этот бот. Чтобы подать апелляцию, используйте команду /appeal в личных сообщениях с ботом {bridge_bot}."
+  },
+  "purgatorium_invite_line": {
+    "status": "verified",
+    "text": "Если вы считаете блокировку ошибочной, вы можете подать апелляцию: присоединитесь к серверу по ссылке {invite}, чтобы связаться с администрацией бота."
   },
   "remadmin_not_admin": {
     "status": "verified",
@@ -387,13 +507,21 @@
     "status": "verified",
     "text": "Пользователь {user_id} лишён статуса администратора этого сервера."
   },
+  "remconsul_not_consul": {
+    "status": "verified",
+    "text": "Пользователь {user_id} не является консулом."
+  },
+  "remconsul_success": {
+    "status": "verified",
+    "text": "Пользователь {user_id} лишён статуса консула сервера апелляций."
+  },
   "setadmin_already": {
     "status": "verified",
     "text": "Пользователь {user_id} уже является администратором этого сервера."
   },
   "setadmin_dm": {
     "status": "verified",
-    "text": "Теперь я признаю Вас администратором сервера {server}."
+    "text": "Теперь вы назначены администратором сервера {server}."
   },
   "setadmin_invalid_id": {
     "status": "verified",
@@ -403,13 +531,21 @@
     "status": "verified",
     "text": "Пользователь {user_id} добавлен в администраторы этого сервера."
   },
+  "setconsul_already": {
+    "status": "verified",
+    "text": "Пользователь {user_id} уже является консулом."
+  },
+  "setconsul_success": {
+    "status": "verified",
+    "text": "Пользователь {user_id} назначен консулом сервера апелляций. При присоединении к серверу апелляций он получит роль консула и не будет забанен."
+  },
   "setgbans_disabled": {
     "status": "verified",
     "text": "Глобальные баны отключены. Разблокировано пользователей: {count}."
   },
   "setgbans_enabled": {
     "status": "verified",
-    "text": "Глобальные баны включены. Пользователи, забаненные в сети, будут блокироваться на этом сервере. Всего в сети заблокировано: {count}."
+    "text": "Глобальные баны включены. Пользователи, забаненные в сети, будут автоматически блокироваться на этом сервере. Всего в сети забанено: {count}."
   },
   "setgbans_usage": {
     "status": "verified",
@@ -447,6 +583,74 @@
     "status": "verified",
     "text": "На страже {servers} {servers_word}"
   },
+  "tribunal_ack": {
+    "status": "verified",
+    "text": "Готово."
+  },
+  "tribunal_already_resolved": {
+    "status": "verified",
+    "text": "По этому случаю решение уже принято."
+  },
+  "tribunal_banned_at": {
+    "status": "verified",
+    "text": "- Заблокирован: {date}"
+  },
+  "tribunal_btn_globalban": {
+    "status": "verified",
+    "text": "Global ban"
+  },
+  "tribunal_btn_ignore": {
+    "status": "verified",
+    "text": "Ignore"
+  },
+  "tribunal_done_globalban": {
+    "status": "verified",
+    "text": "Глобальная блокировка выдана: {moderator}."
+  },
+  "tribunal_done_ignore": {
+    "status": "verified",
+    "text": "Оставлено без глобальной блокировки: {moderator}."
+  },
+  "tribunal_expired": {
+    "status": "verified",
+    "text": "Решение не принято, кнопки погашены по истечении срока."
+  },
+  "tribunal_network_log": {
+    "status": "verified",
+    "text": "Пользователь {mention} ({id}) забанен по всей сети {network}. Причина: {reason}. Снятие блокировки: {until}."
+  },
+  "tribunal_permanent": {
+    "status": "verified",
+    "text": "бессрочно"
+  },
+  "tribunal_reason": {
+    "status": "verified",
+    "text": "- Причина: {reason}"
+  },
+  "tribunal_registered": {
+    "status": "verified",
+    "text": "- Регистрация: {date}"
+  },
+  "tribunal_server": {
+    "status": "verified",
+    "text": "- Сервер: {server} ({id} {network})"
+  },
+  "tribunal_title": {
+    "status": "verified",
+    "text": "**Автоматическая блокировка**"
+  },
+  "tribunal_unknown_case": {
+    "status": "verified",
+    "text": "Этот случай больше не отслеживается ботом."
+  },
+  "tribunal_until": {
+    "status": "verified",
+    "text": "- Снятие блокировки: {date}"
+  },
+  "tribunal_user": {
+    "status": "verified",
+    "text": "- Пользователь: {name} ({id} {username})"
+  },
   "unban_cmd_failed": {
     "status": "verified",
     "text": "Не удалось разблокировать пользователя {user_id}: {error}"
@@ -457,11 +661,11 @@
   },
   "unban_cmd_not_banned": {
     "status": "verified",
-    "text": "Пользователь {user_id} не заблокирован на этом сервере."
+    "text": "Пользователь {user_id} не забанен на этом сервере."
   },
   "unban_cmd_success": {
     "status": "verified",
-    "text": "Пользователь {user_id} разблокирован на этом сервере."
+    "text": "Пользователь {user_id} разбанен на этом сервере."
   },
   "unbanlink_not_found": {
     "status": "verified",
@@ -497,6 +701,6 @@
   },
   "verify_set_no_channel": {
     "status": "verified",
-    "text": "Верификация настроена. Роль: <@&{role_id}>. Уведомления — в лог-канал из /setup."
+    "text": "Верификация настроена. Роль: <@&{role_id}>. Уведомления будут отправляться в лог-канал, заданный командой /setup."
   }
 }
