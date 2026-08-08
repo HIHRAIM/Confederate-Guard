@@ -5,11 +5,11 @@
   },
   "appeal_set": {
     "status": "unverified",
-    "text": "Tekst apelacji dodawany do wiadomości o blokadzie został zaktualizowany."
+    "text": "Tekst apelacji dodawany do wiadomości o banie został zaktualizowany."
   },
   "autorole_done": {
     "status": "unverified",
-    "text": "Gotowe. Rola została nadana {count} członkom."
+    "text": "Gotowe. Członkowie, którzy otrzymali rolę: {count}."
   },
   "autorole_invalid_role": {
     "status": "unverified",
@@ -21,7 +21,7 @@
   },
   "autorole_set": {
     "status": "unverified",
-    "text": "Rola dla wszystkich ustawiona: <@&{role_id}>. Nadaję rolę członkom, którzy jej nie mają..."
+    "text": "Rola dla wszystkich członków ustawiona: <@&{role_id}>. Nadaję rolę tym, którzy jej nie mają…"
   },
   "backup_failed": {
     "status": "unverified",
@@ -29,7 +29,7 @@
   },
   "ban_cmd_failed": {
     "status": "unverified",
-    "text": "Nie udało się zablokować użytkownika {user_id}: {error}"
+    "text": "Nie udało się zbanować użytkownika {user_id}: {error}"
   },
   "ban_cmd_invalid_id": {
     "status": "unverified",
@@ -37,31 +37,31 @@
   },
   "ban_cmd_log": {
     "status": "unverified",
-    "text": "Użytkownik {user_id} został zablokowany przez administratora {admin}. Czas trwania: {duration}, powód: {reason}."
+    "text": "Użytkownik {user_id} został zbanowany przez administratora {admin}. Okres: {duration}, powód: {reason}."
   },
   "ban_cmd_success": {
     "status": "unverified",
-    "text": "Użytkownik {user_id} został zablokowany. Czas trwania: {duration}, powód: {reason}."
+    "text": "Użytkownik {user_id} został zbanowany. Okres: {duration}, powód: {reason}."
   },
   "ban_dm": {
     "status": "unverified",
-    "text": "Zostałeś bezterminowo zablokowany na serwerze {server} z powodu: `{reason}`. Możliwe, że zostaniesz wpisany na międzyserwerową listę spamerów i zablokowany w sieci serwerów korzystających z tego bota."
+    "text": "Zostałeś bezterminowo zbanowany na serwerze {server}. Powód: `{reason}`. Możliwe, że zostaniesz wpisany na międzyserwerową listę spamerów i zbanowany w całej sieci serwerów korzystających z tego bota."
   },
   "ban_invite_dm": {
     "status": "unverified",
-    "text": "Zostałeś zablokowany na serwerze {server}. Czas trwania: {duration}, powód: `{reason}`."
+    "text": "Zostałeś zbanowany na serwerze {server}. Okres: {duration}, powód: `{reason}`."
   },
   "ban_log": {
     "status": "unverified",
-    "text": "Użytkownik {mention} ({username} {id}) został zablokowany za spam."
+    "text": "Użytkownik {mention} ({username} {id}) został zbanowany za spam."
   },
   "baninfo_by": {
     "status": "unverified",
-    "text": "nałożył: {moderator}"
+    "text": "nadany przez: {moderator}"
   },
   "baninfo_header": {
     "status": "unverified",
-    "text": "Znane blokady użytkownika <@{id}> (`{id}`) na serwerach bota:"
+    "text": "Znane bany użytkownika <@{id}> (`{id}`) na serwerach tego bota:"
   },
   "baninfo_network": {
     "status": "unverified",
@@ -73,7 +73,7 @@
   },
   "baninfo_none": {
     "status": "unverified",
-    "text": "Nie znaleziono blokad użytkownika <@{id}> (`{id}`) na serwerach bota."
+    "text": "Nie znaleziono banów użytkownika <@{id}> (`{id}`) na serwerach tego bota."
   },
   "baninfo_permanent": {
     "status": "unverified",
@@ -89,7 +89,7 @@
   },
   "baninfo_when": {
     "status": "unverified",
-    "text": "zablokowany: {date}"
+    "text": "zbanowany: {date}"
   },
   "banlink_added_invite": {
     "status": "unverified",
@@ -129,7 +129,7 @@
   },
   "duration_invalid": {
     "status": "unverified",
-    "text": "Nieprawidłowy format czasu trwania. Użyj: 30s, 5m, 2h, 1d, 1w lub infinity."
+    "text": "Nieprawidłowy format okresu. Użyj: 30s, 5m, 2h, 1d, 1w lub infinity."
   },
   "force_leave_failed": {
     "status": "unverified",
@@ -141,35 +141,35 @@
   },
   "force_leave_not_member": {
     "status": "unverified",
-    "text": "Bota nie ma na tym serwerze."
+    "text": "Bota nie ma na wskazanym serwerze."
   },
   "force_leave_success": {
     "status": "unverified",
-    "text": "Bot opuścił serwer {guild_id}, dane serwera zostały usunięte z bazy danych."
+    "text": "Bot opuścił serwer {guild_id}; dane serwera zostały usunięte z bazy danych."
   },
   "gban_enforce_dm": {
     "status": "unverified",
-    "text": "Nie możesz dołączyć do serwera {server}, ponieważ jesteś zablokowany w naszej sieci serwerów.\n\nPowód: {reason}\nPozostało do zdjęcia blokady: {remaining}"
+    "text": "Nie możesz dołączyć do serwera {server}, ponieważ jesteś zbanowany w naszej sieci serwerów.\n\nPowód: {reason}\nBan zostanie zdjęty: {remaining}"
   },
   "gban_enforce_log": {
     "status": "unverified",
-    "text": "Użytkownik {mention} ({username} {id}) został zablokowany: globalna blokada została nałożona na serwerze {origin_server}, {issued}. Pozostało do zdjęcia: {remaining}."
+    "text": "Użytkownik {mention} ({username} {id}) został zbanowany: ban sieciowy został nadany na serwerze {origin_server}, {issued}. Ban zostanie zdjęty: {remaining}."
   },
   "gban_enforce_reason_suffix": {
     "status": "unverified",
-    "text": "(blokada nałożona przez bota {bot}; data zakończenia blokady: {date})"
+    "text": "(ban nadany przez bota {bot}; data zakończenia bana: {date})"
   },
   "global_duration_invalid": {
     "status": "unverified",
-    "text": "Nieprawidłowy format okresu. Użyj: 1h (godzina), 1d (dni), 2m (miesiące), 3y (lata) lub infinity (10 lat). Maksimum to 10 lat."
+    "text": "Nieprawidłowy format okresu. Użyj: 1h (godziny), 1d (dni), 2m (miesiące), 3y (lata) lub infinity (10 lat). Maksimum to 10 lat."
   },
   "globalban_dm": {
     "status": "unverified",
-    "text": "Jesteś zablokowany w naszej sieci serwerów.\n\nPowód: {reason}\nPozostało do zdjęcia blokady: {remaining}"
+    "text": "Jesteś zbanowany w naszej sieci serwerów.\n\nPowód: {reason}\nBan zostanie zdjęty: {remaining}"
   },
   "globalban_log": {
     "status": "unverified",
-    "text": "Użytkownik {user_id} został zablokowany w całej sieci {network} przez administratora {admin}. Powód: {reason}. Zdjęcie blokady: {unban}."
+    "text": "Użytkownik {user_id} został zbanowany w całej sieci {network} przez administratora {admin}. Powód: {reason}. Zdjęcie bana: {unban}."
   },
   "globalban_no_network": {
     "status": "unverified",
@@ -177,15 +177,15 @@
   },
   "globalban_success": {
     "status": "unverified",
-    "text": "Użytkownik {user_id} został zablokowany na tym serwerze i dodany do listy blokad sieci {network}. Powód: {reason}. Zdjęcie blokady: {unban}."
+    "text": "Użytkownik {user_id} został zbanowany na tym serwerze i dodany do listy banów sieci {network}. Powód: {reason}. Zdjęcie bana: {unban}."
   },
   "globalunban_not_banned": {
     "status": "unverified",
-    "text": "Użytkownik {user_id} nie ma globalnej blokady w tej sieci."
+    "text": "Użytkownik {user_id} nie ma bana sieciowego w tej sieci."
   },
   "globalunban_success": {
     "status": "unverified",
-    "text": "Globalna blokada została zdjęta z użytkownika {user_id}. Odblokowano na serwerach: {count}."
+    "text": "Ban sieciowy został zdjęty z użytkownika {user_id}. Serwery, na których zdjęto bana: {count}."
   },
   "guard_already": {
     "status": "unverified",
@@ -193,7 +193,7 @@
   },
   "guard_enabled": {
     "status": "unverified",
-    "text": "Ochrona włączona na tym kanale. Czas trwania blokad: {duration}, powód: {reason}."
+    "text": "Ochrona włączona na tym kanale. Okres bana: {duration}, powód: {reason}."
   },
   "guard_no_setup": {
     "status": "unverified",
@@ -217,7 +217,7 @@
   },
   "help_cmd_ban": {
     "status": "unverified",
-    "text": "/ban <user_id> <czas trwania> <powód> — zablokuj użytkownika po ID"
+    "text": "/ban <user_id> <okres> <powód> — zbanuj użytkownika po ID"
   },
   "help_cmd_banlink": {
     "status": "unverified",
@@ -225,7 +225,7 @@
   },
   "help_cmd_dm": {
     "status": "unverified",
-    "text": "/dm <tekst> — ustaw tekst wiadomości prywatnej przed banem ({{server}} — nazwa serwera)"
+    "text": "/dm <tekst> — ustaw tekst wiadomości prywatnej wysyłanej przed banem ({{server}} — nazwa serwera)"
   },
   "help_cmd_force_leave": {
     "status": "unverified",
@@ -233,15 +233,15 @@
   },
   "help_cmd_globalban": {
     "status": "unverified",
-    "text": "/globalban <user_id> <powód> <okres> — zablokuj na tym serwerze i w całej sieci (okres: 1h, 2m=miesiące, 3y=lata, infinity=10 lat)"
+    "text": "/globalban <user_id> <powód> <okres> — zbanuj na tym serwerze i w całej sieci (okres: 1h, 1d, 2m=miesiące, 3y=lata, infinity=10 lat)"
   },
   "help_cmd_globalunban": {
     "status": "unverified",
-    "text": "/globalunban <user_id> — zdejmij globalną blokadę i odblokuj w sieci"
+    "text": "/globalunban <user_id> — zdejmij ban sieciowy i odbanuj na serwerach sieci"
   },
   "help_cmd_guard": {
     "status": "unverified",
-    "text": "/guard <czas trwania> <powód> — włącz ochronę przed spamem na tym kanale"
+    "text": "/guard <okres> <powód> — włącz ochronę przed spamem na tym kanale"
   },
   "help_cmd_help": {
     "status": "unverified",
@@ -253,7 +253,7 @@
   },
   "help_cmd_list_chats": {
     "status": "unverified",
-    "text": "/list_chats — lista serwerów, na których jest bot"
+    "text": "/list_chats — lista serwerów, na których działa bot"
   },
   "help_cmd_loc_compare": {
     "status": "unverified",
@@ -309,15 +309,15 @@
   },
   "help_cmd_setverify": {
     "status": "unverified",
-    "text": "/setverify <role_id> [channel_id] — nadawaj rolę członkom aktywnym dłużej niż jeden dzień (wspólna baza między serwerami)"
+    "text": "/setverify <role_id> [channel_id] — nadawaj rolę członkom aktywnym dłużej niż jeden dzień (wspólna baza dla wszystkich serwerów)"
   },
   "help_cmd_unban": {
     "status": "unverified",
-    "text": "/unban <user_id> — odblokuj użytkownika po ID na tym serwerze"
+    "text": "/unban <user_id> — odbanuj użytkownika po ID na tym serwerze"
   },
   "help_cmd_unbanlink": {
     "status": "unverified",
-    "text": "/unbanlink <numer> — usuń link z zabronionych (numer znajdziesz w /links)"
+    "text": "/unbanlink <numer> — usuń link z listy zabronionych (numer znajdziesz w /links)"
   },
   "help_section_bot_admins": {
     "status": "unverified",
@@ -381,7 +381,7 @@
   },
   "loc_cooldown": {
     "status": "unverified",
-    "text": "Ten plik był niedawno pobierany. Spróbuj później (nie częściej niż raz na 10 minut dla serwera lub grupy)."
+    "text": "Ten plik był niedawno pobierany. Spróbuj później (nie częściej niż raz na 10 minut dla serwera lub użytkownika)."
   },
   "loc_file_caption": {
     "status": "unverified",
@@ -421,7 +421,7 @@
   },
   "loc_suggest_confirm": {
     "status": "unverified",
-    "text": "Dziękujemy! Twoja propozycja została wysłana do zespołu. Kod Twojej wiadomości: {code}"
+    "text": "Dziękujemy! Twoja propozycja została wysłana do zespołu lokalizacji. Kod Twojej wiadomości: {code}"
   },
   "loc_suggest_no_support": {
     "status": "unverified",
@@ -461,7 +461,7 @@
   },
   "network_ban_notice": {
     "status": "unverified",
-    "text": "Administratorzy, zwróćcie uwagę, że użytkownik {mention} ({username} {id}) został zablokowany na serwerze {server}."
+    "text": "Uwaga administratorzy: użytkownik {mention} ({username} {id}) został zbanowany na serwerze {server}."
   },
   "no_permission": {
     "status": "unverified",
@@ -481,23 +481,23 @@
   },
   "pardon_done_all": {
     "status": "unverified",
-    "text": "Blokady sieciowe użytkownika <@{id}> zdjęte we wszystkich sieciach — {moderator}."
+    "text": "Bany sieciowe użytkownika <@{id}> zdjęte we wszystkich sieciach (moderator: {moderator})."
   },
   "pardon_done_network": {
     "status": "unverified",
-    "text": "Blokada sieciowa użytkownika <@{id}> zdjęta w sieci {network} — {moderator}."
+    "text": "Ban sieciowy użytkownika <@{id}> zdjęty w sieci {network} (moderator: {moderator})."
   },
   "pardon_none": {
     "status": "unverified",
-    "text": "Użytkownik nie ma aktywnych blokad sieciowych."
+    "text": "Użytkownik nie ma aktywnych banów sieciowych."
   },
   "purgatorium_appeal_hint": {
     "status": "unverified",
-    "text": "Jesteś zablokowany na serwerze chronionym przez tego bota. Aby złożyć apelację, użyj polecenia /appeal w prywatnych wiadomościach z botem {bridge_bot}."
+    "text": "Aby złożyć apelację, użyj polecenia /appeal w prywatnych wiadomościach z botem {bridge_bot}."
   },
   "purgatorium_invite_line": {
     "status": "unverified",
-    "text": "Jeśli uważasz, że blokada jest błędna, możesz złożyć apelację: dołącz do serwera przez link {invite}, aby skontaktować się z administracją bota."
+    "text": "Jeśli uważasz, że ban jest błędny, możesz złożyć apelację: dołącz do serwera przez link {invite}, aby skontaktować się z administracją bota."
   },
   "remadmin_not_admin": {
     "status": "unverified",
@@ -537,15 +537,15 @@
   },
   "setconsul_success": {
     "status": "unverified",
-    "text": "Użytkownik {user_id} został mianowany konsulem serwera apelacyjnego. Po dołączeniu do serwera apelacyjnego otrzyma rolę konsula i nie zostanie zablokowany."
+    "text": "Użytkownik {user_id} został mianowany konsulem serwera apelacyjnego. Po dołączeniu do serwera apelacyjnego otrzyma rolę konsula i nie zostanie zbanowany."
   },
   "setgbans_disabled": {
     "status": "unverified",
-    "text": "Globalne bany są wyłączone. Odblokowano użytkowników: {count}."
+    "text": "Bany sieciowe są wyłączone. Odbanowano użytkowników: {count}."
   },
   "setgbans_enabled": {
     "status": "unverified",
-    "text": "Globalne bany są włączone. Użytkownicy zablokowani w sieci będą automatycznie blokowani na tym serwerze. Łącznie zablokowanych w sieci: {count}."
+    "text": "Bany sieciowe są włączone. Użytkownicy zbanowani w sieci będą automatycznie banowani również na tym serwerze. Łącznie zbanowanych w sieci: {count}."
   },
   "setgbans_usage": {
     "status": "unverified",
@@ -581,7 +581,7 @@
   },
   "status_template": {
     "status": "unverified",
-    "text": "Na straży {servers} {servers_word}"
+    "text": "Na straży: {servers} {servers_word}"
   },
   "tribunal_ack": {
     "status": "unverified",
@@ -593,31 +593,31 @@
   },
   "tribunal_banned_at": {
     "status": "unverified",
-    "text": "- Zablokowany: {date}"
+    "text": "- Zbanowany: {date}"
   },
   "tribunal_btn_globalban": {
     "status": "unverified",
-    "text": "Global ban"
+    "text": "Ban sieciowy"
   },
   "tribunal_btn_ignore": {
     "status": "unverified",
-    "text": "Ignore"
+    "text": "Pomiń"
   },
   "tribunal_done_globalban": {
     "status": "unverified",
-    "text": "Blokada globalna nadana: {moderator}."
+    "text": "Ban sieciowy nadany (moderator: {moderator})."
   },
   "tribunal_done_ignore": {
     "status": "unverified",
-    "text": "Pozostawiono bez blokady globalnej: {moderator}."
+    "text": "Pozostawiono bez bana sieciowego (moderator: {moderator})."
   },
   "tribunal_expired": {
     "status": "unverified",
-    "text": "Nie podjęto decyzji, przyciski wygaszono po upływie terminu."
+    "text": "Nie podjęto decyzji — termin upłynął, przyciski wyłączono."
   },
   "tribunal_network_log": {
     "status": "unverified",
-    "text": "Użytkownik {mention} ({id}) został zbanowany w całej sieci {network}. Powód: {reason}. Zdjęcie blokady: {until}."
+    "text": "Użytkownik {mention} ({id}) został zbanowany w całej sieci {network}. Powód: {reason}. Zdjęcie bana: {until}."
   },
   "tribunal_permanent": {
     "status": "unverified",
@@ -637,7 +637,7 @@
   },
   "tribunal_title": {
     "status": "unverified",
-    "text": "**Automatyczna blokada**"
+    "text": "**Automatyczny ban**"
   },
   "tribunal_unknown_case": {
     "status": "unverified",
@@ -645,7 +645,7 @@
   },
   "tribunal_until": {
     "status": "unverified",
-    "text": "- Zdjęcie blokady: {date}"
+    "text": "- Zdjęcie bana: {date}"
   },
   "tribunal_user": {
     "status": "unverified",
@@ -653,19 +653,19 @@
   },
   "unban_cmd_failed": {
     "status": "unverified",
-    "text": "Nie udało się odblokować użytkownika {user_id}: {error}"
+    "text": "Nie udało się odbanować użytkownika {user_id}: {error}"
   },
   "unban_cmd_log": {
     "status": "unverified",
-    "text": "Użytkownik {user_id} został odblokowany przez administratora {admin}."
+    "text": "Użytkownik {user_id} został odbanowany przez administratora {admin}."
   },
   "unban_cmd_not_banned": {
     "status": "unverified",
-    "text": "Użytkownik {user_id} nie jest zablokowany na tym serwerze."
+    "text": "Użytkownik {user_id} nie jest zbanowany na tym serwerze."
   },
   "unban_cmd_success": {
     "status": "unverified",
-    "text": "Użytkownik {user_id} został odblokowany na tym serwerze."
+    "text": "Użytkownik {user_id} został odbanowany na tym serwerze."
   },
   "unbanlink_not_found": {
     "status": "unverified",
@@ -673,15 +673,15 @@
   },
   "unbanlink_success": {
     "status": "unverified",
-    "text": "Link o numerze {link_id} został usunięty z zabronionych."
+    "text": "Link o numerze {link_id} został usunięty z listy zabronionych."
   },
   "verify_announce": {
     "status": "unverified",
-    "text": "Użytkownik {mention} ({username} {id}) został zweryfikowany."
+    "text": "Użytkownik {name} ({username} {id}) został zweryfikowany."
   },
   "verify_announce_cross": {
     "status": "unverified",
-    "text": "Użytkownik {mention} ({username} {id}) został zweryfikowany (dzięki weryfikacji na innym serwerze)."
+    "text": "Użytkownik {name} ({username} {id}) został zweryfikowany (na podstawie weryfikacji na innym serwerze)."
   },
   "verify_invalid_channel": {
     "status": "unverified",

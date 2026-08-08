@@ -1,3 +1,15 @@
+"""Entry point: bring the database up to date, start the client, run the
+loops that are not tied to Discord events.
+
+Three loops live here rather than in discord_bot/client.py because none of
+them is about Discord — they are about the database and about the deployment:
+encrypted backups, the retention sweep, and the seven-day setup deadline. The
+loops that *are* about Discord (unbans, presence, the verification backfill)
+start in GuardBot.setup_hook instead.
+
+Run with cwd = src/. The database and .env are both opened by relative path,
+and the control panel launches the bot exactly this way.
+"""
 import asyncio
 import discord
 import db
@@ -6,6 +18,13 @@ from discord_bot import bot
 from utils import send_service_event
 
 async def send_db_backup():
+    """Build an encrypted snapshot of guard.db and post it to BACKUP_CHATS.
+
+    Every failure is printed and swallowed, per channel: a backup channel that
+    has been deleted must not take the other channels — or the loop — down
+    with it. The file is encrypted before it leaves the process, because its
+    destination is a Discord channel that stores it indefinitely.
+    """
     import io
     from backup_crypto import build_encrypted_backup, encrypted_filename
     try:
@@ -30,12 +49,21 @@ async def send_db_backup():
             print(f"Periodic backup: failed to send to channel {channel_id}: {e}", flush=True)
 
 async def backup_loop():
+    """Every 12 hours, send the encrypted database snapshot to the backup
+    chats. Sleeps first: a crash-looping bot must not spam backups on every
+    restart."""
     await bot.wait_until_ready()
     while not bot.is_closed():
         await asyncio.sleep(12 * 3600)
         await send_db_backup()
 
 async def retention_loop():
+    """Expire stored user ids and old localization dialogs, daily.
+
+    Runs its first pass immediately on start-up — the retention promise is a
+    published one (PRIVACY.md), and a deployment restarted daily would
+    otherwise never reach the sweep at all.
+    """
     await bot.wait_until_ready()
     while not bot.is_closed():
         try:
@@ -64,6 +92,18 @@ async def setup_deadline_loop():
         await asyncio.sleep(24 * 3600)
 
 async def main():
+    """Bring the schema up to date, start the client and the loops, run.
+
+    The order matters at both ends. db.init() and the first retention pass
+    happen before anything connects, so the client never sees a half-built
+    schema; db.rule_since() is called here so that the setup deadline's
+    grandfathering line is planted on the first start of this version rather
+    than whenever the first sweep happens to run.
+
+    The service chats are told five seconds in, by which time the client is
+    normally ready, and told again on the way out through the finally — which
+    is the only announcement a crash produces.
+    """
     db.init()
     db.cleanup_expired_user_data()
     db.rule_since()

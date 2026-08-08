@@ -5,11 +5,11 @@
   },
   "appeal_set": {
     "status": "unverified",
-    "text": "Текст апеляції, що додається до повідомлення про блокування, оновлено."
+    "text": "Текст апеляції, що додається до повідомлення про бан, оновлено."
   },
   "autorole_done": {
     "status": "unverified",
-    "text": "Готово. Роль видано {count} учасникам."
+    "text": "Готово. Роль отримали учасники: {count}."
   },
   "autorole_invalid_role": {
     "status": "unverified",
@@ -21,7 +21,7 @@
   },
   "autorole_set": {
     "status": "unverified",
-    "text": "Роль для всіх встановлено: <@&{role_id}>. Видаю роль учасникам, які її не мають..."
+    "text": "Роль для всіх учасників встановлено: <@&{role_id}>. Видаю роль тим, хто її не має…"
   },
   "backup_failed": {
     "status": "unverified",
@@ -29,7 +29,7 @@
   },
   "ban_cmd_failed": {
     "status": "unverified",
-    "text": "Не вдалося заблокувати користувача {user_id}: {error}"
+    "text": "Не вдалося забанити користувача {user_id}: {error}"
   },
   "ban_cmd_invalid_id": {
     "status": "unverified",
@@ -37,31 +37,31 @@
   },
   "ban_cmd_log": {
     "status": "unverified",
-    "text": "Користувача {user_id} заблокував адміністратор {admin}. Тривалість: {duration}, причина: {reason}."
+    "text": "Користувача {user_id} забанив адміністратор {admin}. Строк: {duration}, причина: {reason}."
   },
   "ban_cmd_success": {
     "status": "unverified",
-    "text": "Користувача {user_id} заблоковано. Тривалість: {duration}, причина: {reason}."
+    "text": "Користувача {user_id} забанено. Строк: {duration}, причина: {reason}."
   },
   "ban_dm": {
     "status": "unverified",
-    "text": "Вас безстроково заблоковано на сервері {server} з причини: `{reason}`. Можливо, вас буде внесено до міжсерверного списку спамерів і заблоковано в мережі серверів, які використовують цього бота."
+    "text": "Вас безстроково забанено на сервері {server}. Причина: `{reason}`. Можливо, вас внесуть до міжсерверного списку спамерів і забанять у всій мережі серверів, які використовують цього бота."
   },
   "ban_invite_dm": {
     "status": "unverified",
-    "text": "Вас заблоковано на сервері {server}. Тривалість: {duration}, причина: `{reason}`."
+    "text": "Вас забанено на сервері {server}. Строк: {duration}, причина: `{reason}`."
   },
   "ban_log": {
     "status": "unverified",
-    "text": "Користувача {mention} ({username} {id}) заблоковано за спам."
+    "text": "Користувача {mention} ({username} {id}) забанено за спам."
   },
   "baninfo_by": {
     "status": "unverified",
-    "text": "видав: {moderator}"
+    "text": "ким виданий: {moderator}"
   },
   "baninfo_header": {
     "status": "unverified",
-    "text": "Відомі бани користувача <@{id}> (`{id}`) на серверах бота:"
+    "text": "Відомі бани користувача <@{id}> (`{id}`) на серверах цього бота:"
   },
   "baninfo_network": {
     "status": "unverified",
@@ -73,7 +73,7 @@
   },
   "baninfo_none": {
     "status": "unverified",
-    "text": "Банів користувача <@{id}> (`{id}`) на серверах бота не знайдено."
+    "text": "Банів користувача <@{id}> (`{id}`) на серверах цього бота не знайдено."
   },
   "baninfo_permanent": {
     "status": "unverified",
@@ -89,7 +89,7 @@
   },
   "baninfo_when": {
     "status": "unverified",
-    "text": "заблокований: {date}"
+    "text": "забанений: {date}"
   },
   "banlink_added_invite": {
     "status": "unverified",
@@ -129,7 +129,7 @@
   },
   "duration_invalid": {
     "status": "unverified",
-    "text": "Невірний формат тривалості. Використовуйте: 30s, 5m, 2h, 1d, 1w або infinity."
+    "text": "Невірний формат строку. Використовуйте: 30s, 5m, 2h, 1d, 1w або infinity."
   },
   "force_leave_failed": {
     "status": "unverified",
@@ -141,35 +141,35 @@
   },
   "force_leave_not_member": {
     "status": "unverified",
-    "text": "Бота немає на цьому сервері."
+    "text": "Бота немає на вказаному сервері."
   },
   "force_leave_success": {
     "status": "unverified",
-    "text": "Бот покинув сервер {guild_id}, дані сервера видалено з бази даних."
+    "text": "Бот покинув сервер {guild_id}; дані сервера видалено з бази даних."
   },
   "gban_enforce_dm": {
     "status": "unverified",
-    "text": "Ви не можете приєднатися до сервера {server}, оскільки вас заблоковано в нашій мережі серверів.\n\nПричина: {reason}\nЗалишилося до зняття блокування: {remaining}"
+    "text": "Ви не можете приєднатися до сервера {server}, оскільки вас забанено в нашій мережі серверів.\n\nПричина: {reason}\nБан буде знято: {remaining}"
   },
   "gban_enforce_log": {
     "status": "unverified",
-    "text": "Користувача {mention} ({username} {id}) заблоковано: глобальне блокування видано на сервері {origin_server}, {issued}. Залишилося до зняття: {remaining}."
+    "text": "Користувача {mention} ({username} {id}) забанено: мережевий бан видано на сервері {origin_server}, {issued}. Бан буде знято: {remaining}."
   },
   "gban_enforce_reason_suffix": {
     "status": "unverified",
-    "text": "(блокування видано ботом {bot}; дата закінчення блокування: {date})"
+    "text": "(бан видано ботом {bot}; дата закінчення бану: {date})"
   },
   "global_duration_invalid": {
     "status": "unverified",
-    "text": "Невірний формат строку. Використовуйте: 1h (година), 1d (дні), 2m (місяці), 3y (роки) або infinity (10 років). Максимум — 10 років."
+    "text": "Невірний формат строку. Використовуйте: 1h (години), 1d (дні), 2m (місяці), 3y (роки) або infinity (10 років). Максимум — 10 років."
   },
   "globalban_dm": {
     "status": "unverified",
-    "text": "Вас заблоковано в нашій мережі серверів.\n\nПричина: {reason}\nЗалишилося до зняття блокування: {remaining}"
+    "text": "Вас забанено в нашій мережі серверів.\n\nПричина: {reason}\nБан буде знято: {remaining}"
   },
   "globalban_log": {
     "status": "unverified",
-    "text": "Користувача {user_id} заблоковано по всій мережі {network} адміністратором {admin}. Причина: {reason}. Зняття блокування: {unban}."
+    "text": "Користувача {user_id} забанено у всій мережі {network} адміністратором {admin}. Причина: {reason}. Зняття бану: {unban}."
   },
   "globalban_no_network": {
     "status": "unverified",
@@ -177,15 +177,15 @@
   },
   "globalban_success": {
     "status": "unverified",
-    "text": "Користувача {user_id} заблоковано на цьому сервері й додано до списку блокувань мережі {network}. Причина: {reason}. Зняття блокування: {unban}."
+    "text": "Користувача {user_id} забанено на цьому сервері й додано до списку банів мережі {network}. Причина: {reason}. Зняття бану: {unban}."
   },
   "globalunban_not_banned": {
     "status": "unverified",
-    "text": "Користувач {user_id} не має глобального блокування в цій мережі."
+    "text": "Користувач {user_id} не має мережевого бану в цій мережі."
   },
   "globalunban_success": {
     "status": "unverified",
-    "text": "Глобальне блокування знято з користувача {user_id}. Розблоковано на серверах: {count}."
+    "text": "Мережевий бан знято з користувача {user_id}. Серверів, де знято бан: {count}."
   },
   "guard_already": {
     "status": "unverified",
@@ -193,7 +193,7 @@
   },
   "guard_enabled": {
     "status": "unverified",
-    "text": "Охорону ввімкнено в цьому каналі. Тривалість блокувань: {duration}, причина: {reason}."
+    "text": "Охорону ввімкнено в цьому каналі. Строк бану: {duration}, причина: {reason}."
   },
   "guard_no_setup": {
     "status": "unverified",
@@ -217,7 +217,7 @@
   },
   "help_cmd_ban": {
     "status": "unverified",
-    "text": "/ban <user_id> <тривалість> <причина> — заблокувати користувача за ID"
+    "text": "/ban <user_id> <строк> <причина> — забанити користувача за ID"
   },
   "help_cmd_banlink": {
     "status": "unverified",
@@ -225,23 +225,23 @@
   },
   "help_cmd_dm": {
     "status": "unverified",
-    "text": "/dm <текст> — задати текст ОП перед баном ({{server}} — назва сервера)"
+    "text": "/dm <текст> — задати текст ОП, що надсилається перед баном ({{server}} — назва сервера)"
   },
   "help_cmd_force_leave": {
     "status": "unverified",
-    "text": "/force_leave <server_id> — вивести бота з сервера"
+    "text": "/force_leave <server_id> — видалити бота з сервера"
   },
   "help_cmd_globalban": {
     "status": "unverified",
-    "text": "/globalban <user_id> <причина> <строк> — заблокувати на цьому сервері та по всій мережі (строк: 1h, 2m=місяці, 3y=роки, infinity=10 років)"
+    "text": "/globalban <user_id> <причина> <строк> — забанити на цьому сервері та у всій мережі (строк: 1h, 1d, 2m=місяці, 3y=роки, infinity=10 років)"
   },
   "help_cmd_globalunban": {
     "status": "unverified",
-    "text": "/globalunban <user_id> — зняти глобальне блокування та розблокувати по мережі"
+    "text": "/globalunban <user_id> — зняти мережевий бан і розбанити на серверах мережі"
   },
   "help_cmd_guard": {
     "status": "unverified",
-    "text": "/guard <тривалість> <причина> — увімкнути охорону від спаму в цьому каналі"
+    "text": "/guard <строк> <причина> — увімкнути охорону від спаму в цьому каналі"
   },
   "help_cmd_help": {
     "status": "unverified",
@@ -253,7 +253,7 @@
   },
   "help_cmd_list_chats": {
     "status": "unverified",
-    "text": "/list_chats — список серверів, на яких є бот"
+    "text": "/list_chats — список серверів, на яких працює бот"
   },
   "help_cmd_loc_compare": {
     "status": "unverified",
@@ -261,7 +261,7 @@
   },
   "help_cmd_loc_reply": {
     "status": "unverified",
-    "text": "/loc-reply <код> <текст> — відповісти на пропозицію локалізації (адміни бота)"
+    "text": "/loc-reply <код> <текст> — відповісти на пропозицію локалізації (адміністратори бота)"
   },
   "help_cmd_loc_suggest": {
     "status": "unverified",
@@ -273,19 +273,19 @@
   },
   "help_cmd_localizer_add": {
     "status": "unverified",
-    "text": "/localizer-add <користувач> — видати статус локалізатора: правка локалізації через панель керування (адміни бота)"
+    "text": "/localizer-add <користувач> — видати статус локалізатора: правка локалізації через панель керування (адміністратори бота)"
   },
   "help_cmd_localizer_rem": {
     "status": "unverified",
-    "text": "/localizer-rem <користувач> — відкликати делегований статус локалізатора (адміни бота)"
+    "text": "/localizer-rem <користувач> — відкликати делегований статус локалізатора (адміністратори бота)"
   },
   "help_cmd_remadmin": {
     "status": "unverified",
-    "text": "/remadmin <user_id> — позбавити користувача статусу адміна сервера"
+    "text": "/remadmin <user_id> — позбавити користувача статусу адміністратора сервера"
   },
   "help_cmd_remconsul": {
     "status": "unverified",
-    "text": "/remconsul <user_id> — позбавити користувача статусу консула на сервері апеляцій (адміни бота)"
+    "text": "/remconsul <user_id> — позбавити користувача статусу консула на сервері апеляцій (адміністратори бота)"
   },
   "help_cmd_setadmin": {
     "status": "unverified",
@@ -293,11 +293,11 @@
   },
   "help_cmd_setappeal": {
     "status": "unverified",
-    "text": "/setappeal <текст> — текст, що додається новим рядком до повідомлення про бан"
+    "text": "/setappeal <текст> — текст, що додається з нового рядка до повідомлення про бан"
   },
   "help_cmd_setconsul": {
     "status": "unverified",
-    "text": "/setconsul <user_id> — призначити користувача консулом на сервері апеляцій (адміни бота)"
+    "text": "/setconsul <user_id> — призначити користувача консулом на сервері апеляцій (адміністратори бота)"
   },
   "help_cmd_setgbans": {
     "status": "unverified",
@@ -309,15 +309,15 @@
   },
   "help_cmd_setverify": {
     "status": "unverified",
-    "text": "/setverify <role_id> [channel_id] — видавати роль учасникам, які були активні понад один день (спільна база між серверами)"
+    "text": "/setverify <role_id> [channel_id] — видавати роль учасникам, які були активні понад один день (спільна база для всіх серверів)"
   },
   "help_cmd_unban": {
     "status": "unverified",
-    "text": "/unban <user_id> — розблокувати користувача за ID на цьому сервері"
+    "text": "/unban <user_id> — розбанити користувача за ID на цьому сервері"
   },
   "help_cmd_unbanlink": {
     "status": "unverified",
-    "text": "/unbanlink <номер> — видалити посилання із заборонених (номер — у /links)"
+    "text": "/unbanlink <номер> — видалити посилання зі списку заборонених (номер — у /links)"
   },
   "help_section_bot_admins": {
     "status": "unverified",
@@ -365,7 +365,7 @@
   },
   "list_chats_too_long": {
     "status": "unverified",
-    "text": "Список великий — завантажую файл."
+    "text": "Список великий — надсилаю файл."
   },
   "loc_compare_header": {
     "status": "unverified",
@@ -381,7 +381,7 @@
   },
   "loc_cooldown": {
     "status": "unverified",
-    "text": "Цей файл уже нещодавно запитували. Спробуйте пізніше (не частіше одного разу на 10 хвилин для сервера чи групи)."
+    "text": "Цей файл нещодавно запитували. Спробуйте пізніше (не частіше одного разу на 10 хвилин для сервера чи користувача)."
   },
   "loc_file_caption": {
     "status": "unverified",
@@ -405,7 +405,7 @@
   },
   "loc_reply_failed": {
     "status": "unverified",
-    "text": "Не вдалося надіслати особисте повідомлення користувачеві (можливо, закриті ОП)."
+    "text": "Не вдалося надіслати особисте повідомлення користувачеві (можливо, ОП закриті)."
   },
   "loc_reply_not_found": {
     "status": "unverified",
@@ -421,7 +421,7 @@
   },
   "loc_suggest_confirm": {
     "status": "unverified",
-    "text": "Дякуємо! Вашу пропозицію надіслано команді. Код вашого повідомлення: {code}"
+    "text": "Дякуємо! Вашу пропозицію надіслано команді локалізації. Код вашого повідомлення: {code}"
   },
   "loc_suggest_no_support": {
     "status": "unverified",
@@ -457,11 +457,11 @@
   },
   "localizer_rem_not": {
     "status": "unverified",
-    "text": "Користувач {user_id} не має делегованого статусу локалізатора. (Адміністратори стають локалізаторами автоматично, ця команда не позбавляє їх цього статусу.)"
+    "text": "Користувач {user_id} не має делегованого статусу локалізатора. (Адміністратори стають локалізаторами автоматично; ця команда не позбавляє їх цього статусу.)"
   },
   "network_ban_notice": {
     "status": "unverified",
-    "text": "Адміністратори, зверніть увагу, що користувача {mention} ({username} {id}) було заблоковано на сервері {server}."
+    "text": "Увага адміністраторам: користувача {mention} ({username} {id}) забанено на сервері {server}."
   },
   "no_permission": {
     "status": "unverified",
@@ -481,23 +481,23 @@
   },
   "pardon_done_all": {
     "status": "unverified",
-    "text": "Мережеві блокування користувача <@{id}> знято в усіх мережах — {moderator}."
+    "text": "Мережеві бани користувача <@{id}> знято в усіх мережах (модератор: {moderator})."
   },
   "pardon_done_network": {
     "status": "unverified",
-    "text": "Мережеве блокування користувача <@{id}> знято в мережі {network} — {moderator}."
+    "text": "Мережевий бан користувача <@{id}> знято в мережі {network} (модератор: {moderator})."
   },
   "pardon_none": {
     "status": "unverified",
-    "text": "У користувача немає активних мережевих блокувань."
+    "text": "У користувача немає активних мережевих банів."
   },
   "purgatorium_appeal_hint": {
     "status": "unverified",
-    "text": "Вас заблоковано на сервері, який захищає цей бот. Щоб подати апеляцію, використайте команду /appeal в особистих повідомленнях з ботом {bridge_bot}."
+    "text": "Щоб подати апеляцію, використайте команду /appeal в особистих повідомленнях з ботом {bridge_bot}."
   },
   "purgatorium_invite_line": {
     "status": "unverified",
-    "text": "Якщо ви вважаєте блокування помилковим, ви можете подати апеляцію: приєднайтеся до сервера за посиланням {invite}, щоб зв'язатися з адміністрацією бота."
+    "text": "Якщо ви вважаєте бан помилковим, ви можете подати апеляцію: приєднайтеся до сервера за посиланням {invite}, щоб зв'язатися з адміністрацією бота."
   },
   "remadmin_not_admin": {
     "status": "unverified",
@@ -521,7 +521,7 @@
   },
   "setadmin_dm": {
     "status": "unverified",
-    "text": "Тепер вас призначено адміністратором сервера {server}."
+    "text": "Вас призначено адміністратором сервера {server}."
   },
   "setadmin_invalid_id": {
     "status": "unverified",
@@ -537,15 +537,15 @@
   },
   "setconsul_success": {
     "status": "unverified",
-    "text": "Користувача {user_id} призначено консулом сервера апеляцій. Під час приєднання до сервера апеляцій він отримає роль консула й не буде заблокований."
+    "text": "Користувача {user_id} призначено консулом сервера апеляцій. Під час приєднання до сервера апеляцій отримає роль консула й не буде забанений."
   },
   "setgbans_disabled": {
     "status": "unverified",
-    "text": "Глобальні бани вимкнено. Розблоковано користувачів: {count}."
+    "text": "Мережеві бани вимкнено. Розбанено користувачів: {count}."
   },
   "setgbans_enabled": {
     "status": "unverified",
-    "text": "Глобальні бани ввімкнено. Користувачі, заблоковані в мережі, будуть автоматично блокуватися на цьому сервері. Усього в мережі заблоковано: {count}."
+    "text": "Мережеві бани ввімкнено. Користувачів, забанених у мережі, буде автоматично банити й на цьому сервері. Усього в мережі забанено: {count}."
   },
   "setgbans_usage": {
     "status": "unverified",
@@ -581,7 +581,7 @@
   },
   "status_template": {
     "status": "unverified",
-    "text": "На варті {servers} {servers_word}"
+    "text": "На варті: {servers} {servers_word}"
   },
   "tribunal_ack": {
     "status": "unverified",
@@ -589,35 +589,35 @@
   },
   "tribunal_already_resolved": {
     "status": "unverified",
-    "text": "Щодо цього випадку рішення вже ухвалено."
+    "text": "Щодо цієї справи рішення вже ухвалено."
   },
   "tribunal_banned_at": {
     "status": "unverified",
-    "text": "- Заблокований: {date}"
+    "text": "- Забанений: {date}"
   },
   "tribunal_btn_globalban": {
     "status": "unverified",
-    "text": "Global ban"
+    "text": "Мережевий бан"
   },
   "tribunal_btn_ignore": {
     "status": "unverified",
-    "text": "Ignore"
+    "text": "Пропустити"
   },
   "tribunal_done_globalban": {
     "status": "unverified",
-    "text": "Глобальне блокування видано: {moderator}."
+    "text": "Мережевий бан видано (модератор: {moderator})."
   },
   "tribunal_done_ignore": {
     "status": "unverified",
-    "text": "Залишено без глобального блокування: {moderator}."
+    "text": "Залишено без мережевого бану (модератор: {moderator})."
   },
   "tribunal_expired": {
     "status": "unverified",
-    "text": "Рішення не ухвалено, кнопки згашено після завершення терміну."
+    "text": "Рішення не ухвалено — строк минув, кнопки вимкнено."
   },
   "tribunal_network_log": {
     "status": "unverified",
-    "text": "Користувач {mention} ({id}) забанений у всій мережі {network}. Причина: {reason}. Зняття блокування: {until}."
+    "text": "Користувача {mention} ({id}) забанено у всій мережі {network}. Причина: {reason}. Зняття бану: {until}."
   },
   "tribunal_permanent": {
     "status": "unverified",
@@ -637,15 +637,15 @@
   },
   "tribunal_title": {
     "status": "unverified",
-    "text": "**Автоматичне блокування**"
+    "text": "**Автоматичний бан**"
   },
   "tribunal_unknown_case": {
     "status": "unverified",
-    "text": "Цей випадок бот більше не відстежує."
+    "text": "Цю справу бот більше не відстежує."
   },
   "tribunal_until": {
     "status": "unverified",
-    "text": "- Зняття блокування: {date}"
+    "text": "- Зняття бану: {date}"
   },
   "tribunal_user": {
     "status": "unverified",
@@ -653,19 +653,19 @@
   },
   "unban_cmd_failed": {
     "status": "unverified",
-    "text": "Не вдалося розблокувати користувача {user_id}: {error}"
+    "text": "Не вдалося розбанити користувача {user_id}: {error}"
   },
   "unban_cmd_log": {
     "status": "unverified",
-    "text": "Користувача {user_id} розблокував адміністратор {admin}."
+    "text": "Користувача {user_id} розбанив адміністратор {admin}."
   },
   "unban_cmd_not_banned": {
     "status": "unverified",
-    "text": "Користувач {user_id} не заблокований на цьому сервері."
+    "text": "Користувач {user_id} не забанений на цьому сервері."
   },
   "unban_cmd_success": {
     "status": "unverified",
-    "text": "Користувача {user_id} розблоковано на цьому сервері."
+    "text": "Користувача {user_id} розбанено на цьому сервері."
   },
   "unbanlink_not_found": {
     "status": "unverified",
@@ -673,15 +673,15 @@
   },
   "unbanlink_success": {
     "status": "unverified",
-    "text": "Посилання з номером {link_id} видалено із заборонених."
+    "text": "Посилання з номером {link_id} видалено зі списку заборонених."
   },
   "verify_announce": {
     "status": "unverified",
-    "text": "Користувача {mention} ({username} {id}) верифіковано."
+    "text": "Користувача {name} ({username} {id}) верифіковано."
   },
   "verify_announce_cross": {
     "status": "unverified",
-    "text": "Користувача {mention} ({username} {id}) верифіковано (через верифікацію на іншому сервері)."
+    "text": "Користувача {name} ({username} {id}) верифіковано (за верифікацією на іншому сервері)."
   },
   "verify_invalid_channel": {
     "status": "unverified",

@@ -1,3 +1,17 @@
+"""Everything both halves of the code need and neither owns: the localization
+runtime, the permission check, duration parsing, link classification, spam
+detection and the service-chat reporter.
+
+The localization structures are built once at import, from the six JSON files
+in the i18n/ directory *next to this file*. That path is resolved through
+__file__, so moving this module one directory deeper would silently produce an
+empty localization rather than an error — every reply would render as its own
+key. It stays in src/ for that reason.
+
+`_LOCALE`, `_LOCALE_STATUS`, `_LOCALE_FLAT` and `_status_lang_cycle` are
+module-level mutable state and must exist exactly once. Import them by name;
+never rebuild a private copy in another module.
+"""
 import re
 import db
 from config import ADMINS
@@ -55,27 +69,12 @@ LANGUAGE_NAMES = {
 LANG_ORDER = ["ru", "uk", "pl", "en", "es", "pt"]
 
 def language_name(code):
+    """The language's own name for itself, or the code when it is unknown."""
     return LANGUAGE_NAMES.get(code, code)
 
 def available_locales():
     """Languages that have an i18n file, in display order."""
     return [L for L in LANG_ORDER if L in _LOCALE_FLAT]
-
-def reply_keys():
-    """All reply codes, taken from the reference (DEFAULT_LANG) localization."""
-    return sorted(_LOCALE_FLAT.get(DEFAULT_LANG, {}).keys())
-
-def get_reply(lang, key):
-    return _LOCALE_FLAT.get(lang, {}).get(key)
-
-def reply_status(lang, key):
-    """'verified' | 'unverified' | 'untranslated', or None if the key is unknown."""
-    known = any(key in _LOCALE_FLAT.get(L, {}) for L in _LOCALE_FLAT)
-    if not known:
-        return None
-    if key not in _LOCALE_FLAT.get(lang, {}):
-        return "untranslated"
-    return _LOCALE_STATUS.get(key, {}).get(lang, "unverified")
 
 def locale_stats(lang):
     """Counts relative to the DEFAULT_LANG key set, plus the verified percentage."""
@@ -99,6 +98,13 @@ def locale_stats(lang):
             "untranslated": untranslated, "percent": percent}
 
 def locale_bar(lang, width=12):
+    """A twelve-square progress bar of a language's translation state.
+
+    Green for verified, orange for unverified, red for untranslated. The
+    widths are rounded independently and then clamped so that they always sum
+    to exactly `width` — otherwise rounding would make some bars a square
+    longer than others and the column would stop lining up.
+    """
     s = locale_stats(lang)
     total = s["total"] or 1
     v = round(s["verified"] / total * width)
@@ -133,6 +139,11 @@ INVITE_LINK_RE = re.compile(
 )
 
 def normalize_banned_url(raw):
+    """Reduce a URL to the form the banned-link list stores and matches on.
+
+    Lowercased, without scheme, without a leading www. and without a trailing
+    slash, so that one row catches every way the same address can be typed.
+    """
     value = raw.strip().lower()
     value = re.sub(r"^https?://", "", value)
     if value.startswith("www."):
@@ -169,6 +180,13 @@ def message_has_banned_link(content):
     return False
 
 def is_admin(user_id, guild_id=None):
+    """Whether the user may command the bot here.
+
+    Two tiers in one question: a Bot Admin from config.ADMINS passes
+    everywhere, a Server Admin only on the guild named. Called with no
+    guild_id it therefore asks the stricter question — "is this a Bot Admin" —
+    which is what the bot-wide commands want.
+    """
     if user_id in ADMINS:
         return True
     if guild_id is not None:
@@ -176,12 +194,26 @@ def is_admin(user_id, guild_id=None):
     return False
 
 def get_guild_lang(guild_id):
+    """The server's configured language, or English.
+
+    Falls back for an unregistered server and for a row holding a language
+    that is no longer supported, so callers never have to guard the value they
+    pass to `localized`.
+    """
     row = db.get_guild(guild_id)
     if row and row["lang"] in SUPPORTED_LANGS:
         return row["lang"]
     return DEFAULT_LANG
 
 def localized(_key, locale, **kwargs):
+    """Render reply `_key` in `locale`, formatted with the given fields.
+
+    Three fallbacks, deliberately silent: an untranslated key falls back to
+    the reference language, an unknown key renders as its own name, and a
+    template whose placeholders do not match the arguments is returned
+    unformatted. A missing translation degrades the message; raising here
+    would lose it entirely, and these are ban notices and log lines.
+    """
     table = _LOCALE.get(_key, {})
     template = table.get(locale, table.get(DEFAULT_LANG, _key))
     try:
@@ -228,6 +260,12 @@ def parse_global_duration(text):
     return min(n * multipliers[unit], GLOBAL_BAN_MAX_SECONDS)
 
 def format_duration(seconds, lang):
+    """A duration in seconds as the largest unit that keeps it above one.
+
+    Deliberately coarse and untranslated apart from 'infinity': the output
+    goes into ban notices next to a Discord timestamp that carries the exact
+    moment, so this is the rough figure, not the precise one.
+    """
     if seconds is None:
         return localized("duration_infinity", lang)
     if seconds < 60:
@@ -257,6 +295,7 @@ import itertools
 _status_lang_cycle = itertools.cycle(["ru", "uk", "pl", "en", "es", "pt"])
 
 def plural_ru(n, forms):
+    """Pick the Russian/Ukrainian plural form: one, few, or many."""
     n = abs(int(n))
     if n % 10 == 1 and n % 100 != 11:
         return forms[0]
@@ -265,6 +304,11 @@ def plural_ru(n, forms):
     return forms[2]
 
 def plural_pl(n, forms):
+    """Pick the Polish plural form: one, few, or many.
+
+    Differs from the Russian rule at exactly one point — 1 takes the singular
+    only when the number *is* 1, not whenever it ends in 1.
+    """
     n = abs(int(n))
     if n == 1:
         return forms[0]
@@ -273,6 +317,7 @@ def plural_pl(n, forms):
     return forms[2]
 
 def plural_en(n, forms):
+    """Pick the English plural form: singular for 1, plural otherwise."""
     return forms[0] if n == 1 else forms[1]
 
 def get_next_status_text(servers):

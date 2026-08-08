@@ -54,6 +54,44 @@ Confederate Guard is a self-hosted Discord moderation bot that keeps servers cle
 
 ---
 
+## Project structure
+
+The code lives in `src/`, split into packages by domain. `ARCHITECTURE.md` describes how the pieces work together and carries a feature → file table.
+
+```
+src/
+  main.py              entry point: the client plus the background loops
+                       (backups, retention, the setup deadline)
+  config.py            this deployment's ids (untracked; config.example.py is the template)
+  env_loader.py        reads src/.env
+  utils.py             localization runtime, duration parsing, link matching,
+                       spam detection, service events
+  setup_deadline.py    leaves servers nobody registered with /setup
+  backup_crypto.py     encrypted database snapshots
+  restore_backup.py    their restore tool
+
+  db/                  SQLite layer: one connection, one module per domain
+    __init__.py          connection (conn/cur), init(), the whole public API
+    schema.py            every CREATE TABLE + additive migrations
+    guilds.py   settings.py  admins.py  users.py
+    bans.py     tribunal.py
+    onboarding.py        the setup deadline and the retention sweep
+
+  discord_bot/         the bot itself
+    client.py            the client, its loops, persistent-view restore
+    events.py            inbound events (messages, joins, server add/remove)
+    verification.py      activity tracking, role grants, cross-bot sync
+    bans.py              ban delivery, network enforcement, unban loop
+    purgatorium.py       Guard's half of the shared appeal system
+    tribunal.py          review of automatic bans, promotion to network bans
+    commands/            slash commands: guilds, settings, bans, links,
+                         admins, locale, user
+
+  i18n/                the six localization files
+```
+
+---
+
 ## Commands
 
 Permission roles used below:
