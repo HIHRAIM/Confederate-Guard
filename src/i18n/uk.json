@@ -581,7 +581,7 @@
   },
   "status_template": {
     "status": "unverified",
-    "text": "На варті: {servers} {servers_word}"
+    "text": "На варті {servers} {servers_word}"
   },
   "tribunal_ack": {
     "status": "unverified",

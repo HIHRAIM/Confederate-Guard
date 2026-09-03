@@ -16,6 +16,7 @@ start-up by client.py from the open rows in tribunal_cases, and the case is
 claimed in the database before anything is banned — that claim is what makes
 two consuls pressing at the same instant produce one ban and one refusal.
 """
+import logging
 import time
 
 import discord
@@ -28,6 +29,8 @@ from discord_bot.purgatorium import _is_consul_or_admin
 from utils import (
     DEFAULT_LANG, GLOBAL_BAN_MAX_SECONDS, SUPPORTED_LANGS, get_guild_lang, localized,
 )
+
+logger = logging.getLogger("guard.discord")
 
 TRIBUNAL_BUTTON_TTL = 7 * 86400
 
@@ -240,7 +243,7 @@ async def handle_tribunal_click(interaction: discord.Interaction, action):
         try:
             await _tribunal_apply_global_ban(case)
         except Exception as e:
-            print(f"[ERROR] tribunal global ban failed for {case['user_id']}: {e}", flush=True)
+            logger.error("tribunal global ban failed for %s: %s", case["user_id"], e)
 
     try:
         await interaction.followup.send(localized("tribunal_ack", lang), ephemeral=True)

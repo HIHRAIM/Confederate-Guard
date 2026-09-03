@@ -7,20 +7,140 @@ encrypted backups, the retention sweep, and the seven-day setup deadline. The
 loops that *are* about Discord (unbans, presence, the verification backfill)
 start in GuardBot.setup_hook instead.
 
+The client is started by start_client() rather than by bot.start(), because
+the first connection to the gateway is the one moment discord.py cannot
+recover from on its own — see that function.
+
 Run with cwd = src/. The database and .env are both opened by relative path,
 and the control panel launches the bot exactly this way.
 """
 import asyncio
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(name)s %(levelname)s %(message)s",
+)
+logger = logging.getLogger("guard.main")
+
+import aiohttp
 import discord
+
 import db
 from config import BOT_TOKEN, BACKUP_CHATS
 from discord_bot import bot
 from utils import send_service_event
 
+GATEWAY_RETRY_ATTEMPTS = 8
+GATEWAY_RETRY_START = 5
+GATEWAY_RETRY_MAX = 300
+
+TRANSIENT_ERRORS = (
+    OSError,
+    asyncio.TimeoutError,
+    aiohttp.ClientError,
+    discord.HTTPException,
+    discord.GatewayNotFound,
+)
+
+async def _login_with_backoff():
+    """Log in over HTTP, retrying while the failure is the network.
+
+    Only the login is retried, and only for the errors that mean "not right
+    now": a bad token raises LoginFailure, which is not an HTTPException and
+    so is not caught here at all.
+
+    discord.py calls GuardBot.setup_hook at the end of login(), so a login
+    that reached that far has already synced the command tree and started the
+    background loops. setup_hook refuses to start them twice, which is what
+    makes retrying this call safe at all.
+    """
+    delay = GATEWAY_RETRY_START
+    for attempt in range(1, GATEWAY_RETRY_ATTEMPTS + 1):
+        try:
+            await bot.login(BOT_TOKEN)
+            return
+        except TRANSIENT_ERRORS as e:
+            if attempt == GATEWAY_RETRY_ATTEMPTS:
+                raise
+            logger.warning(
+                "login failed (%s: %s); attempt %d/%d, retrying in %ds",
+                type(e).__name__, e, attempt, GATEWAY_RETRY_ATTEMPTS, delay,
+            )
+            await asyncio.sleep(delay)
+            delay = min(delay * 2, GATEWAY_RETRY_MAX)
+
+async def _connect_with_backoff():
+    """Reach the gateway, retrying the *first* handshake with a backoff.
+
+    discord.py recovers from a dropped connection by resuming from
+    bot.ws.sequence, but until the first handshake succeeds bot.ws is still
+    None — so any 5xx from the gateway at start-up becomes an AttributeError
+    on NoneType inside Client.connect and takes the process down. Observed
+    live: a restart met a 503 on the first handshake, systemd restarted the
+    unit ten seconds later, and the bot was blind until it did.
+
+    That single window is all this loop covers. It retries only while bot.ws
+    is None, which is exactly "no connection has ever been made", so a retry
+    can neither duplicate a session nor lose events. Once a connection has
+    succeeded discord.py's own reconnect logic is sound, and anything raised
+    after that point is passed on unchanged — including
+    PrivilegedIntentsRequired, which can only be raised once a handshake has
+    happened.
+    """
+    delay = GATEWAY_RETRY_START
+    for attempt in range(1, GATEWAY_RETRY_ATTEMPTS + 1):
+        try:
+            await bot.connect(reconnect=True)
+            return
+        except Exception as e:
+            if bot.ws is not None or bot.is_closed():
+                raise
+            if attempt == GATEWAY_RETRY_ATTEMPTS:
+                raise
+            logger.warning(
+                "gateway handshake failed (%s: %s); attempt %d/%d, retrying in %ds",
+                type(e).__name__, e, attempt, GATEWAY_RETRY_ATTEMPTS, delay,
+            )
+            await asyncio.sleep(delay)
+            delay = min(delay * 2, GATEWAY_RETRY_MAX)
+
+async def start_client():
+    """What bot.start() would do, with the start-up retry around it.
+
+    The two halves of bot.start() are separated because they need different
+    treatment: the login must happen exactly once, since it is what runs
+    setup_hook, while the connection is the half that fails at start-up.
+
+    A client abandoned mid-start keeps its aiohttp connector open — the
+    "Unclosed connector" that followed the crash — so the client is closed
+    before the failure is passed on to the process.
+    """
+    try:
+        await _login_with_backoff()
+        await _connect_with_backoff()
+    except Exception:
+        try:
+            await bot.close()
+        except Exception:
+            logger.warning("closing the client after a failed start failed", exc_info=True)
+        raise
+
+async def announce_started():
+    """Tell the service chats the bot is up, once it actually is.
+
+    Waits for the client rather than for a fixed few seconds: with the
+    start-up retry in _connect_with_backoff the first connection can take
+    minutes, and send_service_event needs a live client to resolve a channel
+    at all — announced any earlier it would simply be lost.
+    """
+    await bot.wait_until_ready()
+    await send_service_event("bot_started")
+
 async def send_db_backup():
     """Build an encrypted snapshot of guard.db and post it to BACKUP_CHATS.
 
-    Every failure is printed and swallowed, per channel: a backup channel that
+    Every failure is logged and swallowed, per channel: a backup channel that
     has been deleted must not take the other channels — or the loop — down
     with it. The file is encrypted before it leaves the process, because its
     destination is a Discord channel that stores it indefinitely.
@@ -30,7 +150,7 @@ async def send_db_backup():
     try:
         data = build_encrypted_backup("guard.db")
     except Exception as e:
-        print(f"Periodic backup failed to build: {e}", flush=True)
+        logger.error("periodic backup failed to build: %s", e)
         return
     fname = encrypted_filename("guard.db")
 
@@ -41,12 +161,12 @@ async def send_db_backup():
                 try:
                     ch = await bot.fetch_channel(channel_id)
                 except Exception:
-                    print(f"Periodic backup: cannot fetch channel {channel_id}", flush=True)
+                    logger.error("periodic backup: cannot fetch channel %s", channel_id)
                     continue
             if ch:
                 await ch.send(file=discord.File(io.BytesIO(data), filename=fname))
         except Exception as e:
-            print(f"Periodic backup: failed to send to channel {channel_id}: {e}", flush=True)
+            logger.error("periodic backup: failed to send to channel %s: %s", channel_id, e)
 
 async def backup_loop():
     """Every 12 hours, send the encrypted database snapshot to the backup
@@ -88,7 +208,7 @@ async def setup_deadline_loop():
             for event_key, fields in await setup_deadline_pass(bot):
                 await send_service_event(event_key, **fields)
         except Exception as e:
-            print(f"setup_deadline_loop error: {e}", flush=True)
+            logger.error("setup_deadline_loop error: %s", e)
         await asyncio.sleep(24 * 3600)
 
 async def main():
@@ -100,22 +220,20 @@ async def main():
     grandfathering line is planted on the first start of this version rather
     than whenever the first sweep happens to run.
 
-    The service chats are told five seconds in, by which time the client is
-    normally ready, and told again on the way out through the finally — which
-    is the only announcement a crash produces.
+    The service chats are told once the client is ready, and told again on
+    the way out through the finally — which is the only announcement a crash
+    produces.
     """
     db.init()
     db.cleanup_expired_user_data()
     db.rule_since()
 
     await asyncio.sleep(0)
-    task = asyncio.create_task(bot.start(BOT_TOKEN))
+    task = asyncio.create_task(start_client())
     asyncio.get_event_loop().create_task(backup_loop())
     asyncio.get_event_loop().create_task(retention_loop())
     asyncio.get_event_loop().create_task(setup_deadline_loop())
-
-    await asyncio.sleep(5)
-    await send_service_event("bot_started")
+    asyncio.get_event_loop().create_task(announce_started())
 
     try:
         await task

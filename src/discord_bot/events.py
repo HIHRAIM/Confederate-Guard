@@ -14,6 +14,7 @@ message become an ordinary message.
 Adding a handler here means adding an event; adding behaviour to an existing
 one belongs in the domain module it calls.
 """
+import logging
 import time
 
 import discord
@@ -37,6 +38,8 @@ from discord_bot.verification import (
     handle_verification, handle_verification_sync, _grant_verify,
 )
 from utils import DEFAULT_LANG, is_admin, localized, message_has_banned_link, message_has_spam
+
+logger = logging.getLogger("guard.discord")
 
 @bot.event
 async def on_guild_join(guild: discord.Guild):
@@ -232,7 +235,7 @@ async def on_message(message: discord.Message):
     try:
         await post_tribunal_case(message.guild, member, guild_row, reason, unban_at)
     except Exception as e:
-        print(f"[ERROR] tribunal post failed for {member.id}: {e}", flush=True)
+        logger.error("tribunal post failed for %s: %s", member.id, e)
 
     if guild_row:
         log_channel_id = int(guild_row["log_channel_id"])

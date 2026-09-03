@@ -581,7 +581,7 @@
   },
   "status_template": {
     "status": "verified",
-    "text": "На страже: {servers} {servers_word}"
+    "text": "На страже {servers} {servers_word}"
   },
   "tribunal_ack": {
     "status": "verified",

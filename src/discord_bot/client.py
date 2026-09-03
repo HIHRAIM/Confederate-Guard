@@ -14,6 +14,7 @@ the other direction would close the cycle; and `setup_hook` and
 nothing to gain by hoisting them.
 """
 import asyncio
+import logging
 import traceback
 
 import discord
@@ -23,6 +24,8 @@ import db
 import utils
 from config import PURGATORIUM_GUILD_ID
 from utils import DEFAULT_LANG, SUPPORTED_LANGS, get_guild_lang, localized
+
+logger = logging.getLogger("guard.discord")
 
 class GuardBot(discord.Client):
     """The bot's client, with the command tree hanging off it.
@@ -41,14 +44,24 @@ class GuardBot(discord.Client):
         intents.members = True
         super().__init__(intents=intents)
         self.tree = app_commands.CommandTree(self)
+        self._loops_started = False
 
     async def setup_hook(self):
         """Publish the command tree and start everything that runs on a timer.
 
-        Called once by discord.py before the first connection. The three tasks
-        are fire-and-forget: each waits for the client to be ready on its own,
-        so none of them delays the login.
+        Called by discord.py at the end of login(), before the first
+        connection. The three tasks are fire-and-forget: each waits for the
+        client to be ready on its own, so none of them delays the login.
+
+        Idempotent, because main.py retries a login that failed on a
+        transient error and a second run would leave two copies of every
+        loop. The flag is set once the tasks exist rather than on entry: a
+        login that failed before that point — a tree.sync() that met a 5xx,
+        say — gets the whole hook again on the retry, which is what it needs.
         """
+        if self._loops_started:
+            return
+
         from discord_bot.bans import unban_loop
         from discord_bot.verification import backfill_verified_roles
 
@@ -56,6 +69,7 @@ class GuardBot(discord.Client):
         asyncio.create_task(unban_loop(self))
         asyncio.create_task(status_loop(self))
         asyncio.create_task(backfill_verified_roles(self))
+        self._loops_started = True
         self._restore_persistent_views()
 
     def _restore_persistent_views(self):
@@ -74,7 +88,7 @@ class GuardBot(discord.Client):
                 self.add_view(TribunalView(int(case["user_id"]), lang),
                               message_id=int(case["message_id"]))
         except Exception as e:
-            print(f"[ERROR] restoring tribunal views: {e}", flush=True)
+            logger.error("restoring tribunal views: %s", e)
         try:
             lang = get_guild_lang(PURGATORIUM_GUILD_ID)
             for row in db.get_baninfo_posts(max_age_seconds=90 * 86400):
@@ -84,7 +98,7 @@ class GuardBot(discord.Client):
                     self.add_view(NetworkPardonView(uid, networks, lang),
                                   message_id=int(row["message_id"]))
         except Exception as e:
-            print(f"[ERROR] restoring pardon views: {e}", flush=True)
+            logger.error("restoring pardon views: %s", e)
 
     async def on_ready(self):
         """Log the identity the bot actually connected as.
@@ -93,7 +107,7 @@ class GuardBot(discord.Client):
         one of the four event handlers events.py owns — this one is a log
         line, not a dispatcher.
         """
-        print(f"Logged in as {self.user} (ID: {self.user.id})")
+        logger.info("Logged in as %s (ID: %s)", self.user, self.user.id)
 
 bot = GuardBot()
 
@@ -101,14 +115,15 @@ bot = GuardBot()
 async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     """Last resort for a slash command that raised.
 
-    Prints the traceback for the operator and tells the user something went
+    Logs the traceback for the operator and tells the user something went
     wrong, in their server's language, privately. The reply is attempted both
     ways because the command may have deferred already, and the whole attempt
     is swallowed: an interaction that has expired cannot be answered at all,
     and failing to apologize must not raise a second error.
     """
     tb = traceback.format_exc()
-    print(f"[ERROR] Command '{interaction.command.name if interaction.command else '?'}': {error}\n{tb}")
+    logger.error("Command '%s': %s\n%s",
+                 interaction.command.name if interaction.command else "?", error, tb)
     lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
     msg = localized("internal_error", lang, error=error)
     try:
