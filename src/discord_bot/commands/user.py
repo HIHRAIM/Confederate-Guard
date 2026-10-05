@@ -63,6 +63,29 @@ async def help_cmd(interaction: discord.Interaction):
         localized("help_cmd_loc_reply", lang),
     ])
 
+    network_lines = "\n".join([
+        localized("help_cmd_sponsor", lang),
+        localized("help_cmd_sponsor_claim", lang),
+        localized("help_cmd_sponsor_release", lang),
+        localized("help_cmd_sponsor_subscribe", lang),
+        localized("help_cmd_network_create", lang),
+        localized("help_cmd_network_claim", lang),
+        localized("help_cmd_network_rename", lang),
+        localized("help_cmd_network_info", lang),
+        localized("help_cmd_network_invite", lang),
+        localized("help_cmd_network_revoke", lang),
+        localized("help_cmd_network_accept", lang),
+        localized("help_cmd_network_kick", lang),
+        localized("help_cmd_network_transfer", lang),
+    ])
+    network_settings_lines = "\n".join([
+        localized("help_cmd_network_purgatorium", lang),
+        localized("help_cmd_network_channels", lang),
+        localized("help_cmd_network_consulroles", lang),
+        localized("help_cmd_network_appealtext", lang),
+        localized("help_cmd_network_settings", lang),
+    ])
+
     embed = discord.Embed(
         title=localized("help_title", lang),
         color=discord.Color.blurple()
@@ -70,5 +93,7 @@ async def help_cmd(interaction: discord.Interaction):
     embed.add_field(name=localized("help_section_everyone", lang), value=everyone_lines, inline=False)
     embed.add_field(name=localized("help_section_server_admins", lang), value=server_admin_lines, inline=False)
     embed.add_field(name=localized("help_section_bot_admins", lang), value=bot_admin_lines, inline=False)
+    embed.add_field(name=localized("help_section_networks", lang), value=network_lines, inline=False)
+    embed.add_field(name=localized("help_section_networks", lang), value=network_settings_lines, inline=False)
 
     await interaction.response.send_message(embed=embed, ephemeral=True)

@@ -99,16 +99,19 @@ async def remadmin_cmd(interaction: discord.Interaction, user_id: str):
         localized("remadmin_success", lang, user_id=uid)
     )
 
-async def _set_consul_roles(uid, grant: bool):
+async def _set_consul_roles(uid, grant: bool, network=None):
     """Grant or take away the CONSULS role(s) on Purgatorium if the user is
     there. Returns silently when the guild, member or roles are unavailable."""
-    purg = bot.get_guild(PURGATORIUM_GUILD_ID)
+    settings = db.network_settings(network) if network is not None else None
+    guild_id = settings["guild_id"] if settings else PURGATORIUM_GUILD_ID
+    purg = bot.get_guild(int(guild_id)) if guild_id else None
     if purg is None:
         return
     member = purg.get_member(uid)
     if member is None:
         return
-    roles = [purg.get_role(int(rid)) for rid in CONSULS]
+    roles = [purg.get_role(int(rid)) for rid in
+             (settings["consul_roles"] if settings else CONSULS)]
     roles = [r for r in roles if r is not None]
     if not roles:
         return
@@ -121,8 +124,8 @@ async def _set_consul_roles(uid, grant: bool):
         pass
 
 @bot.tree.command(name="setconsul", description="appoint an appeal-server consul (bot admins)")
-@app_commands.describe(user_id="ID of the user to appoint as consul")
-async def setconsul_cmd(interaction: discord.Interaction, user_id: str):
+@app_commands.describe(user_id="ID of the user to appoint as consul", network="Network number; operator default when omitted")
+async def setconsul_cmd(interaction: discord.Interaction, user_id: str, network: int = None):
     """Appoint an appeal-server consul (Bot Admins).
 
     Writes the row and, if the user is already on Purgatorium, hands them the
@@ -133,11 +136,17 @@ async def setconsul_cmd(interaction: discord.Interaction, user_id: str):
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
     lang = guild_row["lang"] if guild_row else DEFAULT_LANG
 
-    if not is_admin(interaction.user.id):
+    if network is None and not is_admin(interaction.user.id):
         await interaction.response.send_message(
             localized("setup_no_perm", lang), ephemeral=True
         )
         return
+    if network is not None:
+        import sponsors
+        if not (is_admin(interaction.user.id) or sponsors.can_manage_network(
+                interaction.user.id, network, new_work=True)):
+            await interaction.response.send_message(localized("network_not_owner", lang), ephemeral=True)
+            return
 
     try:
         uid = int(user_id.strip())
@@ -147,21 +156,24 @@ async def setconsul_cmd(interaction: discord.Interaction, user_id: str):
         )
         return
 
-    if db.is_consul(uid):
+    if db.is_network_consul(network, uid) if network is not None else db.is_consul(uid):
         await interaction.response.send_message(
             localized("setconsul_already", lang, user_id=uid), ephemeral=True
         )
         return
 
-    db.add_consul(uid, interaction.user.id)
-    await _set_consul_roles(uid, grant=True)
+    if network is None:
+        db.add_consul(uid, interaction.user.id)
+    else:
+        db.add_network_consul(network, uid, interaction.user.id)
+    await _set_consul_roles(uid, grant=True, network=network)
     await interaction.response.send_message(
         localized("setconsul_success", lang, user_id=uid)
     )
 
 @bot.tree.command(name="remconsul", description="dismiss an appeal-server consul (bot admins)")
-@app_commands.describe(user_id="ID of the consul to dismiss")
-async def remconsul_cmd(interaction: discord.Interaction, user_id: str):
+@app_commands.describe(user_id="ID of the consul to dismiss", network="Network number; operator default when omitted")
+async def remconsul_cmd(interaction: discord.Interaction, user_id: str, network: int = None):
     """Dismiss a consul and take the Purgatorium roles back (Bot Admins).
 
     Someone who holds a config.CONSULS role directly keeps every right this
@@ -171,11 +183,17 @@ async def remconsul_cmd(interaction: discord.Interaction, user_id: str):
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
     lang = guild_row["lang"] if guild_row else DEFAULT_LANG
 
-    if not is_admin(interaction.user.id):
+    if network is None and not is_admin(interaction.user.id):
         await interaction.response.send_message(
             localized("setup_no_perm", lang), ephemeral=True
         )
         return
+    if network is not None:
+        import sponsors
+        if not (is_admin(interaction.user.id) or sponsors.can_manage_network(
+                interaction.user.id, network, new_work=False)):
+            await interaction.response.send_message(localized("network_not_owner", lang), ephemeral=True)
+            return
 
     try:
         uid = int(user_id.strip())
@@ -185,13 +203,14 @@ async def remconsul_cmd(interaction: discord.Interaction, user_id: str):
         )
         return
 
-    if not db.remove_consul(uid):
+    removed = db.remove_network_consul(network, uid) if network is not None else db.remove_consul(uid)
+    if not removed:
         await interaction.response.send_message(
             localized("remconsul_not_consul", lang, user_id=uid), ephemeral=True
         )
         return
 
-    await _set_consul_roles(uid, grant=False)
+    await _set_consul_roles(uid, grant=False, network=network)
     await interaction.response.send_message(
         localized("remconsul_success", lang, user_id=uid)
     )

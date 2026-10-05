@@ -99,6 +99,12 @@ def _protected_ids():
             guilds.add(guild_id)
         if channel_id is not None:
             channels.add(channel_id)
+    for key in db.protected_settings_ids():
+        guild_id, channel_id = _parse_chat_key(key)
+        if guild_id is not None:
+            guilds.add(guild_id)
+        if channel_id is not None:
+            channels.add(channel_id)
     return guilds, channels
 
 def is_protected_guild(guild):

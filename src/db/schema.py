@@ -281,14 +281,118 @@ def create_all(cur, conn):
         settled_at INTEGER,
         PRIMARY KEY (platform, server_id)
     );
+
+    -- networks: stable network identities. Existing network numbers are
+    -- imported below with owner_id NULL, meaning an operator network.
+    -- Numbers and rows are never reused or deleted because bans refer to them.
+    CREATE TABLE IF NOT EXISTS networks (
+        network INTEGER PRIMARY KEY,
+        owner_id TEXT,
+        name TEXT NOT NULL DEFAULT '',
+        created_at INTEGER NOT NULL
+    );
+
+    -- network_invites: a network owner invites one server; a server admin
+    -- accepts before /setup may join it. Revocation clears the invitation.
+    CREATE TABLE IF NOT EXISTS network_invites (
+        network INTEGER NOT NULL,
+        guild_id TEXT NOT NULL,
+        invited_by TEXT NOT NULL,
+        expires_at INTEGER NOT NULL,
+        accepted_at INTEGER,
+        PRIMARY KEY (network, guild_id)
+    );
+
+    -- sponsor_state: the Patreon role tier last observed for a Discord user.
+    -- Losing a role starts a grace period for slots, never lifts bans.
+    CREATE TABLE IF NOT EXISTS sponsor_state (
+        discord_id TEXT PRIMARY KEY,
+        tier INTEGER NOT NULL DEFAULT 0,
+        grace_from_tier INTEGER,
+        grace_since INTEGER,
+        slot_changed_at INTEGER,
+        community_role_since INTEGER,
+        community_role_present INTEGER NOT NULL DEFAULT 0,
+        retention_due_at INTEGER,
+        updated_at INTEGER
+    );
+
+    -- sponsor_guilds: server slots claimed by a sponsor. Manual guild_admins
+    -- remain separate and are never revoked by a subscription change.
+    CREATE TABLE IF NOT EXISTS sponsor_guilds (
+        guild_id TEXT PRIMARY KEY,
+        discord_id TEXT NOT NULL,
+        claimed_at INTEGER NOT NULL,
+        active INTEGER NOT NULL DEFAULT 1
+    );
+
+    -- sponsor_network_claims: active network slots. The network identity and
+    -- its bans survive release; an unclaimed sponsor network is read-only.
+    CREATE TABLE IF NOT EXISTS sponsor_network_claims (
+        network INTEGER PRIMARY KEY,
+        discord_id TEXT NOT NULL,
+        claimed_at INTEGER NOT NULL
+    );
+
+    -- network_purgatorium: each network's appeal server and protocol channels.
+    -- Operator networks without a row use the original config.py values.
+    CREATE TABLE IF NOT EXISTS network_purgatorium (
+        network INTEGER PRIMARY KEY,
+        guild_id TEXT,
+        invite_url TEXT,
+        appeal_text TEXT,
+        pardon_channel_id TEXT,
+        baninfo_channel_id TEXT,
+        tribunal_channel_id TEXT,
+        consul_roles TEXT
+    );
+
+    -- network_consuls: appointed consuls restricted to one network. The old
+    -- consuls table and config.CONSULS roles remain operator-wide.
+    CREATE TABLE IF NOT EXISTS network_consuls (
+        network INTEGER NOT NULL,
+        user_id TEXT NOT NULL,
+        added_by TEXT NOT NULL,
+        added_at INTEGER NOT NULL,
+        PRIMARY KEY (network, user_id)
+    );
     """)
     conn.commit()
     cols = [r[1] for r in cur.execute("PRAGMA table_info(guilds)").fetchall()]
     if "network" not in cols:
         cur.execute("ALTER TABLE guilds ADD COLUMN network INTEGER")
         conn.commit()
+    cur.execute(
+        "INSERT OR IGNORE INTO networks (network, owner_id, name, created_at)"
+        " SELECT DISTINCT network, NULL, '', ? FROM guilds WHERE network IS NOT NULL",
+        (int(time.time()),)
+    )
+    cur.execute(
+        "INSERT OR IGNORE INTO networks (network, owner_id, name, created_at)"
+        " SELECT DISTINCT network, NULL, '', ? FROM global_bans WHERE network IS NOT NULL",
+        (int(time.time()),)
+    )
+    conn.commit()
     grant_cols = [r[1] for r in cur.execute("PRAGMA table_info(verify_grants)").fetchall()]
     if "granted_at" not in grant_cols:
         cur.execute("ALTER TABLE verify_grants ADD COLUMN granted_at INTEGER")
         cur.execute("UPDATE verify_grants SET granted_at=? WHERE granted_at IS NULL", (int(time.time()),))
+        conn.commit()
+    baninfo_cols = [r[1] for r in cur.execute("PRAGMA table_info(baninfo_posts)").fetchall()]
+    if "scope_network" not in baninfo_cols:
+        cur.execute("ALTER TABLE baninfo_posts ADD COLUMN scope_network INTEGER")
+        conn.commit()
+    sponsor_guild_cols = [r[1] for r in cur.execute("PRAGMA table_info(sponsor_guilds)").fetchall()]
+    if "active" not in sponsor_guild_cols:
+        cur.execute("ALTER TABLE sponsor_guilds ADD COLUMN active INTEGER NOT NULL DEFAULT 1")
+        conn.commit()
+    sponsor_cols = {r[1] for r in cur.execute("PRAGMA table_info(sponsor_state)").fetchall()}
+    if "community_role_since" not in sponsor_cols:
+        cur.execute("ALTER TABLE sponsor_state ADD COLUMN community_role_since INTEGER")
+        conn.commit()
+    if "community_role_present" not in sponsor_cols:
+        cur.execute("ALTER TABLE sponsor_state ADD COLUMN community_role_present INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
+    if "retention_due_at" not in sponsor_cols:
+        cur.execute("ALTER TABLE sponsor_state ADD COLUMN retention_due_at INTEGER")
         conn.commit()

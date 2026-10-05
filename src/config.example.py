@@ -7,6 +7,12 @@ BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
 
 ADMINS = {ADMINISTRATOR_ID, ADMINISTRATOR_ID}
 
+# Use the same Patreon guild and tier roles as bridge_bot. Patreon grants
+# these roles after a patron connects Patreon to Discord on Patreon's site.
+PATREON_GUILD_ID = GUILD_ID
+PATREON_TIER_ROLES = {1: ROLE_ID, 2: ROLE_ID}
+SPONSOR_URL = "https://www.patreon.com/YOUR_CAMPAIGN"
+
 SERVICE_CHATS = {
     "discord": {
         CHAT_ID,
@@ -66,3 +72,6 @@ TRIBUNAL_CHANNELS = {
         CHAT_ID,
     },
 }
+
+COMMUNITY_SPONSOR_ROLE_IDS = (1249359989282443314, 869587188327788564)
+PATREON_TIER_ROLES[3] = 1554181707672985724

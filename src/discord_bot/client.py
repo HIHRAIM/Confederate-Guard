@@ -22,7 +22,6 @@ from discord import app_commands
 
 import db
 import utils
-from config import PURGATORIUM_GUILD_ID
 from utils import DEFAULT_LANG, SUPPORTED_LANGS, get_guild_lang, localized
 
 logger = logging.getLogger("guard.discord")
@@ -90,10 +89,12 @@ class GuardBot(discord.Client):
         except Exception as e:
             logger.error("restoring tribunal views: %s", e)
         try:
-            lang = get_guild_lang(PURGATORIUM_GUILD_ID)
+            lang = DEFAULT_LANG
             for row in db.get_baninfo_posts(max_age_seconds=90 * 86400):
                 uid = int(row["user_id"])
-                networks = _user_ban_networks(uid)
+                allowed = set(db.scope_networks(row["scope_network"]))
+                networks = [network for network in _user_ban_networks(uid)
+                            if network in allowed]
                 if networks:
                     self.add_view(NetworkPardonView(uid, networks, lang),
                                   message_id=int(row["message_id"]))

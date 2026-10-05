@@ -16,6 +16,7 @@ import discord
 from discord import app_commands
 
 import db
+import sponsors
 from discord_bot.bans import (
     enforce_global_ban, _execute_global_unban, _purge_recent_messages,
 )
@@ -144,10 +145,6 @@ async def globalban_cmd(interaction: discord.Interaction, user_id: str, reason: 
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
     lang = guild_row["lang"] if guild_row else DEFAULT_LANG
 
-    if not is_admin(interaction.user.id):
-        await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
-        return
-
     try:
         uid = int(user_id.strip())
     except ValueError:
@@ -165,6 +162,10 @@ async def globalban_cmd(interaction: discord.Interaction, user_id: str, reason: 
         return
 
     network = guild_row["network"]
+    if not (is_admin(interaction.user.id) or sponsors.can_manage_network(
+            interaction.user.id, network, new_work=True)):
+        await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
+        return
     now = int(time.time())
     unban_at = now + seconds
 
@@ -245,10 +246,6 @@ async def globalunban_cmd(interaction: discord.Interaction, user_id: str):
     guild_row = db.get_guild(interaction.guild.id) if interaction.guild else None
     lang = guild_row["lang"] if guild_row else DEFAULT_LANG
 
-    if not is_admin(interaction.user.id):
-        await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
-        return
-
     try:
         uid = int(user_id.strip())
     except ValueError:
@@ -260,6 +257,10 @@ async def globalunban_cmd(interaction: discord.Interaction, user_id: str):
         return
 
     network = guild_row["network"]
+    if not (is_admin(interaction.user.id) or sponsors.can_manage_network(
+            interaction.user.id, network, new_work=False)):
+        await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
+        return
     if not db.get_global_ban(network, uid):
         await interaction.response.send_message(
             localized("globalunban_not_banned", lang, user_id=uid), ephemeral=True

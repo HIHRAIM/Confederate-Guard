@@ -1,6 +1,6 @@
-"""All four @bot.event handlers, and nothing else.
+"""All five @bot.event handlers, and nothing else.
 
-This is the dispatcher. Every inbound Discord event lands in one of these four
+This is the dispatcher. Every inbound Discord event lands in one of these five
 functions, which decide *which* domain module gets to act and in what order;
 none of them contains policy of its own beyond that ordering.
 
@@ -20,9 +20,9 @@ import time
 import discord
 
 import db
+import sponsors
 import utils
 from config import (
-    APPEAL_BANINFO_CHANNELS, APPEAL_PARDON_CHANNELS, PURGATORIUM_GUILD_ID,
     UNVERIFIED, VERIFIED,
 )
 from discord_bot.bans import (
@@ -40,6 +40,19 @@ from discord_bot.verification import (
 from utils import DEFAULT_LANG, is_admin, localized, message_has_banned_link, message_has_spam
 
 logger = logging.getLogger("guard.discord")
+
+@bot.event
+async def on_member_update(before: discord.Member, after: discord.Member):
+    """Apply a Patreon role change immediately; the hourly pass repairs gaps."""
+    if after.guild.id != int(sponsors.PATREON_GUILD_ID):
+        return
+    if {role.id for role in before.roles} == {role.id for role in after.roles}:
+        return
+    tier = await sponsors.live_discord_tier(after.id)
+    if tier is not None:
+        kind = sponsors.apply_tier(after.id, tier)
+        if kind:
+            await sponsors.send_notice(after.id, kind)
 
 @bot.event
 async def on_guild_join(guild: discord.Guild):
@@ -82,11 +95,14 @@ async def on_member_join(member: discord.Member):
     if member.bot:
         return
 
-    if member.guild.id == PURGATORIUM_GUILD_ID:
+    if db.purgatorium_scope(member.guild.id)[0]:
         try:
             await handle_purgatorium_join(member)
         except Exception:
             pass
+        return
+
+    if not sponsors.guild_service_active(member.guild.id):
         return
 
     guild_row = db.get_guild(member.guild.id)
@@ -154,12 +170,12 @@ async def on_message(message: discord.Message):
             await handle_verification_sync(message)
         return
 
-    if message.channel.id in APPEAL_PARDON_CHANNELS.get("discord", set()):
+    if db.channel_scope(message.channel.id, "pardon")[0]:
         if message.author.id != bot.user.id:
             await handle_appeal_pardon(message)
         return
 
-    if message.channel.id in APPEAL_BANINFO_CHANNELS.get("discord", set()):
+    if db.channel_scope(message.channel.id, "baninfo")[0]:
         if message.author.id != bot.user.id:
             try:
                 await handle_appeal_baninfo(message)
@@ -170,6 +186,9 @@ async def on_message(message: discord.Message):
     if message.author.bot or message.webhook_id:
         return
     if not message.guild:
+        return
+
+    if not sponsors.guild_service_active(message.guild.id):
         return
 
     try:

@@ -22,12 +22,11 @@ import time
 import discord
 
 import db
-from config import TRIBUNAL_CHANNELS
 from discord_bot.bans import enforce_global_ban
 from discord_bot.client import _get_channel, bot
 from discord_bot.purgatorium import _is_consul_or_admin
 from utils import (
-    DEFAULT_LANG, GLOBAL_BAN_MAX_SECONDS, SUPPORTED_LANGS, get_guild_lang, localized,
+    DEFAULT_LANG, GLOBAL_BAN_MAX_SECONDS, SUPPORTED_LANGS, get_guild_lang, is_admin, localized,
 )
 
 logger = logging.getLogger("guard.discord")
@@ -110,7 +109,10 @@ async def post_tribunal_case(guild, member, guild_row, reason, unban_at):
     if network is None:
         return
     banned_at = int(time.time())
-    for channel_id in TRIBUNAL_CHANNELS.get("discord", set()):
+    settings = db.network_settings(network)
+    if settings is None:
+        return
+    for channel_id in settings["tribunal_channels"]:
         channel = await _get_channel(channel_id)
         if channel is None:
             continue
@@ -133,7 +135,9 @@ async def _tribunal_broadcast(uid, network, reason, unban_at, origin_guild_id, a
     in unnoticed — and every server the ban has just reached.
     """
     targets = {int(origin_guild_id)}
-    targets |= {int(row["guild_id"]) for row in db.get_user_active_bans(uid)}
+    targets |= {int(row["guild_id"]) for row in db.get_user_active_bans(uid)
+                if (db.get_guild(row["guild_id"]) and
+                    db.get_guild(row["guild_id"])["network"] == network)}
     targets |= {int(gid) for gid in applied_guild_ids}
 
     for gid in sorted(targets):
@@ -223,9 +227,17 @@ async def handle_tribunal_click(interaction: discord.Interaction, action):
         await interaction.response.send_message(
             localized("tribunal_unknown_case", lang), ephemeral=True)
         return
-    if not _is_consul_or_admin(interaction.user):
+    if not _is_consul_or_admin(interaction.user, case["network"]):
         await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
         return
+    if action == "globalban":
+        import sponsors
+        identity = db.get_network(case["network"])
+        if identity and identity["owner_id"] is not None and not (
+                is_admin(interaction.user.id) or sponsors.can_manage_network(
+                    identity["owner_id"], case["network"], new_work=True)):
+            await interaction.response.send_message(localized("sponsor_not_active", lang), ephemeral=True)
+            return
     if case["lang"] in SUPPORTED_LANGS:
         lang = case["lang"]
     if not db.resolve_tribunal_case(interaction.message.id, action):

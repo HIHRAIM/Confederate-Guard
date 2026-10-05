@@ -190,7 +190,12 @@ def is_admin(user_id, guild_id=None):
     if user_id in ADMINS:
         return True
     if guild_id is not None:
-        return db.is_guild_admin(guild_id, user_id)
+        if db.is_guild_admin(guild_id, user_id):
+            return True
+        claim = db.get_sponsor_guild(guild_id)
+        if claim and str(claim["discord_id"]) == str(user_id):
+            from sponsors import sponsor_rights_tier
+            return sponsor_rights_tier(user_id) != 0
     return False
 
 def get_guild_lang(guild_id):

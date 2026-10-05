@@ -82,7 +82,7 @@ def get_stale_tribunal_cases(max_age_seconds):
         (cutoff,)
     ).fetchall()
 
-def add_baninfo_post(message_id, channel_id, user_id):
+def add_baninfo_post(message_id, channel_id, user_id, scope_network=None):
     """Remember a ban summary that carries per-network unban buttons.
 
     Written only for the message the buttons ended up on — a summary long
@@ -92,9 +92,9 @@ def add_baninfo_post(message_id, channel_id, user_id):
     cur.execute(
         """
         INSERT OR REPLACE INTO baninfo_posts
-        (message_id, channel_id, user_id, created_at) VALUES (?,?,?,?)
+        (message_id, channel_id, user_id, created_at, scope_network) VALUES (?,?,?,?,?)
         """,
-        (str(message_id), str(channel_id), str(user_id), int(time.time()))
+        (str(message_id), str(channel_id), str(user_id), int(time.time()), scope_network)
     )
     conn.commit()
 
@@ -113,6 +113,11 @@ def get_baninfo_posts(max_age_seconds=None):
         "SELECT * FROM baninfo_posts WHERE created_at IS NULL OR created_at >= ?",
         (cutoff,)
     ).fetchall()
+
+def get_baninfo_post(message_id):
+    """The appeal scope recorded for one persistent pardon panel."""
+    return cur.execute("SELECT * FROM baninfo_posts WHERE message_id=?",
+                       (str(message_id),)).fetchone()
 
 def cleanup_old_baninfo_posts(max_age_seconds=90 * 24 * 3600):
     """The summaries themselves stay in the thread; only the bookkeeping that

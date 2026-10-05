@@ -702,5 +702,211 @@
   "verify_set_no_channel": {
     "status": "verified",
     "text": "Верификация настроена. Роль: <@&{role_id}>. Уведомления будут отправляться в лог-канал, заданный командой /setup."
-  }
+  },
+  "network_unknown": {
+    "status": "unverified",
+    "text": "Такой сети нет."
+  },
+  "network_invite_required": {
+    "status": "unverified",
+    "text": "Чтобы подключиться к сети, сервер должен получить приглашение её владельца, а администратор сервера должен его принять. Затем укажите сеть в /setup."
+  },
+  "network_not_owner": {
+    "status": "unverified",
+    "text": "Вы не управляете этой сетью."
+  },
+  "network_name_required": {
+    "status": "unverified",
+    "text": "Укажите название сети."
+  },
+  "network_created": {
+    "status": "unverified",
+    "text": "Создана сеть №{network}: {name}. Её номер никогда не будет выдан повторно."
+  },
+  "network_renamed": {
+    "status": "unverified",
+    "text": "Сеть №{network} переименована."
+  },
+  "network_info": {
+    "status": "unverified",
+    "text": "Сеть №{network}: {name}\nВладелец: {owner}\nСерверы: {guilds}\nАктивные сетевые баны: {bans}"
+  },
+  "network_invalid_guild": {
+    "status": "unverified",
+    "text": "Укажите корректный ID сервера Discord."
+  },
+  "network_invited": {
+    "status": "unverified",
+    "text": "Сервер {guild_id} приглашён в сеть №{network} на {days} дней. Его администратор должен выполнить /network-accept, а затем /setup."
+  },
+  "network_revoked": {
+    "status": "unverified",
+    "text": "Приглашение отозвано."
+  },
+  "network_accepted": {
+    "status": "unverified",
+    "text": "Приглашение принято. Укажите сеть №{network} в /setup."
+  },
+  "network_not_member": {
+    "status": "unverified",
+    "text": "Этот сервер не входит в сеть."
+  },
+  "network_kicked": {
+    "status": "unverified",
+    "text": "Сервер исключён из сети. Сняты только баны, наложенные сетевым механизмом."
+  },
+  "network_invalid_user": {
+    "status": "unverified",
+    "text": "Укажите корректный ID пользователя Discord."
+  },
+  "network_transferred": {
+    "status": "unverified",
+    "text": "Сеть №{network} передана пользователю {user_id}."
+  },
+  "help_section_networks": {
+    "status": "unverified",
+    "text": "Сети"
+  },
+  "help_cmd_network_create": {
+    "status": "unverified",
+    "text": "/network-create — создать свою сеть"
+  },
+  "help_cmd_network_rename": {
+    "status": "unverified",
+    "text": "/network-rename — переименовать свою сеть"
+  },
+  "help_cmd_network_info": {
+    "status": "unverified",
+    "text": "/network-info — сведения о сети"
+  },
+  "help_cmd_network_invite": {
+    "status": "unverified",
+    "text": "/network-invite — пригласить сервер в свою сеть"
+  },
+  "help_cmd_network_revoke": {
+    "status": "unverified",
+    "text": "/network-revoke — отозвать приглашение"
+  },
+  "help_cmd_network_accept": {
+    "status": "unverified",
+    "text": "/network-accept — принять приглашение для этого сервера"
+  },
+  "help_cmd_network_kick": {
+    "status": "unverified",
+    "text": "/network-kick — исключить сервер из своей сети"
+  },
+  "help_cmd_network_transfer": {
+    "status": "unverified",
+    "text": "/network-transfer — передать владение сетью"
+  },
+  "sponsor_not_active": {
+    "status": "unverified",
+    "text": "Для вашего аккаунта Discord нет активной подписки. Свяжите Patreon с Discord на сайте Patreon и откройте /sponsor-subscribe."
+  },
+  "sponsor_no_guild": {
+    "status": "unverified",
+    "text": "Запустите команду на сервере."
+  },
+  "sponsor_manage_required": {
+    "status": "unverified",
+    "text": "Чтобы заявить этот сервер, нужны права Discord Administrator или Manage Server."
+  },
+  "sponsor_already_claimed": {
+    "status": "unverified",
+    "text": "Вы уже заняли слот для этого сервера."
+  },
+  "sponsor_taken": {
+    "status": "unverified",
+    "text": "Этот сервер уже заявлен другим спонсором."
+  },
+  "sponsor_rotation_wait": {
+    "status": "unverified",
+    "text": "После освобождения слота подождите 30 дней, прежде чем заявлять другой сервер."
+  },
+  "sponsor_server_limit": {
+    "status": "unverified",
+    "text": "Достигнут лимит серверов подписки; приглашённые серверы в её сетях тоже учитываются."
+  },
+  "sponsor_network_limit": {
+    "status": "unverified",
+    "text": "Достигнут лимит сетей подписки либо для этой сети нет свободных серверных слотов."
+  },
+  "sponsor_claimed": {
+    "status": "unverified",
+    "text": "Сервер заявлен. Теперь вам доступны /setup и команды администратора сервера здесь."
+  },
+  "sponsor_release_none": {
+    "status": "unverified",
+    "text": "Вы не заявляли этот сервер."
+  },
+  "sponsor_released": {
+    "status": "unverified",
+    "text": "Слот сервера освобождён. Другой сервер можно заявить через {days} дней. Ручные назначения и данные модерации сохранены."
+  },
+  "sponsor_network_claimed": {
+    "status": "unverified",
+    "text": "Для этой сети уже занят спонсорский слот."
+  },
+  "sponsor_network_claimed_ok": {
+    "status": "unverified",
+    "text": "Слот сети снова заявлен. Её баны и настройки сохранены."
+  },
+  "sponsor_status": {
+    "status": "unverified",
+    "text": "Уровень по роли: {tier}; действующий уровень: {rights}. Серверы: {servers}/{server_limit}; сети: {networks}/{network_limit} ({network_ids}). Дней льготного периода: {days}."
+  },
+  "sponsor_subscribe": {
+    "status": "unverified",
+    "text": "Одна подписка Patreon действует во всех ботах автора. Guard, уровень 1: {servers1} сервера и {networks1} сеть. Уровень 2: {servers2} серверов и {networks2} сети. Приглашённые в ваши сети серверы занимают ваши серверные слоты. Оформите подписку на {url} и свяжите Patreon с Discord на сайте Patreon, чтобы бот увидел роль. После прекращения оплаты баны остаются, а слоты сохраняются ещё 30 дней."
+  },
+  "help_cmd_sponsor": {
+    "status": "unverified",
+    "text": "/sponsor — оплаченный уровень и слоты"
+  },
+  "help_cmd_sponsor_claim": {
+    "status": "unverified",
+    "text": "/sponsor-claim — заявить этот сервер"
+  },
+  "help_cmd_sponsor_release": {
+    "status": "unverified",
+    "text": "/sponsor-release — освободить слот сервера"
+  },
+  "help_cmd_sponsor_subscribe": {
+    "status": "unverified",
+    "text": "/sponsor-subscribe — как оформить подписку"
+  },
+  "network_purg_invalid": {"status": "unverified", "text": "Укажите числовой ID сервера и HTTPS-ссылку приглашения."},
+  "network_purg_taken": {"status": "unverified", "text": "Этот сервер апелляций уже закреплён за другим спонсором или сетью."},
+  "network_purg_bot_missing": {"status": "unverified", "text": "Сначала добавьте бота на сервер апелляций."},
+  "network_purg_saved": {"status": "unverified", "text": "Сервер апелляций и приглашение сохранены."},
+  "network_purg_first": {"status": "unverified", "text": "Сначала настройте сервер через /network-purgatorium."},
+  "network_channel_invalid": {"status": "unverified", "text": "Укажите три разных ID каналов на сервере апелляций."},
+  "network_channel_taken": {"status": "unverified", "text": "Один из каналов уже занят другим протоколом."},
+  "network_channels_saved": {"status": "unverified", "text": "Каналы апелляций и трибунала сохранены."},
+  "network_roles_invalid": {"status": "unverified", "text": "Укажите ID ролей с сервера апелляций."},
+  "network_roles_saved": {"status": "unverified", "text": "Роли консулов сохранены."},
+  "network_appealtext_saved": {"status": "unverified", "text": "Текст инструкции для апелляций сохранён."},
+  "network_settings": {"status": "unverified", "text": "Сеть {network}: сервер апелляций {guild}; приглашение {invite}; помилование {pardon}; сведения о банах {baninfo}; трибунал {tribunal}; роли консулов {roles}; текст апелляции {text}."},
+  "help_cmd_network_purgatorium": {"status": "unverified", "text": "/network-purgatorium — настроить сервер апелляций"},
+  "help_cmd_network_channels": {"status": "unverified", "text": "/network-channels — настроить каналы апелляций и трибунала"},
+  "help_cmd_network_consulroles": {"status": "unverified", "text": "/network-consulroles — настроить роли консулов"},
+  "help_cmd_network_appealtext": {"status": "unverified", "text": "/network-appealtext — настроить текст апелляций"},
+  "help_cmd_network_settings": {"status": "unverified", "text": "/network-settings — показать настройки апелляций"},
+  "sponsor_notice_frozen": {"status": "unverified", "text": "Оплата закончилась. Сети Guard, баны и настройка продолжают работать 30 дней с прежними лимитами. Затем спонсорские действия останавливаются и лишние слоты освобождаются; существующие баны сохраняются. Для продолжения продлите Patreon и проверьте привязку к Discord."},
+  "sponsor_notice_downgraded": {"status": "unverified", "text": "Уровень подписки Guard снизился. Существующие баны сохраняются. Для лишних слотов серверов и сетей начался льготный период 30 дней."},
+  "sponsor_notice_restored": {"status": "unverified", "text": "Подписка Guard снова активна. Доступные слоты серверов и сетей восстановлены согласно текущему уровню."},
+  "sponsor_notice_expired": {"status": "unverified", "text": "30 дней работы Guard после окончания оплаты истекли. Спонсорская модерация и настройка остановлены, лишние слоты освобождены; существующие баны сохраняются. Продлите подписку и вновь закрепите сети."},
+  "help_cmd_network_claim": {
+    "status": "unverified",
+    "text": "/network-claim — вернуть слот сохранённой сети"
+  },
+  "sponsor_saved_networks": {"status": "unverified", "text": "Сохранённые номера сетей: {ids}. После продления используйте /network-claim для повторного подключения."},
+  "sponsor_tier_community": {"status": "unverified", "text": "Роль сообщества"},
+  "sponsor_community_pending": {"status": "unverified", "text": "Преимущества роли сообщества начнут действовать примерно через {days} дн. после первого обнаружения роли."},
+  "sponsor_community_grace": {"status": "unverified", "text": "Роль сообщества снята; преимущества действуют ещё {days} дн."},
+  "sponsor_retention_warning": {"status": "unverified", "text": "Льготный период работы истёк. Другой действующий спонсор или администратор бота может взять сообщество под управление; иначе через 30 дней после окончания льготного периода бот выйдет и удалит данные сообщества."},
+  "sponsor_grace_active": {"status": "unverified", "text": "Платная роль снята; преимущества действуют ещё {days} дн."},
+  "sponsor_notice_community_lost": {"status": "unverified", "text": "Роль сообщества исчезла. Guard продолжит работать один день. Если другой действующий спонсор или администратор бота не возьмёт сообщество под управление, через 30 дней после этого льготного дня бот выйдет и удалит данные."},
+  "sponsor_notice_paid_lost": {"status": "unverified", "text": "Платная роль исчезла. Guard продолжит работать 30 дней. Если другой действующий спонсор или администратор бота не возьмёт сообщество под управление, ещё через 30 дней после льготного периода бот выйдет и удалит данные."},
+  "sponsor_notice_retention": {"status": "unverified", "text": "Льготный период работы истёк. Если другой действующий спонсор или администратор бота не возьмёт сообщество под управление, через 30 дней бот выйдет и удалит его данные."}
 }

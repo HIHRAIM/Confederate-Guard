@@ -24,7 +24,6 @@ from datetime import datetime, timedelta, timezone
 import discord
 
 import db
-from config import PURGATORIUM_GUILD_ID
 from discord_bot.client import _get_channel, bot
 from utils import DEFAULT_LANG, SUPPORTED_LANGS, localized
 
@@ -32,7 +31,7 @@ GATE_BAN_MARKER = "[gate-unban:"
 
 GATE_SCAN_INTERVAL = 900
 
-async def _find_registered_guild_ban(uid):
+async def _find_registered_guild_ban(uid, guild_ids=None):
     """Language of the first server registered via /setup where the user is
     really banned, or None.
 
@@ -43,7 +42,9 @@ async def _find_registered_guild_ban(uid):
     a day. Nothing is written back — the gate keeps no trace of the visitor.
     """
     for guild in list(bot.guilds):
-        if guild.id == PURGATORIUM_GUILD_ID:
+        if db.purgatorium_scope(guild.id)[0]:
+            continue
+        if guild_ids is not None and str(guild.id) not in guild_ids:
             continue
         guild_row = db.get_guild(guild.id)
         if guild_row is None:
@@ -219,10 +220,15 @@ async def _lift_expired_gate_bans(client: discord.Client):
     for expired markers survives restarts without keeping any record of who
     visited the server.
     """
-    purg = client.get_guild(PURGATORIUM_GUILD_ID)
-    if purg is None:
-        return
     now = int(time.time())
+    for purg_id in db.all_purgatorium_guild_ids():
+        purg = client.get_guild(int(purg_id))
+        if purg is None:
+            continue
+        await _lift_expired_gate_bans_in_guild(purg, now)
+
+async def _lift_expired_gate_bans_in_guild(purg, now):
+    """Scan one appeal server's audit-marked gate bans."""
     async for entry in purg.bans(limit=None):
         reason = entry.reason or ""
         start = reason.find(GATE_BAN_MARKER)

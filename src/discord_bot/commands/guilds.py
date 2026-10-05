@@ -14,8 +14,23 @@ import discord
 from discord import app_commands
 
 import db
+import sponsors
 from discord_bot.client import bot
 from utils import DEFAULT_LANG, SUPPORTED_LANGS, get_guild_lang, is_admin, localized
+
+async def _release_network_enforcements(guild):
+    """Lift only bans placed here by network enforcement on network exit.
+
+    The ledger excludes /ban and the origin /globalban. The global ban record
+    and the server's other settings survive leaving the network.
+    """
+    for uid in db.get_gban_enforcements(guild.id):
+        try:
+            await guild.unban(discord.Object(id=int(uid)))
+        except Exception:
+            pass
+        db.remove_active_ban(guild.id, uid)
+    db.clear_gban_enforcements(guild.id)
 
 @bot.tree.command(name="setup", description="register the server: language, log channel, network")
 @app_commands.describe(
@@ -57,6 +72,38 @@ async def setup_cmd(interaction: discord.Interaction, lang: str, channel_id: str
         )
         return
 
+    old = db.get_guild(interaction.guild.id)
+    if network is not None:
+        network_row = db.get_network(network)
+        if is_admin(interaction.user.id):
+            if network_row is None:
+                db.ensure_operator_network(network)
+        elif network_row is None:
+            await interaction.response.send_message(
+                localized("network_unknown", lang), ephemeral=True)
+            return
+        elif old is None or old["network"] != network:
+            invitation = db.get_invite(network, interaction.guild.id)
+            if not invitation or invitation["accepted_at"] is None:
+                await interaction.response.send_message(
+                    localized("network_invite_required", lang), ephemeral=True)
+                return
+            if network_row["owner_id"] is not None:
+                owner = network_row["owner_id"]
+                if not sponsors.can_manage_network(owner, network, new_work=True):
+                    await interaction.response.send_message(
+                        localized("sponsor_not_active", lang), ephemeral=True)
+                    return
+                if not sponsors.can_add_server(owner, interaction.guild.id):
+                    await interaction.response.send_message(
+                        localized("sponsor_server_limit", lang), ephemeral=True)
+                    return
+
+    if old and old["network"] is not None and old["network"] != network:
+        await _release_network_enforcements(interaction.guild)
+
+    if is_admin(interaction.user.id):
+        db.clear_inactive_sponsor_guild(interaction.guild.id)
     db.setup_guild(interaction.guild.id, lang, cid, network)
     if network is not None:
         await interaction.response.send_message(

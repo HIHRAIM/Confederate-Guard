@@ -2,6 +2,17 @@
 
 Confederate Guard is a self-hosted Discord moderation bot that keeps servers clean of spam and coordinates bans across a group of allied servers. It watches designated “guarded” channels and automatically bans anyone who posts links, invite URLs, or file attachments there, and adds temporary bans with automatic unban, a shared network ban list, per-server log channels, custom ban DMs and appeal text, auto-role assignment, activity-based cross-server verification, and language localization. It is the moderation companion to [Confederate](https://github.com/HIHRAIM/Confederate): it can mirror that bot's verification state, and together the two run a shared ban-appeal flow on a dedicated appeal server.
 
+## Sponsorship and networks
+
+The operator's Bot Admins can manage every network. A sponsor can manage only networks they own and claim, and can register a server only with its own administrator's consent. An invitation and acceptance are required before another server joins a network. Existing network bans remain attached to their network if sponsorship ends. The same Patreon role used by Confederate supplies the tier; Guard has no Telegram interface.
+
+| One subscription | Community role | €1 | €3 | €5 |
+|---|---:|---:|---:|---:|
+| Registered servers | 2 | 2 | 6 | 10 |
+| Networks | 1 | 1 | 3 | 5 |
+
+Use `/sponsor` to inspect slots, `/sponsor-claim` to claim a server, and `/network-create`, `/network-invite` and `/network-accept` to build a network. `/network-purgatorium` and `/network-channels` configure an appeal server and its Guard protocol for the sponsor's networks. A sponsor cannot manage another sponsor's network; Bot Admins can. Either community role on the Patreon server grants the €1 allowance after seven days of continuous observed membership. Work continues for one day after that role is lost, or for 30 days after a paid role is lost. Thirty days after the working grace ends, unclaimed servers' scoped configuration and ban history are erased and the bot leaves; another sponsor or a Bot Admin can take over before that deadline. Network bans shared with other still active servers remain with those servers.
+
 ## Requirements
 
 - Python **3.10+** (recommended 3.11+)

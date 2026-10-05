@@ -19,6 +19,8 @@ user.py, and the commands about the bot's own presence in communities
 here guilds.py.
 """
 from discord_bot.commands import guilds
+from discord_bot.commands import networks
+from discord_bot.commands import sponsors
 from discord_bot.commands import settings
 from discord_bot.commands import bans
 from discord_bot.commands import links

@@ -27,6 +27,7 @@ import aiohttp
 import discord
 
 import db
+import sponsors
 from config import BOT_TOKEN, BACKUP_CHATS
 from discord_bot import bot
 from utils import send_service_event
@@ -211,6 +212,22 @@ async def setup_deadline_loop():
             logger.error("setup_deadline_loop error: %s", e)
         await asyncio.sleep(24 * 3600)
 
+async def sponsor_loop():
+    """Hourly role reconciliation, including changes missed while offline."""
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        try:
+            notices = await sponsors.reconcile_pass()
+            if notices is None:
+                await asyncio.sleep(sponsors.SPONSOR_RECONCILE_SECONDS)
+                continue
+            for owner, kind in notices:
+                await sponsors.send_notice(owner, kind)
+            await sponsors.cleanup_due_guilds()
+        except Exception as error:
+            logger.error("sponsor reconciliation failed: %s", error)
+        await asyncio.sleep(sponsors.SPONSOR_RECONCILE_SECONDS)
+
 async def main():
     """Bring the schema up to date, start the client and the loops, run.
 
@@ -233,6 +250,7 @@ async def main():
     asyncio.get_event_loop().create_task(backup_loop())
     asyncio.get_event_loop().create_task(retention_loop())
     asyncio.get_event_loop().create_task(setup_deadline_loop())
+    asyncio.get_event_loop().create_task(sponsor_loop())
     asyncio.get_event_loop().create_task(announce_started())
 
     try:

@@ -702,5 +702,211 @@
   "verify_set_no_channel": {
     "status": "unverified",
     "text": "Weryfikacja skonfigurowana. Rola: <@&{role_id}>. Powiadomienia będą wysyłane do kanału logów ustawionego poleceniem /setup."
-  }
+  },
+  "network_unknown": {
+    "status": "unverified",
+    "text": "That network does not exist."
+  },
+  "network_invite_required": {
+    "status": "unverified",
+    "text": "This server needs an invitation from the network owner and acceptance by a Server Admin before /setup can join the network."
+  },
+  "network_not_owner": {
+    "status": "unverified",
+    "text": "You do not manage this network."
+  },
+  "network_name_required": {
+    "status": "unverified",
+    "text": "Give the network a name."
+  },
+  "network_created": {
+    "status": "unverified",
+    "text": "Created network #{network}: {name}. Its number will never be reused."
+  },
+  "network_renamed": {
+    "status": "unverified",
+    "text": "Renamed network #{network}."
+  },
+  "network_info": {
+    "status": "unverified",
+    "text": "Network #{network}: {name}\nOwner: {owner}\nServers: {guilds}\nActive network bans: {bans}"
+  },
+  "network_invalid_guild": {
+    "status": "unverified",
+    "text": "Give a valid Discord server ID."
+  },
+  "network_invited": {
+    "status": "unverified",
+    "text": "Invited server {guild_id} into network #{network} for {days} days. A Server Admin there must run /network-accept before /setup."
+  },
+  "network_revoked": {
+    "status": "unverified",
+    "text": "Invitation revoked."
+  },
+  "network_accepted": {
+    "status": "unverified",
+    "text": "Invitation accepted. Run /setup with network #{network} to join."
+  },
+  "network_not_member": {
+    "status": "unverified",
+    "text": "That server is not in this network."
+  },
+  "network_kicked": {
+    "status": "unverified",
+    "text": "Server removed from the network. Only bans imposed by network enforcement were lifted."
+  },
+  "network_invalid_user": {
+    "status": "unverified",
+    "text": "Give a valid Discord user ID."
+  },
+  "network_transferred": {
+    "status": "unverified",
+    "text": "Network #{network} transferred to user {user_id}."
+  },
+  "help_section_networks": {
+    "status": "unverified",
+    "text": "Networks"
+  },
+  "help_cmd_network_create": {
+    "status": "unverified",
+    "text": "/network-create — create your network"
+  },
+  "help_cmd_network_rename": {
+    "status": "unverified",
+    "text": "/network-rename — rename your network"
+  },
+  "help_cmd_network_info": {
+    "status": "unverified",
+    "text": "/network-info — inspect a network"
+  },
+  "help_cmd_network_invite": {
+    "status": "unverified",
+    "text": "/network-invite — invite a server into your network"
+  },
+  "help_cmd_network_revoke": {
+    "status": "unverified",
+    "text": "/network-revoke — revoke an invitation"
+  },
+  "help_cmd_network_accept": {
+    "status": "unverified",
+    "text": "/network-accept — accept an invitation for this server"
+  },
+  "help_cmd_network_kick": {
+    "status": "unverified",
+    "text": "/network-kick — remove a server from your network"
+  },
+  "help_cmd_network_transfer": {
+    "status": "unverified",
+    "text": "/network-transfer — transfer network ownership"
+  },
+  "sponsor_not_active": {
+    "status": "unverified",
+    "text": "No active sponsorship is linked to your Discord account. Connect Patreon to Discord on Patreon, then see /sponsor-subscribe."
+  },
+  "sponsor_no_guild": {
+    "status": "unverified",
+    "text": "Use this command in a server."
+  },
+  "sponsor_manage_required": {
+    "status": "unverified",
+    "text": "You need Discord Administrator or Manage Server permission here to claim this server."
+  },
+  "sponsor_already_claimed": {
+    "status": "unverified",
+    "text": "You already hold this server slot."
+  },
+  "sponsor_taken": {
+    "status": "unverified",
+    "text": "Another sponsor has claimed this server."
+  },
+  "sponsor_rotation_wait": {
+    "status": "unverified",
+    "text": "After releasing a slot, wait 30 days before claiming a replacement server."
+  },
+  "sponsor_server_limit": {
+    "status": "unverified",
+    "text": "This subscription has reached its server limit, counting invited servers in its networks."
+  },
+  "sponsor_network_limit": {
+    "status": "unverified",
+    "text": "This subscription has reached its network limit or lacks a free server slot for that network."
+  },
+  "sponsor_claimed": {
+    "status": "unverified",
+    "text": "Server claimed. You can now use /setup and the Server Admin commands here."
+  },
+  "sponsor_release_none": {
+    "status": "unverified",
+    "text": "You have not claimed that server."
+  },
+  "sponsor_released": {
+    "status": "unverified",
+    "text": "Server slot released. You can claim a replacement after {days} days. Manual admin grants and moderation data are untouched."
+  },
+  "sponsor_network_claimed": {
+    "status": "unverified",
+    "text": "That network already has an active sponsor slot."
+  },
+  "sponsor_network_claimed_ok": {
+    "status": "unverified",
+    "text": "Network slot reclaimed. Its bans and settings were preserved."
+  },
+  "sponsor_status": {
+    "status": "unverified",
+    "text": "Poziom roli: {tier}; działający poziom: {rights}. Serwery: {servers}/{server_limit}; sieci: {networks}/{network_limit} ({network_ids}). Pozostałe dni okresu karencji: {days}."
+  },
+  "sponsor_subscribe": {
+    "status": "unverified",
+    "text": "One Patreon subscription works across the creator’s bots. Guard tier 1: {servers1} servers and {networks1} network. Tier 2: {servers2} servers and {networks2} networks. Invited servers in your networks use your server slots. Subscribe at {url} and connect Patreon to Discord on Patreon’s site so the bot can see your role. A lapsed subscription keeps bans in force; its slots have a 30-day grace period."
+  },
+  "help_cmd_sponsor": {
+    "status": "unverified",
+    "text": "/sponsor — your paid tier and slots"
+  },
+  "help_cmd_sponsor_claim": {
+    "status": "unverified",
+    "text": "/sponsor-claim — claim this server"
+  },
+  "help_cmd_sponsor_release": {
+    "status": "unverified",
+    "text": "/sponsor-release — release your server slot"
+  },
+  "help_cmd_sponsor_subscribe": {
+    "status": "unverified",
+    "text": "/sponsor-subscribe — subscription instructions"
+  },
+  "network_purg_invalid": {"status": "unverified", "text": "Enter a numeric server ID and an HTTPS invitation URL."},
+  "network_purg_taken": {"status": "unverified", "text": "This appeal server is already assigned to another sponsor or network."},
+  "network_purg_bot_missing": {"status": "unverified", "text": "Add this bot to the appeal server first."},
+  "network_purg_saved": {"status": "unverified", "text": "The appeal server and invitation were saved."},
+  "network_purg_first": {"status": "unverified", "text": "Set the appeal server with /network-purgatorium first."},
+  "network_channel_invalid": {"status": "unverified", "text": "Enter three distinct channel IDs inside the appeal server."},
+  "network_channel_taken": {"status": "unverified", "text": "One of these channels is already assigned to another protocol."},
+  "network_channels_saved": {"status": "unverified", "text": "Appeal protocol and tribunal channels were saved."},
+  "network_roles_invalid": {"status": "unverified", "text": "Enter role IDs belonging to the appeal server."},
+  "network_roles_saved": {"status": "unverified", "text": "Consul roles were saved."},
+  "network_appealtext_saved": {"status": "unverified", "text": "Appeal instructions were saved."},
+  "network_settings": {"status": "unverified", "text": "Network {network}: appeal server {guild}; invite {invite}; pardon {pardon}; ban info {baninfo}; tribunal {tribunal}; consul roles {roles}; appeal text {text}."},
+  "help_cmd_network_purgatorium": {"status": "unverified", "text": "/network-purgatorium — set an appeal server"},
+  "help_cmd_network_channels": {"status": "unverified", "text": "/network-channels — set appeal and tribunal channels"},
+  "help_cmd_network_consulroles": {"status": "unverified", "text": "/network-consulroles — set consul roles"},
+  "help_cmd_network_appealtext": {"status": "unverified", "text": "/network-appealtext — set appeal instructions"},
+  "help_cmd_network_settings": {"status": "unverified", "text": "/network-settings — show appeal settings"},
+  "sponsor_notice_frozen": {"status": "unverified", "text": "Płatność wygasła. Sieci Guard, bany i konfiguracja działają jeszcze przez 30 dni z tymi samymi limitami. Potem działania sponsora zostaną wstrzymane, a nadmiarowe miejsca zwolnione; istniejące bany pozostaną. Odnów Patreon i sprawdź połączenie z Discordem."},
+  "sponsor_notice_downgraded": {"status": "unverified", "text": "Your Guard sponsorship tier decreased. Existing bans remain. Surplus server and network slots enter a 30-day grace period."},
+  "sponsor_notice_restored": {"status": "unverified", "text": "Your Guard sponsorship is active again. Your available server and network slots have been restored according to your current tier."},
+  "sponsor_notice_expired": {"status": "unverified", "text": "Minęło 30 dni działania Guard po wygaśnięciu płatności. Moderacja i konfiguracja sponsora zostały wstrzymane, nadmiarowe miejsca zwolniono; istniejące bany pozostały. Odnów subskrypcję i ponownie przypisz sieci."},
+  "help_cmd_network_claim": {
+    "status": "unverified",
+    "text": "/network-claim — reclaim your saved network"
+  },
+  "sponsor_saved_networks": {"status": "unverified", "text": "Zapisane numery sieci: {ids}. Po odnowieniu użyj /network-claim."},
+  "sponsor_tier_community": {"status": "unverified", "text": "Community role"},
+  "sponsor_community_pending": {"status": "unverified", "text": "Community-role benefits start in about {days} day(s) after the role was first observed."},
+  "sponsor_community_grace": {"status": "unverified", "text": "Community role lost; benefits continue for {days} more day(s)."},
+  "sponsor_retention_warning": {"status": "unverified", "text": "The working grace period ended. Another active sponsor or bot administrator can take over; otherwise the bot leaves and the community data is deleted 30 days after grace ends."},
+  "sponsor_grace_active": {"status": "unverified", "text": "The paid role ended; benefits continue for {days} more day(s)."},
+  "sponsor_notice_community_lost": {"status": "unverified", "text": "Your community role disappeared. Guard keeps working for one day. If no active sponsor or bot administrator takes over, the bot leaves and erases this community's data 30 days after that grace day ends."},
+  "sponsor_notice_paid_lost": {"status": "unverified", "text": "Your paid role disappeared. Guard keeps working for 30 days. If no active sponsor or bot administrator takes over, the bot leaves and erases this community's data 30 more days after grace ends."},
+  "sponsor_notice_retention": {"status": "unverified", "text": "The working grace period ended. Unless another active sponsor or bot administrator takes over, the bot leaves and erases this community's data in 30 days."}
 }

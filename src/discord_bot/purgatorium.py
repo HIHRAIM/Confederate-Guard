@@ -22,7 +22,7 @@ import discord
 
 import db
 from config import (
-    BRIDGE_BOT_ID, CONSULS, PURGATORIUM_GUILD_ID, PURGATORIUM_INVITE_URL,
+    BRIDGE_BOT_ID, CONSULS,
 )
 from discord_bot.bans import (
     GATE_BAN_MARKER, _execute_global_unban, _find_registered_guild_ban,
@@ -37,11 +37,21 @@ def _purgatorium_invite_line(guild_id, lang):
     is configured) or when the ban happened on Purgatorium itself — bans there
     are not appealable through the bots.
     """
-    if int(guild_id) == PURGATORIUM_GUILD_ID:
+    if db.purgatorium_scope(guild_id)[0]:
         return None
     if db.get_appeal(guild_id):
         return None
-    return localized("purgatorium_invite_line", lang, invite=PURGATORIUM_INVITE_URL)
+    guild_row = db.get_guild(guild_id)
+    if not guild_row or guild_row["network"] is None:
+        return None
+    settings = db.network_settings(guild_row["network"])
+    if not settings:
+        return None
+    if settings["appeal_text"]:
+        return settings["appeal_text"]
+    if settings["invite_url"]:
+        return localized("purgatorium_invite_line", lang, invite=settings["invite_url"])
+    return None
 
 async def handle_purgatorium_join(member: discord.Member):
     """Gatekeeper for the shared appeal server.
@@ -56,11 +66,16 @@ async def handle_purgatorium_join(member: discord.Member):
     database: the unban moment is encoded in the audit-log reason and lifted by
     the unban_loop scan, so the gate leaves no stored trace of the visitor.
     """
-    if is_admin(member.id, PURGATORIUM_GUILD_ID):
+    found, network = db.purgatorium_scope(member.guild.id)
+    if not found:
+        return
+    if is_admin(member.id, member.guild.id):
         return
 
-    if db.is_consul(member.id):
-        roles = [member.guild.get_role(int(rid)) for rid in CONSULS]
+    settings = db.network_settings(network) if network is not None else None
+    if _is_consul_or_admin(member, network):
+        roles = [member.guild.get_role(int(rid)) for rid in
+                 (settings["consul_roles"] if settings else CONSULS)]
         roles = [r for r in roles if r is not None]
         if roles:
             try:
@@ -69,17 +84,20 @@ async def handle_purgatorium_join(member: discord.Member):
                 pass
         return
 
-    global_bans = db.get_user_active_global_bans(member.id)
+    guild_ids = db.scope_guild_ids(network)
+    network_ids = set(db.scope_networks(network))
+    global_bans = [row for row in db.get_user_active_global_bans(member.id)
+                   if row["network"] in network_ids]
     local_bans = [
         b for b in db.get_user_active_bans(member.id)
-        if int(b["guild_id"]) != PURGATORIUM_GUILD_ID
+        if str(b["guild_id"]) in guild_ids
     ]
 
     if global_bans or local_bans:
         row = global_bans[0] if global_bans else local_bans[0]
         lang = row["lang"] if row["lang"] in SUPPORTED_LANGS else DEFAULT_LANG
     else:
-        lang = await _find_registered_guild_ban(member.id)
+        lang = await _find_registered_guild_ban(member.id, guild_ids)
 
     if lang is not None:
         try:
@@ -119,7 +137,14 @@ async def handle_appeal_pardon(message: discord.Message):
         return
     uid = int(content)
 
+    found, network = db.channel_scope(message.channel.id, "pardon")
+    if not found:
+        return
+    network_ids = set(db.scope_networks(network))
+    guild_ids = db.scope_guild_ids(network)
     for gban in db.get_user_active_global_bans(uid):
+        if gban["network"] not in network_ids:
+            continue
         try:
             await _execute_global_unban(gban["network"], uid)
         except Exception:
@@ -127,6 +152,8 @@ async def handle_appeal_pardon(message: discord.Message):
 
     for row in db.get_user_active_bans(uid):
         gid = int(row["guild_id"])
+        if str(gid) not in guild_ids:
+            continue
         guild_obj = bot.get_guild(gid)
         if guild_obj:
             try:
@@ -135,7 +162,8 @@ async def handle_appeal_pardon(message: discord.Message):
                 pass
         db.remove_active_ban(gid, uid)
         db.remove_gban_enforcement(gid, uid)
-    db.remove_user_ban_history(uid)
+    for gid in guild_ids:
+        db.remove_ban_history(gid, uid)
 
     await _acknowledge_message(message)
 
@@ -150,7 +178,7 @@ def _format_ts_date(ts):
     except Exception:
         return None
 
-async def _collect_user_ban_info(uid):
+async def _collect_user_ban_info(uid, guild_ids=None, network_ids=None):
     """Everything guard_bot knows about the user's bans, per guild.
 
     Merges the live ban lists of every server the bot is on (reason from the
@@ -170,7 +198,9 @@ async def _collect_user_ban_info(uid):
         return e
 
     for guild in list(bot.guilds):
-        if guild.id == PURGATORIUM_GUILD_ID:
+        if db.purgatorium_scope(guild.id)[0]:
+            continue
+        if guild_ids is not None and str(guild.id) not in guild_ids:
             continue
         try:
             ban_entry = await guild.fetch_ban(discord.Object(id=uid))
@@ -192,7 +222,9 @@ async def _collect_user_ban_info(uid):
 
     for row in db.get_user_active_bans(uid):
         gid = int(row["guild_id"])
-        if gid == PURGATORIUM_GUILD_ID:
+        if db.purgatorium_scope(gid)[0]:
+            continue
+        if guild_ids is not None and str(gid) not in guild_ids:
             continue
         e = entry(gid)
         if row["unban_at"] is None:
@@ -202,12 +234,16 @@ async def _collect_user_ban_info(uid):
 
     for row in db.get_user_ban_history(uid):
         gid = int(row["guild_id"])
-        if gid == PURGATORIUM_GUILD_ID:
+        if db.purgatorium_scope(gid)[0]:
+            continue
+        if guild_ids is not None and str(gid) not in guild_ids:
             continue
         if row["banned_at"]:
             entry(gid).setdefault("banned_at", int(row["banned_at"]))
 
     for row in db.get_user_global_bans(uid):
+        if network_ids is not None and row["network"] not in network_ids:
+            continue
         e = entry(row["origin_guild_id"]) if row["origin_guild_id"] else None
         if e is None:
             continue
@@ -253,16 +289,22 @@ def _format_ban_info_entry(e, lang):
         details.append(localized("baninfo_no_details", lang))
     return f"**{e['name']}** ({'; '.join(details)})"
 
-def _is_consul_or_admin(user) -> bool:
+def _is_consul_or_admin(user, network=None) -> bool:
     """Who may act on the buttons the bot puts in appeal threads and in the
     tribunal channel: bot admins, consuls appointed with /setconsul, and anyone
     holding one of the CONSULS roles where the interaction happened."""
     uid = getattr(user, "id", None)
     if uid is None:
         return False
-    if is_admin(uid) or db.is_consul(uid):
+    if is_admin(uid):
         return True
-    return any(role.id in CONSULS for role in getattr(user, "roles", None) or [])
+    identity = db.get_network(network) if network is not None else None
+    if network is None or (identity and identity["owner_id"] is None):
+        return db.is_consul(uid) or any(
+            role.id in CONSULS for role in getattr(user, "roles", None) or [])
+    settings = db.network_settings(network)
+    return db.is_network_consul(network, uid) or bool(settings and any(
+        role.id in settings["consul_roles"] for role in getattr(user, "roles", None) or []))
 
 def _user_ban_networks(uid):
     """Networks where this user currently holds a global ban, ascending."""
@@ -321,7 +363,11 @@ async def _refresh_pardon_view(message, uid, lang):
     """Rebuild a summary's buttons from what is still banned, or drop them."""
     if message is None:
         return
-    networks = _user_ban_networks(uid)
+    post = db.get_baninfo_post(message.id)
+    if post is None:
+        return
+    allowed = set(db.scope_networks(post["scope_network"]))
+    networks = [item for item in _user_ban_networks(uid) if item in allowed]
     try:
         await message.edit(view=NetworkPardonView(uid, networks, lang) if networks else None)
     except Exception:
@@ -331,14 +377,27 @@ async def handle_network_pardon_click(interaction: discord.Interaction, uid, net
     """Lift the user's global ban in one network, or in every network at once."""
     lang = get_guild_lang(interaction.guild_id) if interaction.guild_id else DEFAULT_LANG
 
-    if not _is_consul_or_admin(interaction.user):
+    post = db.get_baninfo_post(interaction.message.id) if interaction.message else None
+    if post is None or str(post["user_id"]) != str(uid):
+        await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
+        return
+    allowed = set(db.scope_networks(post["scope_network"]))
+    if network is not None and network not in allowed:
+        await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
+        return
+
+    if network is None:
+        permitted = is_admin(interaction.user.id)
+    else:
+        permitted = _is_consul_or_admin(interaction.user, network)
+    if not permitted:
         await interaction.response.send_message(localized("setup_no_perm", lang), ephemeral=True)
         return
 
     await interaction.response.defer(ephemeral=True)
 
     if network is None:
-        networks = _user_ban_networks(uid)
+        networks = [item for item in _user_ban_networks(uid) if item in allowed]
     else:
         networks = [network] if db.get_active_global_ban(network, uid) else []
 
@@ -375,9 +434,33 @@ async def handle_appeal_baninfo(message: discord.Message):
     if message.author.id != BRIDGE_BOT_ID and not is_admin(message.author.id):
         return
     parts = (message.content or "").split()
+    if len(parts) == 3 and parts[0] == "FLOOD":
+        if not parts[1].isdigit() or not parts[2].isdigit():
+            return
+        uid, guild_id = int(parts[1]), int(parts[2])
+        found, network = db.channel_scope(message.channel.id, "baninfo")
+        expected, appeal_network = db.purgatorium_scope(guild_id)
+        if (not found or not expected or network != appeal_network
+                or not message.guild or message.guild.id != guild_id):
+            return
+        guild = bot.get_guild(guild_id)
+        if guild is None:
+            return
+        try:
+            await guild.ban(discord.Object(id=uid),
+                            reason="Appeal flood: 30 unanswered messages in 10 minutes",
+                            delete_message_days=0)
+        except Exception:
+            return
+        await _acknowledge_message(message)
+        return
     if len(parts) < 2 or not parts[0].isdigit() or not parts[1].isdigit():
         return
     uid, thread_id = int(parts[0]), int(parts[1])
+
+    found, network = db.channel_scope(message.channel.id, "baninfo")
+    if not found:
+        return
 
     thread = bot.get_channel(thread_id)
     if thread is None:
@@ -386,8 +469,10 @@ async def handle_appeal_baninfo(message: discord.Message):
         except Exception:
             return
 
-    lang = get_guild_lang(PURGATORIUM_GUILD_ID)
-    entries = await _collect_user_ban_info(uid)
+    lang = get_guild_lang(message.guild.id)
+    guild_ids = db.scope_guild_ids(network)
+    network_ids = set(db.scope_networks(network))
+    entries = await _collect_user_ban_info(uid, guild_ids, network_ids)
 
     if not entries:
         texts = [localized("baninfo_none", lang, id=uid)]
@@ -405,6 +490,7 @@ async def handle_appeal_baninfo(message: discord.Message):
             texts.append(line)
 
     networks = _user_ban_networks(uid)
+    networks = [item for item in networks if item in network_ids]
     view = NetworkPardonView(uid, networks, lang) if networks else None
     sent = None
     try:
@@ -415,6 +501,6 @@ async def handle_appeal_baninfo(message: discord.Message):
         return
 
     if sent is not None and view is not None:
-        db.add_baninfo_post(sent.id, thread.id, uid)
+        db.add_baninfo_post(sent.id, thread.id, uid, scope_network=network)
 
     await _acknowledge_message(message)
