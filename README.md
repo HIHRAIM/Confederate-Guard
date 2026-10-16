@@ -13,6 +13,8 @@ The operator's Bot Admins can manage every network. A sponsor can manage only ne
 
 Use `/sponsor` to inspect slots, `/sponsor-claim` to claim a server, and `/network-create`, `/network-invite` and `/network-accept` to build a network. `/network-purgatorium` and `/network-channels` configure an appeal server and its Guard protocol for the sponsor's networks. A sponsor cannot manage another sponsor's network; Bot Admins can. Either community role on the Patreon server grants the €1 allowance after seven days of continuous observed membership. Work continues for one day after that role is lost, or for 30 days after a paid role is lost. Thirty days after the working grace ends, unclaimed servers' scoped configuration and ban history are erased and the bot leaves; another sponsor or a Bot Admin can take over before that deadline. Network bans shared with other still active servers remain with those servers.
 
+Active sponsors can use `/limit` on Discord to see their subscription's current server and moderation-network slots. This includes working grace. Slots count simultaneous assignments and have no daily reset; Bot Admin status alone does not grant access to this command.
+
 ## Requirements
 
 - Python **3.10+** (recommended 3.11+)

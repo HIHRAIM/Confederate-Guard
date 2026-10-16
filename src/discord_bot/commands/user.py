@@ -65,6 +65,7 @@ async def help_cmd(interaction: discord.Interaction):
 
     network_lines = "\n".join([
         localized("help_cmd_sponsor", lang),
+        localized("cmd_limit", lang),
         localized("help_cmd_sponsor_claim", lang),
         localized("help_cmd_sponsor_release", lang),
         localized("help_cmd_sponsor_subscribe", lang),

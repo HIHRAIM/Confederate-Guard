@@ -908,5 +908,9 @@
   "sponsor_grace_active": {"status": "unverified", "text": "The paid role ended; benefits continue for {days} more day(s)."},
   "sponsor_notice_community_lost": {"status": "unverified", "text": "Your community role disappeared. Guard keeps working for one day. If no active sponsor or bot administrator takes over, the bot leaves and erases this community's data 30 days after that grace day ends."},
   "sponsor_notice_paid_lost": {"status": "unverified", "text": "Your paid role disappeared. Guard keeps working for 30 days. If no active sponsor or bot administrator takes over, the bot leaves and erases this community's data 30 more days after grace ends."},
-  "sponsor_notice_retention": {"status": "unverified", "text": "The working grace period ended. Unless another active sponsor or bot administrator takes over, the bot leaves and erases this community's data in 30 days."}
+  "sponsor_notice_retention": {"status": "unverified", "text": "The working grace period ended. Unless another active sponsor or bot administrator takes over, the bot leaves and erases this community's data in 30 days."},
+  "slash_limit": {"status": "unverified", "text": "Поточне використання лімітів підписки"},
+  "cmd_limit": {"status": "unverified", "text": "/limit — поточне використання лімітів підписки (лише спонсори)."},
+  "limit_sponsors_only": {"status": "unverified", "text": "Команда доступна лише чинним спонсорам, включно з періодом продовження роботи. Для Telegram спочатку зв’яжіть акаунт із Discord-акаунтом підписника."},
+  "limit_status": {"status": "unverified", "text": "Servers: {servers}/{server_limit}; moderation networks: {networks}/{network_limit}. These are simultaneous slots shared across this subscription; they have no daily reset."}
 }

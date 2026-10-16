@@ -132,3 +132,14 @@ async def sponsor_subscribe_cmd(interaction: discord.Interaction):
         "sponsor_subscribe", lang, url=SPONSOR_URL,
         servers1=one["servers"], networks1=one["networks"],
         servers2=two["servers"], networks2=two["networks"]), ephemeral=True)
+
+@bot.tree.command(name="limit", description=localized("slash_limit", "en"))
+async def limit_cmd(interaction: discord.Interaction):
+    """Show only the caller's active subscription usage; admins get no bypass."""
+    lang = get_guild_lang(interaction.guild_id)
+    owner = str(interaction.user.id)
+    await interaction.response.defer(ephemeral=True)
+    await _refresh(owner)
+    text = (sponsors.limit_text(owner, lang) if sponsors.sponsor_tier(owner) != 0
+            else localized("limit_sponsors_only", lang))
+    await interaction.followup.send(text, ephemeral=True)

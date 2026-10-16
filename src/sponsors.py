@@ -361,3 +361,10 @@ def guild_service_active(guild_id):
     if direct and (not direct["active"] or sponsor_rights_tier(direct["discord_id"]) == 0):
         return False
     return True
+
+def limit_text(owner, lang):
+    """Only the authenticated subscription's current server/network usage."""
+    caps = sponsor_limits(sponsor_tier(owner))
+    return localized("limit_status", lang, servers=db.sponsor_server_usage(owner),
+                     server_limit=caps["servers"], networks=len(db.sponsor_networks(owner)),
+                     network_limit=caps["networks"])
